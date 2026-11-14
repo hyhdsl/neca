@@ -18,7 +18,7 @@
 | D3 | 旧 CLI 双轨 | 旧 `--issue` 等 flag 全部保留为兼容别名，至少保留一个版本周期 |
 | D4 | p12 继续走 `openssl` 子进程 | 3DES + SHA1 是 MIUI 兼容性硬需求，重实现风险大于收益 |
 | D5 | `ca.key` 保持 `0600 root:root` | 不做组权限放宽；`neca` 以 root 身份执行所有涉及 CA 私钥的操作 |
-| D6 | `swanctl --load-creds` 实验：做 | 目标是把吊销从"重启容器、断所有会话"改为"热加载、不断线" |
+| D6 | `swanctl --load-creds` 实验：**已执行，结论可用** | 2026-11-15 实测：charon 日志出现 `crl #10:0d is newer - existing crl #10:0b replaced`，热加载生效且未重启容器；吊销默认改为 `creds` 模式 |
 | D7 | 开发环境：本地 Docker | 本机无 Go、无 WSL 发行版；用容器获得可复现的构建与测试环境 |
 | D8 | 服务器验证：真实环境 | 用临时 PKI 与真实 strongSwan 各验一遍，生产操作一律先 `--dry-run` |
 | D9 | GitHub 集成 | 由 DSH 插件 `dsh-github-flow`（复用 `gh` CLI 的 OAuth 登录）承担仓库、PR、Actions 与发布操作 |
@@ -39,7 +39,7 @@ D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7�
 - 列表、p12 自检、CSV 导出、索引同步；
 - 交互向导（菜单 0–10 与编号语义不变）；
 - 平台包生成：Windows（PowerShell + cmd）、Android（说明 + p12）、iOS（mobileconfig）；
-- CRL 生成与引擎重载（默认重启容器，实验通过后改为可配置的 `creds` 模式）；
+- CRL 生成与引擎重载（默认 `creds` 热加载，可配置回 `restart`）；
 - 锁、审计、结构化输出、`--dry-run`。
 
 ### 1.3 范围外（本阶段不做）
@@ -187,7 +187,7 @@ neca/
 | `--json` | 结构化输出，关闭 `[OK]` 等人类文案 | 关 |
 | `--dry-run` | 只打印将执行的动作，不落盘、不调 docker | 关 |
 | `--no-reload` | 只生成 CRL，不重载引擎 | 关 |
-| `--reload-mode restart\|creds` | 重载方式；`creds` 为实验通过后的默认 | restart（暂定） |
+| `--reload-mode restart\|creds` | 重载方式，默认 `creds` | creds |
 | `--config <file>` | 读取配置文件（未来用），优先级低于环境变量 | 无 |
 | `-q` / `--quiet` | 仅输出错误 | 关 |
 | `--version` | 打印版本 | — |
@@ -242,7 +242,7 @@ neca/
 | `CONTAINER` / `DOCKER_BIN` | `ipsec-vpn` / `docker` |
 | `SERVER_ID` / `ORG` / `CA_CN` | `vpn.nekobiglazyer.work` / `NekoBigLazyer` / `NekoBigLazyer VPN CA` |
 | `DEFAULT_DAYS` / `KEY_BITS` | `365` / `3072` |
-| `NECA_RELOAD_MODE` | `restart`（实验通过后默认改 `creds`） |
+| `NECA_RELOAD_MODE` | `creds`（热加载；设为 `restart` 则重启容器） |
 | `NECA_LOCK_FILE` | `$PKI_DIR/.lock` |
 
 `config.Load()` 负责读取、补默认值、校验目录可写、校验 CA 存在；缺失时返回退出码 3 的错误。
@@ -289,7 +289,7 @@ func (r *Runner) Run(ctx context.Context, timeout time.Duration, name string, ar
 - `crl.Gen()`：调用 `openssl ca -gencrl`，先写临时文件再原子替换，`chmod 0644`；
 - `engine.Reload()`：按 `NECA_RELOAD_MODE` 二选一：
   - `restart`：`docker restart`，轮询 `swanctl --stats` 最多 40s（旧行为）；
-  - `creds`：`docker exec ipsec-vpn swanctl --load-creds`，不重启、不断线（待实验验证）。
+  - `creds`：`docker exec ipsec-vpn swanctl --load-creds`，不重启、不断线（2026-11-15 实测通过，charon 日志确认 CRL 被热替换）。
 
 ### 8.7 audit
 
@@ -404,6 +404,8 @@ issue TMP01 windows,android → list → verify → add-platform ios → export 
 
 `Dockerfile.dev`：`golang:1.25-bookworm` + `openssl` + `git` + `ca-certificates` + `make`。
 
+> 网络备注（2026-11-15 实测）：本机直连 Docker Hub 不可达，已在 `~/.docker/daemon.json` 配置 `registry-mirrors`（`docker.1ms.run` 等）并重启 Docker Desktop，镜像拉取恢复正常。`docker` 与凭据助手已放入 `~/.dsh/bin`，当前 DSH 会话内可直接使用。
+
 ```bash
 # 构建开发镜像
 docker build -f Dockerfile.dev -t neca-dev .
@@ -449,7 +451,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 
 | 项 | 建议 |
 |---|---|
-| 仓库 | `github.com/<owner>/neca`，**私有**（含 VPN 运维逻辑与模板） |
+| 仓库 | `github.com/hyhdsl/neca`，**私有**，已创建并推送基线（2026-11-15） |
 | 默认分支 | `main`，保护：必须 PR + CI 通过 |
 | 分支命名 | `feat/…`、`fix/…`、`chore/…` |
 | 提交信息 | Conventional Commits（`feat:`、`fix:`、`chore:`、`docs:`） |
@@ -544,7 +546,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | Windows 模板被改成非 ASCII | 低 | 高 | CI 强制 `check-ascii` |
 | 以 root 运行带来的误操作 | 中 | 高 | 默认 `--dry-run` 提示；删除类操作二次确认；审计 |
 | 并发写坏索引 | 中 | 中 | 全局 flock + 原子替换 |
-| `--load-creds` 实验失败 | 中 | 低 | 保留 restart 模式，只是不改默认 |
+| `--load-creds` 实验失败 | 已排除 | — | 2026-11-15 实测通过，默认 `creds`；`restart` 保留为回退 |
 | GHCR 推送权限配置错误 | 中 | 低 | 用内置 `GITHUB_TOKEN` + `packages: write` |
 
 ---
@@ -552,7 +554,7 @@ gh auth login --hostname github.com --git-protocol https --web
 ## 18. 待定事项
 
 1. GitHub 仓库 owner/名称（建议 `nekobiglazyer/neca`，私有）；
-2. 运行镜像是否内置 openssl（scratch 镜像装不了 openssl，需要 distroless 或 debian-slim）；
+2. 运行镜像：已定 **debian-slim**（内置 openssl，约 80MB；scratch/distroless 无法运行 openssl 子进程）；
 3. Go 版本锁定（建议 1.25，与开发镜像一致）；
 4. 是否把旧 bash 脚本放入 `legacy/` 一并归档；
 5. 阶段二 Web 的权限方案（§12.2 的三选一）。
@@ -586,6 +588,21 @@ docker exec ipsec-vpn swanctl --list-crls 2>&1 | head   # 若支持，查看CRL�
 
 - **成功**：日志显示新 CRL 已加载，且被吊销的测试证书无法再建立连接，同时既有会话数量不变；
 - **失败**：日志无新 CRL 记录，或必须重启才生效 → 保持 `restart` 模式，文档记录结论。
+
+### 实验结果（2026-11-15 03:20 执行）
+
+用临时证书 `NECA-CRLTEST`（序列 `7063A61F…D9935`）做了一次完整验证：
+
+| 步骤 | 结果 |
+|---|---|
+| 签发测试证书 | 成功，索引新增 V 行，CRL 仍 5 条 |
+| 索引置 R + `openssl ca -gencrl` | CRL 变为 6 条，哈希变化 |
+| `swanctl --load-creds` | 输出 `loaded certificate from /etc/swanctl/x509crl/ca.crl.pem` |
+| charon 日志 | `crl #10:0d is newer - existing crl #10:0b replaced`，即内存中的 CRL 被热替换 |
+| 容器状态 | `RestartCount=0`，`StartedAt` 未变，确认未重启 |
+| 清理 | 索引恢复 8 行、CRL 恢复 5 条，重新 `--load-creds` 回滚内存 CRL；测试证书与客户包已删除 |
+
+结论：**`swanctl --load-creds` 会重新读取并替换 CRL，吊销可以做到立即生效且不断线**，`neca` 默认使用 `creds` 模式，`restart` 仅作回退。唯一未覆盖的是用被吊销证书实际拨号被拒（需要客户端），但 CRL 内容已确认进入 charon。
 
 ---
 

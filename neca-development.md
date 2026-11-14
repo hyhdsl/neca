@@ -320,7 +320,7 @@ func (r *Runner) Run(ctx context.Context, timeout time.Duration, name string, ar
 
 - 不迁移、不重命名任何目录；新旧实现共用同一份 `index.txt`、`meta/`、`clients/`、`exports/`。
 - `index.txt` 是 CRL 的唯一事实源，**不允许**引入第二份证书状态存储；SQLite（阶段三）只存用户、审计、归属。
-- 版本切换用 `git` 管脚本与二进制，回退只需换回旧 `vpn-cert-manager.sh`。
+- 版本切换用 `git` 管脚本与二进制，回退只需换回旧 `legacy/vpn-cert-manager.sh`。
 
 ---
 
@@ -484,7 +484,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 - `docker.yml`：`permissions: packages: write` + `GITHUB_TOKEN` 登录 `ghcr.io`，**无需 PAT**；
 - 若未来需要跨仓操作，再考虑 GitHub App，不要引入长期 PAT。
 
-当前状态（2026-11-15）：三个工作流尚未创建——`ci.yml` 随 M0 落地，`release.yml` 与 `docker.yml` 随 M5 落地。
+当前状态（2026-11-15）：`ci.yml` 已随 M0 落地（见 §19.1）；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
 
 ### 15.3 发布流程
 
@@ -570,7 +570,7 @@ gh auth login --hostname github.com --git-protocol https --web
 1. ~~GitHub 仓库 owner/名称~~：已定 `github.com/hyhdsl/neca`（私有）；
 2. 运行镜像：已定 **debian-slim**（内置 openssl，约 80MB；scratch/distroless 无法运行 openssl 子进程）；
 3. Go 版本锁定：镜像内实测 `go1.25.14`，`go.mod` 声明 `go 1.25`；
-4. 是否把旧 bash 脚本放入 `legacy/` 一并归档；
+4. ~~是否把旧 bash 脚本放入 `legacy/` 一并归档~~：已归档到 `legacy/`（2026-11-15，M0）；
 5. 阶段二 Web 的权限方案（§12.2 的三选一）。
 
 ---
@@ -582,11 +582,11 @@ gh auth login --hostname github.com --git-protocol https --web
 | 项 | 状态 |
 |---|---|
 | 仓库 | `github.com/hyhdsl/neca`（私有）已创建，`main` 已推送基线（`fbe67d6`、`16338b0`） |
-| 代码 | 未开始（M0 之前） |
+| 代码 | ✅ M0 已完成：Go 模块、`neca version`、Makefile、Dockerfile.dev、CI、ASCII 门禁 |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
-| CI/CD 工作流 | ⏳ 未创建（M0 落 CI，M5 落 release/docker） |
+| CI/CD 工作流 | ✅ `ci.yml` 已落地（M0）；`release.yml` / `docker.yml` 随 M5 |
 | 服务器 | 生产状态已还原：索引 8 行、CRL 5 条、容器未重启 |
 
 ### 19.2 变更记录
@@ -595,6 +595,7 @@ gh auth login --hostname github.com --git-protocol https --web
 |---|---|---|
 | 2026-11-15 | 第 1 稿 | 决策 D1–D9、架构、CLI 契约、CI/CD 规划、路线图、实验步骤 |
 | 2026-11-15 | 第 2 稿 | 仓库落地（hyhdsl/neca）；load-creds 实测通过并改默认；运行镜像定 debian-slim；补充本机环境实测与镜像源说明 |
+| 2026-11-15 | M0 | 仓库骨架落地：Go 模块、`neca version`、Makefile、Dockerfile.dev、`ci.yml`、ASCII 门禁；旧 bash 实现归档到 `legacy/` |
 
 ---
 
@@ -661,5 +662,5 @@ docker exec ipsec-vpn swanctl --list-crls 2>&1 | head   # 若支持，查看CRL�
 
 - strongSwan swanctl：`https://www.strongswan.org/testing/testresults/`（本机为 5.9.8）
 - OpenSSL 3.0 `ca`、`pkcs12` 手册
-- 现有脚本与说明：[vpn-cert-manager.sh](vpn-cert-manager.sh)、[vpn-cert-manager.md](vpn-cert-manager.md)
+- 现有脚本与说明（已归档）：[legacy/vpn-cert-manager.sh](legacy/vpn-cert-manager.sh)、[legacy/vpn-cert-manager.md](legacy/vpn-cert-manager.md)
 - 技术选型评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)

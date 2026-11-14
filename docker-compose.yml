@@ -1,0 +1,28 @@
+# 本地开发与测试环境（开发文档 §4）。
+#
+# 这是 make dev 的等价 Compose 入口，适合偏好 docker compose 的开发者：
+#   docker compose run --rm dev make all
+#   docker compose run --rm dev bash
+#
+# 卷说明：
+#   ./                   仓库源码（改动即时反映到容器）
+#   neca-gomod           Go module 缓存（避免每次重建都重新下载）
+#   neca-gocache         Go build 缓存（显著加快重复构建）
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: neca-dev
+    working_dir: /src
+    tty: true
+    stdin_open: true
+    command: ["bash"]
+    volumes:
+      - ./:/src
+      - neca-gomod:/go/pkg/mod
+      - neca-gocache:/root/.cache/go-build
+
+volumes:
+  neca-gomod:
+  neca-gocache:

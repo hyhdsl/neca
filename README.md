@@ -62,6 +62,11 @@ dist/               构建产物（不入库）
 
 可能被替换或新增的能力以接口形式集中在 `internal/core/ports`（当前：索引存储 `IndexStore`、配置来源 `Source`/`Resolver`）；CLI 子命令通过 `internal/cli` 的注册表挂载。设计原则、候选扩展点与新增步骤见开发文档 §3.1。
 
+## 敏感信息
+
+仓库内的服务器 IP、VPN 内网段、真实域名、组织与 CA 名称均为占位值：`<SERVER_IP>`、`<VPN_SUBNET>`、`vpn.example.com`、`ExampleOrg`。
+生产部署通过环境变量注入真实的 `SERVER_ID`、`ORG`、`CA_CN`、`PKI_DIR` 等值，不要把真实服务器标识写回仓库。
+
 ## 开发命令
 
 | 命令 | 作用 |
@@ -101,3 +106,4 @@ dist/               构建产物（不入库）
 - 扩展点契约已落地：`IndexStore`、配置来源接口与 CLI 命令注册表（无行为变更）。
 - 2026-11-15 完成 `swanctl --load-creds` 实测：新 CRL 可热替换，吊销不再需要重启容器。
 - 旧 bash 实现已移入 `legacy/`，保留作为影子测试基准与回退手段。
+- 仓库内服务器标识均为占位值，生产值通过环境变量注入（详见下文「敏感信息」）。

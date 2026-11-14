@@ -1,6 +1,6 @@
 # neca 开发文档（v0.1 规划稿）
 
-> 项目代号：**neca**（取自 example.com 的 Example + CA）
+> 项目代号：**neca**（CA 管理工具；品牌、域名与服务器标识在仓库中一律使用占位值）
 > 文档版本：2026-11-15 第 2 稿（新增：仓库落地、load-creds 实测、Docker 环境实测）
 > 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
@@ -322,6 +322,8 @@ neca/
 | `DEFAULT_DAYS` / `KEY_BITS` | `365` / `3072` |
 | `NECA_RELOAD_MODE` | `creds`（热加载；设为 `restart` 则重启容器） |
 | `NECA_LOCK_FILE` | `$PKI_DIR/.lock` |
+
+> `SERVER_ID` / `ORG` / `CA_CN` 的默认值是仓库占位值（`vpn.example.com` / `ExampleOrg` / `ExampleOrg VPN CA`）。生产部署必须用环境变量注入真实值，不要把真实服务器标识写回仓库。
 
 `config.Load()` 负责读取、补默认值、校验目录可写、校验 CA 存在；缺失时返回退出码 3 的错误。
 
@@ -682,6 +684,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | M0 | 仓库骨架落地：Go 模块、`neca version`、Makefile、Dockerfile.dev、`ci.yml`、ASCII 门禁；旧 bash 实现归档到 `legacy/` |
 | 2026-11-15 | 扩展点 | 新增 §3.1：索引存储/配置来源接口契约（`internal/core/ports`）与 CLI 子命令注册表；候选扩展点登记，无行为变更 |
 | 2026-11-15 | M1 | 只读命令落地：config/proc/openssl/index/meta/table/csv；list/verify/export/index sync；新增 fixture 生成器与 `make shadow`，新旧实现 diff=0 |
+| 2026-11-15 | 安全 | 清理仓库中的服务器标识（IP、VPN 内网段、真实域名、组织/CA 名称），统一为占位值；生产值改为环境变量注入，并重写 Git 历史 |
 
 ---
 

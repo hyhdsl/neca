@@ -70,10 +70,10 @@ func TestEndDate(t *testing.T) {
 // TestSAN 校验去空格并以逗号连接。
 func TestSAN(t *testing.T) {
 	oss := NewOpenSSL(fakeRunner{handler: func([]string) (Result, error) {
-		return Result{Stdout: "X509v3 Subject Alternative Name: \n    DNS:vpn.example.work, DNS:TMP01\n"}, nil
+		return Result{Stdout: "X509v3 Subject Alternative Name: \n    DNS:vpn.example.com, DNS:TMP01\n"}, nil
 	}})
 	got, err := oss.SAN(context.Background(), "/tmp/a.crt")
-	if err != nil || got != "DNS:vpn.example.work,DNS:TMP01" {
+	if err != nil || got != "DNS:vpn.example.com,DNS:TMP01" {
 		t.Fatalf("SAN() = %q, %v", got, err)
 	}
 }

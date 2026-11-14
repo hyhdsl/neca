@@ -5,7 +5,11 @@
 //   - core 以结构化值返回结果，本包只负责渲染，绝不反向依赖 cmd/*；
 //   - 输出前缀 [OK]/[INFO]/[WARN]/[ERR] 是下游契约（文档 §6.3），不得改动。
 //
-// M0 只实现 version、help 与 --version；其余子命令按里程碑推进：
+// 命令通过 Registry（command.go）注册：新增子命令只需实现 Command.Run 并
+// 注册，不需要修改 Run 的分发逻辑或帮助文本。这是为 M1/M2 批量增加
+// list/issue/revoke 等命令、以及未来 Web 端复用命令元数据预留的扩展点。
+//
+// M0 已实现 version、help 与 --version；其余子命令按里程碑推进：
 //
 //	M1 list/verify/export/index sync，M2 写命令，M3 交互向导/--json/--dry-run。
 package cli
@@ -13,7 +17,6 @@ package cli
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/hyhdsl/neca/internal/version"
 )
@@ -41,52 +44,58 @@ const progName = "neca"
 //
 // M0 阶段无参数时打印帮助并返回用法错误；M3 接入交互向导后改为默认进入菜单。
 func Run(args []string, stdout, stderr io.Writer) int {
+	registry := newBuiltinRegistry()
+
 	if len(args) == 0 {
-		printHelp(stdout)
+		registry.WriteHelp(stdout)
 		fmt.Fprintf(stderr, "[INFO] 交互向导将在 M3 提供；请先使用子命令，例如：%s version\n", progName)
 		return ExitUsage
 	}
 
-	cmd := args[0]
-	switch cmd {
-	case "version":
-		// 完整版本摘要：版本、提交、构建时间与目标平台，便于线上核对。
-		fmt.Fprintln(stdout, version.Get().String())
-		return ExitOK
-	case "--version", "-V":
-		// 单行版本号，方便脚本直接取值；保持与 version 子命令同源。
+	// 全局开关不是子命令：--version / -V 只输出一行版本号，
+	// 与 `neca version` 的完整摘要刻意区分（文档 §6.2）。
+	if args[0] == "--version" || args[0] == "-V" {
 		fmt.Fprintf(stdout, "%s %s\n", progName, version.Get().Version)
 		return ExitOK
-	case "help", "-h", "--help":
-		printHelp(stdout)
-		return ExitOK
-	default:
+	}
+
+	cmd, ok := registry.Lookup(args[0])
+	if !ok {
 		// 未知子命令属于用法错误，提示后返回退出码 1（文档 §6.3）。
-		fmt.Fprintf(stderr, "[ERR]  未知子命令：%s\n", cmd)
+		fmt.Fprintf(stderr, "[ERR]  未知子命令：%s\n", args[0])
 		fmt.Fprintf(stderr, "[INFO] 运行 %s help 查看可用命令\n", progName)
 		return ExitUsage
 	}
+
+	return cmd.Run(Env{Stdout: stdout, Stderr: stderr, Args: args[1:]})
 }
 
-// printHelp 输出帮助文本。
+// newBuiltinRegistry 构建内置命令表。
 //
-// M0 只列已实现的命令，避免承诺尚未落地的功能；后续里程碑在功能实现时
-// 同步扩充帮助，而不是提前写好"将来会有"的说明。
-func printHelp(w io.Writer) {
-	lines := []string{
-		progName + " —— strongSwan IKEv2 用户证书管理工具",
-		"",
-		"用法：",
-		"  " + progName + " <子命令> [参数]",
-		"",
-		"可用子命令（M0）：",
-		"  version        显示版本、提交号、构建时间与目标平台",
-		"  help           显示本帮助",
-		"",
-		"通用开关：",
-		"  --version, -V  只输出版本号（单行）",
-		"",
-		"后续里程碑将提供：list / verify / export / issue / revoke / reissue 等子命令。",
-	}
-	fmt.Fprintln(w, strings.Join(lines, "\n"))
+// 每次 Run 都新建注册表，避免共享可变全局状态；注册成本可忽略。
+// 未来新增子命令（list/issue/...）只需在这里追加注册，不要改 Run 的
+// 分发逻辑——这正是命令注册表要解决的扩展问题。
+func newBuiltinRegistry() *Registry {
+	registry := NewRegistry()
+
+	registry.MustRegister(Command{
+		Name:    "version",
+		Summary: "显示版本、提交号、构建时间与目标平台",
+		Run: func(env Env) int {
+			fmt.Fprintln(env.Stdout, version.Get().String())
+			return ExitOK
+		},
+	})
+
+	registry.MustRegister(Command{
+		Name:    "help",
+		Aliases: []string{"-h", "--help"},
+		Summary: "显示本帮助",
+		Run: func(env Env) int {
+			registry.WriteHelp(env.Stdout)
+			return ExitOK
+		},
+	})
+
+	return registry
 }

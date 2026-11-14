@@ -31,8 +31,9 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 version
 
 ```text
 cmd/neca/           CLI 入口（薄壳，仅转发给 internal/cli）
-internal/cli/       参数解析、子命令分发、输出渲染
+internal/cli/       参数解析、子命令注册表、输出渲染
 internal/core/      业务核心（M1 起填充；不依赖展示层、不直接打印）
+internal/core/ports/ 扩展点接口（IndexStore / 配置来源）
 internal/version/   构建期注入的版本元数据
 templates/          平台包模板（Windows 模板必须纯 ASCII）
 testdata/           黄金文件与 fixture
@@ -41,6 +42,10 @@ scripts/            辅助脚本（如 check-ascii）
 legacy/             上一代 bash 实现（只读归档，影子测试基准）
 dist/               构建产物（不入库）
 ```
+
+## 扩展点
+
+可能被替换或新增的能力以接口形式集中在 `internal/core/ports`（当前：索引存储 `IndexStore`、配置来源 `Source`/`Resolver`）；CLI 子命令通过 `internal/cli` 的注册表挂载。设计原则、候选扩展点与新增步骤见开发文档 §3.1。
 
 ## 开发命令
 
@@ -76,5 +81,6 @@ dist/               构建产物（不入库）
 ## 现状
 
 - M0 已完成：Go 模块、`neca version`、Makefile、Dockerfile.dev、CI 工作流、ASCII 门禁。
+- 扩展点契约已落地：`IndexStore`、配置来源接口与 CLI 命令注册表（无行为变更）。
 - 2026-11-15 完成 `swanctl --load-creds` 实测：新 CRL 可热替换，吊销不再需要重启容器。
 - 旧 bash 实现已移入 `legacy/`，保留作为影子测试基准与回退手段。

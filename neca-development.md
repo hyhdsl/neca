@@ -98,6 +98,79 @@ D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7�
 
 未来 Web 面板（阶段二）在这个结构里只需要新增 `cmd/necad` 与 `internal/web`，core 一行不改。
 
+### 3.1 扩展点（Extension Points）
+
+目标：把"未来可能被替换或新增"的能力收敛为少量接口与注册表，让签发/吊销/CRL 等主流程保持不变；以后接新后端、加新命令时，不改业务代码、不改分发 switch。
+
+设计原则（遵循 Go 惯例，避免过度抽象）：
+
+1. **接口定义在使用方**：接口放在 `internal/core/ports` 这个只含接口与数据类型的叶子包，实现方反向依赖它，避免 `core → 子包 → core` 的循环依赖。
+2. **有替换需求才抽接口**：本轮只落地已经明确的 `IndexStore` 与配置 `Source`/`Resolver`；其余先登记为候选，等 M1/M2 出现第一个真实实现时再抽象，不为假想需求写空接口。
+3. **构造函数注入**：core 的领域函数接收接口参数，不在包内直接 new 具体实现；测试用内存假实现替换。
+4. **注册表集中管理**：CLI 子命令通过 `cli.Registry` 注册，未来平台包生成器（Bundler）也用同样方式注册；业务代码里禁止出现按类型分支的 type switch。
+5. **internal 不承诺兼容**：v0.1.0 之前接口可演进，但每次演进必须同步更新本节与测试假实现。
+
+#### 3.1.1 已落地契约
+
+| 扩展点 | 接口/类型 | 位置 | 首个实现（计划） | 后续可接入 |
+|---|---|---|---|---|
+| 索引存储 | `ports.IndexStore`、`ports.Row`、`ports.Index` | `internal/core/ports/index.go` | M1：`index.txt` 文件后端（flock + 原子替换） | 测试内存实现、Web 只读查询、只读缓存 |
+| 配置来源 | `ports.Source`、`ports.Resolver` | `internal/core/ports/config.go` | M1：环境变量、`--config` 文件 | Web 设置、数据库覆盖、测试注入 |
+| CLI 子命令 | `cli.Command`、`cli.Env`、`cli.Registry` | `internal/cli/command.go` | 已实现：`version`、`help` | `list`/`issue` 等、兼容别名、命令元数据复用 |
+
+`IndexStore` 契约要点：
+
+- `Load` 返回只读快照，不持有也不暴露锁；
+- `Update` 在全局锁内执行一次读-改-写：fn 返回错误或 panic 时不落盘，成功时由实现负责 fsync + 原子替换；
+- 拿不到锁时返回包装了 `ErrIndexLocked` 的错误，CLI 侧据此返回退出码 3；
+- 生产实现只能是 `index.txt`（§10 唯一事实源），接口不得用于引入第二份证书状态存储。
+
+`Source` / `Resolver` 契约要点：
+
+- 一个 Source 只读自己那层配置，不填默认值、不做类型校验；错误必须带来源名；
+- `Resolver` 按注册顺序合并，**先注册的优先**，即 `NewResolver(env, file)` 表达"环境变量高于配置文件"（§7）；
+- key 与旧脚本环境变量名一致（`PKI_DIR`、`CRL_FILE` 等）；默认值与类型校验留给 M1 的 `core/config`。
+
+CLI 注册表要点：
+
+- `Command.Run` 只接收 `Env`（注入 stdout/stderr/args），禁止直接访问 `os.Stdout`、`os.Args`，保证可测试、可复用；
+- 注册冲突（重名、别名冲突、nil Run）在启动时立即报错；内置命令用 `MustRegister` 在测试阶段暴露问题；
+- `help` 文本由注册表自动生成，新增命令不需要改帮助代码。
+
+#### 3.1.2 候选扩展点（先登记，暂不落接口）
+
+| 扩展点 | 预计触发时机 | 未来实现示例 |
+|---|---|---|
+| 引擎重载 Engine | M2 实现 `engine.go` | docker restart、`swanctl --load-creds`、systemd、K8s Job |
+| 审计输出 AuditSink | M2 实现 `audit.go` | 追加文件、SQLite、远程日志 |
+| 平台包 Bundler | M1 实现 `bundle/` | Windows、Android、iOS、未来 macOS/Linux |
+| 签名后端 Signer | 出现外部 CA/HSM 需求时 | 本地 openssl、企业 CA、PKCS#11 |
+| 通知回调 Notifier | 需要 IM/Webhook 时 | 飞书、企业微信、邮件 |
+
+候选扩展点不写空接口：M1/M2 实现时按 §3.1.3 的步骤抽象，避免接口形状被假想需求带偏。
+
+#### 3.1.3 新增扩展点的步骤
+
+1. 在 `internal/core/ports`（或对应领域的消费方包）定义接口与最小数据类型，写清并发、错误、锁与幂等语义；
+2. 在 `internal/core/<领域>` 写第一个真实实现，构造函数接收依赖；
+3. 在注册表登记：CLI 命令用 `cli.Registry.Register`，平台包用 M1 的 Bundler 注册表；
+4. 补一个测试假实现（`_test.go`）与至少一个契约测试（成功、失败回滚、边界）；
+5. 更新本节的契约表与 §19.2 变更记录，并在 PR 描述里说明兼容性影响。
+
+#### 3.1.4 示例：新增一个子命令
+
+```go
+// 在 newBuiltinRegistry 中追加；Run 的分发逻辑无需改动。
+registry.MustRegister(Command{
+    Name:    "list",
+    Summary: "列出全部证书",
+    Run: func(env Env) int {
+        // 调用 core 返回结构化结果，再在这里渲染人类可读文本或 JSON。
+        return ExitOK
+    },
+})
+```
+
 ---
 
 ## 4. 仓库与包结构
@@ -116,6 +189,9 @@ neca/
 ├─ cmd/neca/main.go        # CLI 入口（薄）
 ├─ internal/
 │  ├─ core/
+│  │  ├─ ports/            # 扩展点接口与数据类型（§3.1）
+│  │  │  ├─ index.go       # IndexStore / Row / Index
+│  │  │  └─ config.go      # Source / Resolver
 │  │  ├─ config.go         # 环境变量、默认值、校验
 │  │  ├─ proc.go           # 外部命令执行器
 │  │  ├─ openssl.go        # openssl 调用与输出解析
@@ -129,7 +205,9 @@ neca/
 │  │  ├─ csv.go            # 导出
 │  │  ├─ models.go         # Cert / Meta / IssueRequest
 │  │  └─ bundle/           # windows.go android.go ios.go
-│  ├─ cli/                 # 参数解析、子命令、向导（薄）
+│  ├─ cli/
+│  │  ├─ cli.go            # 入口、全局开关、内置命令装配
+│  │  └─ command.go        # 子命令注册表（扩展点）
 │  └─ app/                 # 阶段二：HTTP 服务
 ├─ templates/              # embed 的 PS1 / mobileconfig / 说明文本
 └─ testdata/               # 黄金文件与 fixture
@@ -583,6 +661,7 @@ gh auth login --hostname github.com --git-protocol https --web
 |---|---|
 | 仓库 | `github.com/hyhdsl/neca`（私有）已创建，`main` 已推送基线（`fbe67d6`、`16338b0`） |
 | 代码 | ✅ M0 已完成：Go 模块、`neca version`、Makefile、Dockerfile.dev、CI、ASCII 门禁 |
+| 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
@@ -596,6 +675,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | 第 1 稿 | 决策 D1–D9、架构、CLI 契约、CI/CD 规划、路线图、实验步骤 |
 | 2026-11-15 | 第 2 稿 | 仓库落地（hyhdsl/neca）；load-creds 实测通过并改默认；运行镜像定 debian-slim；补充本机环境实测与镜像源说明 |
 | 2026-11-15 | M0 | 仓库骨架落地：Go 模块、`neca version`、Makefile、Dockerfile.dev、`ci.yml`、ASCII 门禁；旧 bash 实现归档到 `legacy/` |
+| 2026-11-15 | 扩展点 | 新增 §3.1：索引存储/配置来源接口契约（`internal/core/ports`）与 CLI 子命令注册表；候选扩展点登记，无行为变更 |
 
 ---
 

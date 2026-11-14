@@ -54,7 +54,7 @@ vet: ## go vet 静态检查
 	$(GO) vet ./...
 
 fmt: ## 格式化所有 Go 源码
-	gofmt -w $$(git ls-files '*.go')
+	$(GO) fmt ./...
 
 fmt-check: ## 校验 gofmt 无差异（CI 门禁）
 	@diff="$$(gofmt -l .)"; \
@@ -72,8 +72,8 @@ dev: ## 构建并进入开发容器（docker compose 解析挂载路径，Window
 docker: build ## 构建运行镜像 ghcr.io/hyhdsl/neca:dev（先交叉编译）
 	docker build -f Dockerfile -t ghcr.io/hyhdsl/neca:dev .
 
-shadow: ## 影子对比测试（M2 落地，当前仅提示）
-	@echo "[WARN] 影子对比测试在 M2 落地（需 bash + openssl + fixture），当前版本尚未实现"; exit 1
+shadow: build ## 新旧实现影子对比（需 bash + openssl + python3）
+	NECA_BIN=$(DIST)/neca-linux-amd64 bash scripts/shadow.sh
 
 clean: ## 清理构建产物
 	rm -rf $(DIST)

@@ -358,6 +358,8 @@ func (r *Runner) Run(ctx context.Context, timeout time.Duration, name string, ar
 
 `KEY=VALUE` 逐行，保留旧键，新增 `SCHEMA=2`、`OWNER=`、`DEVICE=`（可选）。读时忽略未知键，写时保持键顺序稳定。
 
+M1 的 `index sync` 仍按旧脚本的 5 个键（CN/PLATFORMS/CREATED/EXPIRES/SERIAL）写入，保证影子对比逐字节一致；`SCHEMA=2` 与 `OWNER`/`DEVICE` 在 M2 写命令时再增加。
+
 ### 8.5 pki：签发与重签
 
 签发流程与旧脚本一致：校验 CN → 生成密钥（0600）→ CSR → 写 `.ext` → `x509 -req` → 索引 → 元数据 → p12 → 平台包。每个失败路径用 `defer` 清理未完成产物（旧脚本会残留密钥）。
@@ -452,7 +454,7 @@ Web 服务若还需要读写 CA 私钥，只有三种选择：
 
 ### 13.2 fixture 生成
 
-`testdata/gen-fixture.sh`：`mktemp -d` 生成一套独立 CA（RSA 2048 加速）+ 两张证书，所有路径写入 `fixture.env`；测试用 `t.Setenv` 注入。**任何测试都不得触碰 `/opt/ipsec`**。
+`testdata/gen-fixture.sh`：在目标目录生成独立 CA（RSA 2048 加速）、TMP01/TMP02（有效）、TMP03（已吊销）、TMP05（孤立证书，用于 sync）以及一条仅存在于索引的已吊销记录；同时生成 CRL、meta 与客户端 p12。所有路径通过环境变量注入，**任何测试都不得触碰 `/opt/ipsec`**。
 
 ### 13.3 影子对比（迁移期最重要）
 
@@ -465,11 +467,14 @@ issue TMP01 windows,android → list → verify → add-platform ios → export 
 
 比对项：`--list` 表体（忽略列宽）、导出 CSV（去时间戳列）、`index.txt` 的 (状态,序列号,CN) 集合、CRL 序列号集合、`clients/` 目录树与文件大小。差异必须为 0 才允许合并。
 
+M1 已落地：`scripts/shadow.sh` + `make shadow` 自动生成 fixture 的独立副本，比较 list/verify/export/index sync 的输出、CSV、index.txt 与 meta 目录；CI 将差异视为失败。
+
 ### 13.4 CI 门禁
 
 - `go vet ./...`、`gofmt -l` 无输出、`go test -race ./...`；
 - `make check-ascii`（Windows 模板纯 ASCII）；
 - `make build` 产出 linux/amd64 与 linux/arm64 两个二进制；
+- `make shadow`（新旧实现输出与产物 diff = 0）；
 - 提交信息遵循 Conventional Commits。
 
 ---
@@ -480,7 +485,7 @@ issue TMP01 windows,android → list → verify → add-platform ios → export 
 
 ### 14.1 镜像
 
-`Dockerfile.dev`：`golang:1.25-bookworm` + `openssl` + `git` + `ca-certificates` + `make`。
+`Dockerfile.dev`：`golang:1.25-bookworm` + `openssl` + `git` + `ca-certificates` + `make` + `python3`（影子测试）；Go module 代理优先走 `goproxy.cn`。
 
 ### 14.1.1 本机实际环境（2026-11-15 实测）
 
@@ -514,7 +519,7 @@ docker run --rm -it -v "$PWD":/src -w /src \
 | `make test` | 容器内 `go test -race ./...` |
 | `make vet` / `make fmt` | 静态检查与格式化 |
 | `make check-ascii` | 校验 Windows 模板 |
-| `make shadow` | 跑影子对比（需要 bash + openssl） |
+| `make shadow` | 新旧实现影子对比（bash + openssl + python3，diff 必须为 0） |
 | `make docker` | 构建运行镜像 `ghcr.io/hyhdsl/neca:dev` |
 
 ### 14.3 交叉编译
@@ -552,7 +557,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 
 | 文件 | 触发 | 内容 |
 |---|---|---|
-| `.github/workflows/ci.yml` | push / PR | setup-go、`go vet`、`go test -race`、`make check-ascii`、构建 amd64 |
+| `.github/workflows/ci.yml` | push / PR | setup-go、`go vet`、`go test -race`、`make check-ascii`、`make shadow`、构建 amd64 |
 | `.github/workflows/release.yml` | tag `v*` | 交叉编译 amd64/arm64，生成 checksum，创建 GitHub Release |
 | `.github/workflows/docker.yml` | tag `v*` / 手动 | buildx 构建，推送 `ghcr.io/hyhdsl/neca:<tag>` 与 `:latest` |
 
@@ -562,7 +567,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 - `docker.yml`：`permissions: packages: write` + `GITHUB_TOKEN` 登录 `ghcr.io`，**无需 PAT**；
 - 若未来需要跨仓操作，再考虑 GitHub App，不要引入长期 PAT。
 
-当前状态（2026-11-15）：`ci.yml` 已随 M0 落地（见 §19.1）；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
+当前状态（2026-11-15）：`ci.yml` 已随 M0 落地，M1 增加 `make shadow` 门禁；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
 
 ### 15.3 发布流程
 
@@ -660,12 +665,12 @@ gh auth login --hostname github.com --git-protocol https --web
 | 项 | 状态 |
 |---|---|
 | 仓库 | `github.com/hyhdsl/neca`（私有）已创建，`main` 已推送基线（`fbe67d6`、`16338b0`） |
-| 代码 | ✅ M0 已完成：Go 模块、`neca version`、Makefile、Dockerfile.dev、CI、ASCII 门禁 |
+| 代码 | ✅ M1 已完成：只读命令 list/verify/export/index sync；core 模块 config/proc/openssl/index/meta/table/csv；影子对比 diff=0 |
 | 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
-| CI/CD 工作流 | ✅ `ci.yml` 已落地（M0）；`release.yml` / `docker.yml` 随 M5 |
+| CI/CD 工作流 | ✅ `ci.yml` 已落地（M0），M1 增加影子对比门禁；`release.yml` / `docker.yml` 随 M5 |
 | 服务器 | 生产状态已还原：索引 8 行、CRL 5 条、容器未重启 |
 
 ### 19.2 变更记录
@@ -676,6 +681,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | 第 2 稿 | 仓库落地（hyhdsl/neca）；load-creds 实测通过并改默认；运行镜像定 debian-slim；补充本机环境实测与镜像源说明 |
 | 2026-11-15 | M0 | 仓库骨架落地：Go 模块、`neca version`、Makefile、Dockerfile.dev、`ci.yml`、ASCII 门禁；旧 bash 实现归档到 `legacy/` |
 | 2026-11-15 | 扩展点 | 新增 §3.1：索引存储/配置来源接口契约（`internal/core/ports`）与 CLI 子命令注册表；候选扩展点登记，无行为变更 |
+| 2026-11-15 | M1 | 只读命令落地：config/proc/openssl/index/meta/table/csv；list/verify/export/index sync；新增 fixture 生成器与 `make shadow`，新旧实现 diff=0 |
 
 ---
 

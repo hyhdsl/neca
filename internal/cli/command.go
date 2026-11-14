@@ -6,6 +6,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+
+	"github.com/hyhdsl/neca/internal/core"
 )
 
 // Env 是执行一次子命令所需的运行时环境。
@@ -113,11 +115,16 @@ func (r *Registry) WriteHelp(w io.Writer) {
 		if len(cmd.Aliases) > 0 {
 			name += "（别名 " + strings.Join(cmd.Aliases, "、") + "）"
 		}
-		fmt.Fprintf(w, "  %-28s %s\n", name, cmd.Summary)
+		// 按显示宽度补齐（中文别名占 2 列），不能用 %-28s 的字节宽度。
+		padding := 28 - core.DisplayWidth(name)
+		if padding < 0 {
+			padding = 0
+		}
+		fmt.Fprintf(w, "  %s%s %s\n", name, strings.Repeat(" ", padding), cmd.Summary)
 	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "通用开关：")
 	fmt.Fprintln(w, "  --version, -V  只输出版本号（单行）")
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "后续里程碑将提供：list / verify / export / issue / revoke / reissue 等子命令。")
+	fmt.Fprintln(w, "后续里程碑将提供：issue / reissue / revoke / unrevoke / delete 等写命令。")
 }

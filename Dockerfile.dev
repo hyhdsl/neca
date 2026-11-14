@@ -13,12 +13,14 @@ FROM golang:1.25-bookworm
 #   make            —— Makefile 是唯一构建入口（文档 §14.2）
 #   ca-certificates —— 访问 Go module 代理 / GitHub 时的根证书
 #   gcc + libc6-dev —— go test -race 在 linux/amd64 上需要 cgo 编译器
+#   python3         —— 影子测试要运行旧 bash 脚本，其表格对齐依赖 Python
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates \
       git \
       make \
       openssl \
+      python3 \
       gcc \
       libc6-dev \
  && rm -rf /var/lib/apt/lists/*
@@ -26,6 +28,10 @@ RUN apt-get update \
 # 开发容器默认开启 cgo，才能执行 go test -race；
 # 发布构建由 Makefile 显式覆盖为 CGO_ENABLED=0，产出静态二进制。
 ENV CGO_ENABLED=1
+
+# 本机直连 proxy.golang.org 不可达（实测 connection refused），
+# 开发镜像优先走 goproxy.cn；CI 使用 GitHub 默认代理，不受影响。
+ENV GOPROXY=https://goproxy.cn,https://proxy.golang.org,direct
 
 WORKDIR /src
 

@@ -9,9 +9,8 @@
 // 注册，不需要修改 Run 的分发逻辑或帮助文本。这是为 M1/M2 批量增加
 // list/issue/revoke 等命令、以及未来 Web 端复用命令元数据预留的扩展点。
 //
-// M0 已实现 version、help 与 --version；其余子命令按里程碑推进：
-//
-//	M1 list/verify/export/index sync，M2 写命令，M3 交互向导/--json/--dry-run。
+// 当前已实现（M1）：version、help、list、verify、export、index sync；
+// 后续按里程碑推进：M2 写命令，M3 交互向导/--json/--dry-run。
 package cli
 
 import (
@@ -96,6 +95,12 @@ func newBuiltinRegistry() *Registry {
 			return ExitOK
 		},
 	})
+
+	// M1 只读命令：全部经 core 的结构化结果渲染，CLI 不直接调用 openssl。
+	registry.MustRegister(newListCommand())
+	registry.MustRegister(newVerifyCommand())
+	registry.MustRegister(newExportCommand())
+	registry.MustRegister(newIndexCommand())
 
 	return registry
 }

@@ -67,6 +67,9 @@ jobs:
       - name: 交叉编译 linux/amd64 + linux/arm64
         run: make build
 
+      - name: 影子对比（新旧实现 diff = 0）
+        run: make shadow
+
       - name: 冒烟测试（version 子命令）
         run: ./dist/neca-linux-amd64 version
 

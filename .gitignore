@@ -1,0 +1,22 @@
+# 构建产物（Makefile 输出目录）
+/dist/
+
+# 本机构建得到的二进制
+/neca
+/neca.exe
+
+# Go 测试与覆盖率产物
+*.test
+*.out
+/coverage.txt
+/cover.html
+
+# 编辑器与系统文件
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 本地环境覆盖（fixture.env 由 testdata/gen-fixture.sh 生成，不入库）
+fixture.env
+*.local

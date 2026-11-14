@@ -1,7 +1,7 @@
 # neca 开发文档（v0.1 规划稿）
 
 > 项目代号：**neca**（取自 example.com 的 Example + CA）
-> 文档版本：2026-11-15 第 1 稿
+> 文档版本：2026-11-15 第 2 稿（新增：仓库落地、load-creds 实测、Docker 环境实测）
 > 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
 
@@ -14,7 +14,7 @@
 | # | 决策 | 说明 |
 |---|---|---|
 | D1 | 语言：**Go** | 一步到位：CLI 与未来 Web 面板共用同一套 core，单静态二进制部署 |
-| D2 | 软件名：**neca** | 命令 `neca`；模块路径 `github.com/<owner>/neca` |
+| D2 | 软件名：**neca** | 命令 `neca`；模块路径 `github.com/hyhdsl/neca`（仓库已建） |
 | D3 | 旧 CLI 双轨 | 旧 `--issue` 等 flag 全部保留为兼容别名，至少保留一个版本周期 |
 | D4 | p12 继续走 `openssl` 子进程 | 3DES + SHA1 是 MIUI 兼容性硬需求，重实现风险大于收益 |
 | D5 | `ca.key` 保持 `0600 root:root` | 不做组权限放宽；`neca` 以 root 身份执行所有涉及 CA 私钥的操作 |
@@ -404,7 +404,19 @@ issue TMP01 windows,android → list → verify → add-platform ios → export 
 
 `Dockerfile.dev`：`golang:1.25-bookworm` + `openssl` + `git` + `ca-certificates` + `make`。
 
-> 网络备注（2026-11-15 实测）：本机直连 Docker Hub 不可达，已在 `~/.docker/daemon.json` 配置 `registry-mirrors`（`docker.1ms.run` 等）并重启 Docker Desktop，镜像拉取恢复正常。`docker` 与凭据助手已放入 `~/.dsh/bin`，当前 DSH 会话内可直接使用。
+### 14.1.1 本机实际环境（2026-11-15 实测）
+
+| 项 | 值 |
+|---|---|
+| OS / Shell | Windows 11，DSH 内置 MSYS bash |
+| Docker | Docker Desktop，Engine 与 CLI 均为 **29.9.3** |
+| 基础镜像 | `golang:1.25-bookworm`（1.2 GB），内含 `go1.25.14` 与 `/usr/bin/openssl` |
+| 镜像源 | Docker Hub 直连不可达；`~/.docker/daemon.json` 已配 `registry-mirrors`：`docker.1ms.run`、`docker.xuanyuan.me`、`dockerproxy.net` |
+| docker 命令 | `~/.dsh/bin/docker` wrapper（DSH 进程的 PATH 是启动快照，系统 PATH 里的 Docker 目录在会话内不可见）；同目录放置 `docker-credential-desktop.exe` |
+| git | git 2.56（Windows） |
+| gh | `~/.dsh/bin/gh.exe` 2.104.0，已 OAuth 登录 **hyhdsl** |
+
+> 重启 DSH 后原生 PATH 生效，wrapper 变为冗余但无害。以上为实测结果：`hello-world` 拉取运行成功，Go 镜像可直接用于构建。
 
 ```bash
 # 构建开发镜像
@@ -472,6 +484,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 - `docker.yml`：`permissions: packages: write` + `GITHUB_TOKEN` 登录 `ghcr.io`，**无需 PAT**；
 - 若未来需要跨仓操作，再考虑 GitHub App，不要引入长期 PAT。
 
+当前状态（2026-11-15）：三个工作流尚未创建——`ci.yml` 随 M0 落地，`release.yml` 与 `docker.yml` 随 M5 落地。
+
 ### 15.3 发布流程
 
 ```text
@@ -531,7 +545,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M1 | config / proc / openssl / index(只读) / meta / table / csv；`list`、`verify`、`export`、`index sync` | 与旧脚本输出 diff 为 0 | 1.5 人日 |
 | M2 | pki / issue / reissue / revoke / unrevoke / platform / delete；flock；失败清理 | 临时 PKI 全流程通过；影子测试通过 | 2 人日 |
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨 | 人工回归清单全过 | 1 人日 |
-| M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | 实验中吊销生效且在线会话不中断 | 0.5 人日 |
+| M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周 | 生产连续两周无回退 | 0.5 人日 |
 | M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`） | 只读面板上线，与 CLI 共用 core | 3–4 人日 |
 
@@ -553,11 +567,34 @@ gh auth login --hostname github.com --git-protocol https --web
 
 ## 18. 待定事项
 
-1. GitHub 仓库 owner/名称（建议 `example/neca`，私有）；
+1. ~~GitHub 仓库 owner/名称~~：已定 `github.com/hyhdsl/neca`（私有）；
 2. 运行镜像：已定 **debian-slim**（内置 openssl，约 80MB；scratch/distroless 无法运行 openssl 子进程）；
-3. Go 版本锁定（建议 1.25，与开发镜像一致）；
+3. Go 版本锁定：镜像内实测 `go1.25.14`，`go.mod` 声明 `go 1.25`；
 4. 是否把旧 bash 脚本放入 `legacy/` 一并归档；
 5. 阶段二 Web 的权限方案（§12.2 的三选一）。
+
+---
+
+## 19. 进度与变更记录
+
+### 19.1 当前进度（2026-11-15）
+
+| 项 | 状态 |
+|---|---|
+| 仓库 | `github.com/hyhdsl/neca`（私有）已创建，`main` 已推送基线（`fbe67d6`、`16338b0`） |
+| 代码 | 未开始（M0 之前） |
+| `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
+| Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
+| DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
+| CI/CD 工作流 | ⏳ 未创建（M0 落 CI，M5 落 release/docker） |
+| 服务器 | 生产状态已还原：索引 8 行、CRL 5 条、容器未重启 |
+
+### 19.2 变更记录
+
+| 日期 | 版本 | 变更 |
+|---|---|---|
+| 2026-11-15 | 第 1 稿 | 决策 D1–D9、架构、CLI 契约、CI/CD 规划、路线图、实验步骤 |
+| 2026-11-15 | 第 2 稿 | 仓库落地（hyhdsl/neca）；load-creds 实测通过并改默认；运行镜像定 debian-slim；补充本机环境实测与镜像源说明 |
 
 ---
 

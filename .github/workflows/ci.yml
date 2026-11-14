@@ -1,0 +1,79 @@
+# neca CI（M0 落地，开发文档 §15.2）
+#
+# 触发：
+#   - main 与功能分支的 push（文档 §15.1 分支命名：feat/ fix/ chore/）
+#   - 所有 pull_request
+#
+# 门禁（文档 §13.4）：
+#   1. gofmt 无差异
+#   2. go vet 通过
+#   3. Windows 模板纯 ASCII（§9 硬规则 1）
+#   4. go test -race 全绿
+#   5. 交叉编译 linux/amd64 与 linux/arm64
+#   6. 对产物做一次 version 冒烟测试
+#
+# 说明：release.yml 与 docker.yml 按计划在 M5 随 v0.1.0 一起落地，
+# 当前仓库只有本工作流；GHCR 推送权限届时用内置 GITHUB_TOKEN。
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
+  pull_request:
+
+# 最小权限：CI 只读仓库内容，不使用任何 secret。
+permissions:
+  contents: read
+
+# 同一分支的新推送会取消旧运行，避免排队浪费额度。
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Go（版本取自 go.mod）
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 显示工具链版本
+        run: go version
+
+      - name: gofmt 检查
+        run: make fmt-check
+
+      - name: go vet
+        run: make vet
+
+      - name: Windows 模板 ASCII 校验
+        run: make check-ascii
+
+      - name: 单元测试（-race）
+        run: make test
+
+      - name: 交叉编译 linux/amd64 + linux/arm64
+        run: make build
+
+      - name: 冒烟测试（version 子命令）
+        run: ./dist/neca-linux-amd64 version
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: neca-linux
+          path: dist/neca-linux-*
+          retention-days: 7
+          if-no-files-found: error

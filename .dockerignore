@@ -1,0 +1,10 @@
+# Docker 构建上下文保持精简：Dockerfile.dev 不 COPY 源码，
+# 运行镜像只 COPY dist/ 下的二进制，其余文件无需进入上下文。
+.git
+.github
+dist
+legacy
+templates
+testdata/golden
+*.md
+!README.md

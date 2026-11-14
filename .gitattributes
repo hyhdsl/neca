@@ -1,0 +1,15 @@
+# 统一换行符：仓库同时服务 Windows 开发机与 Linux 容器/服务器。
+# 若脚本或 Makefile 以 CRLF 检出，容器内会立刻出现
+# "bad interpreter" 或 "missing separator" 错误，因此强制 LF。
+* text=auto eol=lf
+
+# 二进制文件不做任何换行转换。
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.p12   binary
+*.pfx   binary
+*.der   binary
+*.crt   binary
+*.key   binary
+*.pem   binary

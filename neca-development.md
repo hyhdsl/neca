@@ -112,7 +112,7 @@ neca/
 ├─ .github/workflows/
 │  ├─ ci.yml               # push/PR：vet + test + 构建
 │  ├─ release.yml          # tag：交叉编译 + GitHub Release
-│  └─ docker.yml           # tag：构建并推送 ghcr.io/<owner>/neca
+│  └─ docker.yml           # tag：构建并推送 ghcr.io/hyhdsl/neca
 ├─ cmd/neca/main.go        # CLI 入口（薄）
 ├─ internal/
 │  ├─ core/
@@ -437,7 +437,7 @@ docker run --rm -it -v "$PWD":/src -w /src \
 | `make vet` / `make fmt` | 静态检查与格式化 |
 | `make check-ascii` | 校验 Windows 模板 |
 | `make shadow` | 跑影子对比（需要 bash + openssl） |
-| `make docker` | 构建运行镜像 `ghcr.io/<owner>/neca:dev` |
+| `make docker` | 构建运行镜像 `ghcr.io/hyhdsl/neca:dev` |
 
 ### 14.3 交叉编译
 
@@ -476,7 +476,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 |---|---|---|
 | `.github/workflows/ci.yml` | push / PR | setup-go、`go vet`、`go test -race`、`make check-ascii`、构建 amd64 |
 | `.github/workflows/release.yml` | tag `v*` | 交叉编译 amd64/arm64，生成 checksum，创建 GitHub Release |
-| `.github/workflows/docker.yml` | tag `v*` / 手动 | buildx 构建，推送 `ghcr.io/<owner>/neca:<tag>` 与 `:latest` |
+| `.github/workflows/docker.yml` | tag `v*` / 手动 | buildx 构建，推送 `ghcr.io/hyhdsl/neca:<tag>` 与 `:latest` |
 
 所需权限与密钥：
 

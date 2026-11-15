@@ -12,6 +12,7 @@ AI disclosure: this project's code, tests and documentation were produced with
 the assistance of an AI coding agent (DeepSeek Harness / DeepSeek model).
 AI output may contain errors; review and test before use.
 
-PR policy: external pull requests are not accepted. The project is maintained
-by the repository owner; issues and forks are welcome under AGPL. See
+PR policy: external pull requests are paused during development and will be
+reconsidered when development is complete. The project is maintained by the
+repository owner; issues and forks are welcome under AGPL. See
 SECONDARY-DEVELOPMENT.md for attribution and contribution policy.

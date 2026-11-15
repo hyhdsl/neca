@@ -78,9 +78,9 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 ```bash
 make build
-docker build --build-arg TARGETARCH=amd64 -t neca:0.1.0 .
-docker save neca:0.1.0 -o /tmp/neca-0.1.0.tar
-docker load < /tmp/neca-0.1.0.tar
+docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.0 .
+docker save neca:v0.1.0 -o /tmp/neca-v0.1.0.tar
+docker load < /tmp/neca-v0.1.0.tar
 cd /opt/ipsec
 docker compose -f docker-compose.neca.yml run --rm neca list
 ```

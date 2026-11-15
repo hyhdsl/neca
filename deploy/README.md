@@ -10,15 +10,15 @@
 
 ```bash
 make build
-docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.0 .
-docker save neca:v0.1.0 | gzip > /tmp/neca-v0.1.0.tar.gz
-scp /tmp/neca-v0.1.0.tar.gz root@<SERVER>:/tmp/
+docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.1 .
+docker save neca:v0.1.1 | gzip > /tmp/neca-v0.1.1.tar.gz
+scp /tmp/neca-v0.1.1.tar.gz root@<SERVER>:/tmp/
 ```
 
 服务器：
 
 ```bash
-docker load < /tmp/neca-v0.1.0.tar.gz
+docker load < /tmp/neca-v0.1.1.tar.gz
 ```
 
 ## 2. 部署文件
@@ -32,7 +32,18 @@ chmod 0600 /opt/ipsec/neca.env
 
 真实 `SERVER_ID` / `ORG` / `CA_CN` 只写服务器 env 文件，不提交仓库。
 
-## 3. 运行
+## 3. 安装便捷命令
+
+```bash
+install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
+neca version
+neca list
+```
+
+包装命令会在非交互环境自动加 `docker compose run -T`，并把当前 shell 的
+`NECA_LANG` 传入容器。
+
+## 4. 直接运行
 
 ```bash
 cd /opt/ipsec

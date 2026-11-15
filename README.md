@@ -78,15 +78,24 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 ```bash
 make build
-docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.0 .
-docker save neca:v0.1.0 -o /tmp/neca-v0.1.0.tar
-docker load < /tmp/neca-v0.1.0.tar
-cd /opt/ipsec
-docker compose -f docker-compose.neca.yml run --rm neca list
+docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.1 .
+docker save neca:v0.1.1 -o /tmp/neca-v0.1.1.tar
+docker load < /tmp/neca-v0.1.1.tar
+install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
+neca list
 ```
 
 真实 `SERVER_ID` / `ORG` / `CA_CN` 只放在服务器 `/opt/ipsec/neca.env`（0600），
 不提交仓库。完整步骤、备份/回滚和 docker.sock 安全说明见 [deploy/README.md](deploy/README.md)。
+
+语言切换是**单次命令**生效：
+
+```bash
+neca --lang en-US list
+# 或让当前 shell 持续使用英文（包装命令会转发 NECA_LANG 给容器）
+export NECA_LANG=en-US
+neca list
+```
 
 ## 目录结构
 

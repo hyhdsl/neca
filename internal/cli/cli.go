@@ -118,6 +118,9 @@ func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if opts.JSON {
 		return runJSONCommand(env, cmd, stdout, stderr)
 	}
+	if lang == "en-US" && cmd.Name != "wizard" && !opts.Quiet {
+		return runLocalizedCommand(env, cmd, stdout, stderr)
+	}
 	return cmd.Run(env)
 }
 

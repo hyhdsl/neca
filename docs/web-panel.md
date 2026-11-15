@@ -423,19 +423,19 @@ Web 面板不是独立产品，而是 neca core 的一个可选展示层：
 
 ### 12.3 为什么不建议现在拆
 
-1. **Go internal 包不能跨仓库 import**  
+1. **Go internal 包不能跨仓库 import**
    internal/core 在本模块外不可引用；拆分需要先把 core 提取成公开模块，或让 Web 通过 CLI/JSON 调用。前者是 API 重构，后者损失类型安全与性能。
 
-2. **lite/neca-web 必须共享精确版本**  
+2. **lite/neca-web 必须共享精确版本**
    lite→full 要求两个镜像同 tag；同一仓库 tag 同时构建两个镜像最简单。
 
-3. **Web 仍然很小**  
+3. **Web 仍然很小**
    M6 只读、M6b helper 写操作；目录分离（cmd/necad、internal/web）已足够，不需要仓库级隔离。
 
-4. **独立仓库不会减少攻击面**  
+4. **独立仓库不会减少攻击面**
    lite 镜像不包含 Web 二进制、Web 容器非 root、helper 单独容器，这些是镜像/部署问题，不是仓库问题。
 
-5. **当前 PR 政策**  
+5. **当前 PR 政策**
    开发期暂不接受外部 PR；独立仓库带来的协作收益暂时不成立。
 
 ### 12.4 以后可以考虑拆分的情形

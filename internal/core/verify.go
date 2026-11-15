@@ -58,7 +58,13 @@ func VerifyClients(ctx context.Context, cfg *Config, oss *OpenSSL, only []string
 			report.Warnings = append(report.Warnings, fmt.Sprintf("%s: p12 密码长度 %d 过短", cn, report.PasswordLen))
 		}
 
-		report.OKMessage = fmt.Sprintf("p12 检查: %s (3DES ✓, 证书 %d 张, 密码 %d 位)", cn, count, report.PasswordLen)
+		profileLabel := "未知"
+		if strings.Contains(info, "pbeWithSHA1And3-KeyTripleDES-CBC") {
+			profileLabel = "3DES ✓"
+		} else if strings.Contains(lower, "pbes2") || strings.Contains(lower, "aes256") || strings.Contains(lower, "aes128") {
+			profileLabel = "AES ✓"
+		}
+		report.OKMessage = fmt.Sprintf("p12 检查: %s (%s, 证书 %d 张, 密码 %d 位)", cn, profileLabel, count, report.PasswordLen)
 		result.Reports = append(result.Reports, report)
 	}
 	return result, nil

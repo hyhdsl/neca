@@ -199,8 +199,10 @@ func DeleteCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 	err := withPkiLock(cfg.LockFile, func() error {
 		certPath := filepath.Join(cfg.PKIDir, cn+".crt")
 		serials := map[string]bool{}
+		currentSerial := ""
 		if _, err := os.Stat(certPath); err == nil {
 			if serial, err := oss.Serial(ctx, certPath); err == nil {
+				currentSerial = serial
 				serials[serial] = true
 			}
 		}
@@ -220,9 +222,17 @@ func DeleteCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 			return err
 		}
 		if !purgeRevoked {
-			for _, row := range rows {
-				if serials[row.Serial] && row.Status == ports.IndexRevoked {
+			// 当前证书为 V 时允许删除，即使 archive 中有重签留下的 R 行；
+			// 只有当前证书本身是 R（或没有当前证书、只剩 R 归档）才要求显式确认。
+			if currentSerial != "" {
+				if status := indexStatus(rows, currentSerial); status == ports.IndexRevoked {
 					return preconditionf("删除", "证书已吊销，需 --purge-revoked 才会从 CRL 移除: %s", cn)
+				}
+			} else {
+				for _, row := range rows {
+					if serials[row.Serial] && row.Status == ports.IndexRevoked {
+						return preconditionf("删除", "证书已吊销，需 --purge-revoked 才会从 CRL 移除: %s", cn)
+					}
 				}
 			}
 		}

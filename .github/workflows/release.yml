@@ -37,6 +37,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          extra=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            extra+=(--prerelease)
+          fi
           gh release create "$GITHUB_REF_NAME" \
             dist/neca-linux-amd64 \
             dist/neca-linux-arm64 \
@@ -46,4 +50,5 @@ jobs:
             dist/neca-web-helper-linux-arm64 \
             dist/checksums.txt \
             --title "$GITHUB_REF_NAME" \
-            --generate-notes
+            --generate-notes \
+            "${extra[@]}"

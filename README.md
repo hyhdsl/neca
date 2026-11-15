@@ -19,6 +19,8 @@
 - 运行形态：服务器上以 root 执行，`ca.key` 保持 `0600 root:root`
 - 开发环境：本地 Docker（开发机不需要安装 Go，见文档 §14）
 
+> **使用文档**：<https://neca.nekobiglazyer.work>（中文全量 + 英文核心页，含实验性 Web API）。
+
 ## 快速开始
 
 全部构建与测试都在 Docker 开发镜像里完成：
@@ -217,6 +219,15 @@ dist/               构建产物（不入库）
 - **二次开发**：必须保留原作者与仓库链接、保留 AGPL 许可与源码公开义务；详见 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
 - **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；正式 Release 为 [v0.3.0](https://github.com/hyhdsl/neca/releases/tag/v0.3.0)。M6 历史预览包（preview.1–preview.3）仅保留源代码归档。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
 
+## 帮助文档
+
+- **中文帮助中心（全量）**：<https://neca.nekobiglazyer.work>
+- **English core pages**：<https://neca.nekobiglazyer.work/en/>
+- **文档源码**：[docs/help/README.md](docs/help/README.md)
+- **实验性 Web API**：[API 说明](https://neca.nekobiglazyer.work/#/api)
+
+> 使用或部署前先看帮助中心；开发、设计和历史评估仍见下列文档索引。
+
 ## 文档索引
 
 完整索引见 [docs/README.md](docs/README.md)。
@@ -230,7 +241,6 @@ dist/               构建产物（不入库）
 | [docs/legacy-vpn-cert-manager.md](docs/legacy-vpn-cert-manager.md) | 旧 bash 脚本的使用与二次开发说明（归档） |
 | [docs/deploy.md](docs/deploy.md) | Docker 服务器部署、备份/回滚与安全说明 |
 | [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策（开发期暂不接受外部 PR） |
-| [docs/help/](docs/help/README.md) | 用户帮助中心（GitBook 兼容 Markdown + GitHub Pages 站点） |
 | [LICENSE](LICENSE) | GNU AGPL-3.0-only 许可全文 |
 | [NOTICE](NOTICE) | 版权、AI 披露与署名 |
 

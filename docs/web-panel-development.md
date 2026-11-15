@@ -243,7 +243,8 @@ type PasskeyAuthenticator interface {
 
 - 写 API 只在 `readOnly=false` 且 helper 可用时成功；否则返回 403/503。
 - 写请求可带 `requestId`（JSON body）或 `X-Request-ID`；相同 ID 的重复请求由 helper
-  幂等缓存处理（缓存仅在进程内，helper 重启后丢失）。
+  幂等缓存处理。缓存可持久化到 `NECA_WEB_HELPER_CACHE_FILE`（compose 默认
+  `/run/neca/web-helper-cache.json`，0600，TTL 24h）；文件损坏时忽略并从空缓存重建。
 - 写 API 支持 issue/revoke/unrevoke/reissue，不支持 delete/package/设置编辑。
 - 下载 ID 由 sidecar 元数据解析，禁止任意路径；过期返回 410/404。
 - 错误响应为 `{"error":{"code":"...","message":"..."}}`；常见状态码 400/401/403/409/503。
@@ -413,7 +414,7 @@ type PasskeyAuthenticator interface {
 
 - Playwright/axe 浏览器验收已完成（Edge，无 serious/critical）；
 - Web UI 已接入 zh-CN/en-US（`neca_lang` Cookie），深浅色/移动端通过；
-- 仍有：helper 幂等缓存为进程内（重启后丢失）；listen/adminCNs/passkey 变更需重启；
+- 仍有：listen/adminCNs/passkey 变更需重启；helper 缓存文件损坏时幂等记录会丢失；
 - 仍有：delete 不开放；Passkey 仅接口。
 
 ## 20. 正式部署记录（2026-11-15）

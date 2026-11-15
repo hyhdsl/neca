@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,13 +26,21 @@ type cacheEntry struct {
 	expires     time.Time
 }
 
+// persistedCacheEntry 是缓存落盘格式；字段必须导出，encoding/json 才会写入。
+type persistedCacheEntry struct {
+	Fingerprint string    `json:"fingerprint"`
+	Response    Response  `json:"response"`
+	Expires     time.Time `json:"expires"`
+}
+
 // Server 是 root helper：唯一写边界，只接受白名单结构化请求。
 type Server struct {
-	cfg     *core.Config
-	cfgPath string
-	store   *core.FileIndexStore
-	oss     *core.OpenSSL
-	engine  *core.Engine
+	cfg       *core.Config
+	cfgPath   string
+	cacheFile string
+	store     *core.FileIndexStore
+	oss       *core.OpenSSL
+	engine    *core.Engine
 
 	mu    sync.Mutex
 	cache map[string]cacheEntry
@@ -41,12 +50,16 @@ type Server struct {
 // NewServer 构造 root helper；调用方必须保证以 root 运行。
 func NewServer(cfg *core.Config, cfgPath string) *Server {
 	runner := core.NewExecRunner()
-	return &Server{
-		cfg: cfg, cfgPath: cfgPath,
+	server := &Server{
+		cfg: cfg, cfgPath: cfgPath, cacheFile: strings.TrimSpace(os.Getenv("NECA_WEB_HELPER_CACHE_FILE")),
 		store: core.NewFileIndexStore(cfg.IndexFile, cfg.LockFile),
 		oss:   core.NewOpenSSL(runner), engine: core.NewEngine(cfg, runner),
 		cache: map[string]cacheEntry{}, now: time.Now,
 	}
+	if server.cacheFile != "" {
+		server.loadCache()
+	}
+	return server
 }
 
 // Handler 返回 helper 的 HTTP 处理器。
@@ -96,7 +109,9 @@ func (s *Server) handleExecute(w http.ResponseWriter, r *http.Request) {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.cleanupCache()
+	if s.cleanupCache() {
+		s.saveCacheLocked()
+	}
 	if cached, ok := s.cache[req.RequestID]; ok {
 		if cached.fingerprint != fingerprint {
 			writeHelperError(w, "request_id_conflict", "requestId 已用于不同请求")
@@ -114,6 +129,7 @@ func (s *Server) handleExecute(w http.ResponseWriter, r *http.Request) {
 	s.cache[req.RequestID] = cacheEntry{
 		fingerprint: fingerprint, response: response, expires: s.now().Add(CacheTTL),
 	}
+	s.saveCacheLocked()
 	serial := ""
 	if result != nil {
 		serial = result.Serial
@@ -185,13 +201,84 @@ func (s *Server) reloadConfig() (*core.Config, error) {
 	return cfg, nil
 }
 
-func (s *Server) cleanupCache() {
+func (s *Server) cleanupCache() bool {
 	now := s.now()
+	removed := false
 	for id, entry := range s.cache {
 		if !entry.expires.After(now) {
 			delete(s.cache, id)
+			removed = true
 		}
 	}
+	return removed
+}
+
+// loadCache 在 helper 启动时读取持久化幂等缓存；损坏时从空缓存继续。
+func (s *Server) loadCache() {
+	data, err := os.ReadFile(s.cacheFile)
+	if errors.Is(err, os.ErrNotExist) {
+		return
+	}
+	if err != nil {
+		log.Printf("helper: 读取幂等缓存失败: %v", err)
+		return
+	}
+	var persisted map[string]persistedCacheEntry
+	if err := json.Unmarshal(data, &persisted); err != nil {
+		log.Printf("helper: 幂等缓存 JSON 非法，忽略: %v", err)
+		return
+	}
+	for id, entry := range persisted {
+		s.cache[id] = cacheEntry{fingerprint: entry.Fingerprint, response: entry.Response, expires: entry.Expires}
+	}
+}
+
+// saveCacheLocked 原子写入幂等缓存；必须由持有 s.mu 的调用方调用。
+func (s *Server) saveCacheLocked() {
+	if s.cacheFile == "" {
+		return
+	}
+	persisted := make(map[string]persistedCacheEntry, len(s.cache))
+	for id, entry := range s.cache {
+		persisted[id] = persistedCacheEntry{Fingerprint: entry.fingerprint, Response: entry.response, Expires: entry.expires}
+	}
+	data, err := json.Marshal(persisted)
+	if err != nil {
+		log.Printf("helper: 序列化幂等缓存失败: %v", err)
+		return
+	}
+	dir := filepath.Dir(s.cacheFile)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		log.Printf("helper: 创建幂等缓存目录失败: %v", err)
+		return
+	}
+	tmp, err := os.CreateTemp(dir, ".web-helper-cache-*")
+	if err != nil {
+		log.Printf("helper: 创建幂等缓存临时文件失败: %v", err)
+		return
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+	_ = tmp.Chmod(0o600)
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		log.Printf("helper: 写入幂等缓存失败: %v", err)
+		return
+	}
+	if err := tmp.Sync(); err != nil {
+		_ = tmp.Close()
+		log.Printf("helper: fsync 幂等缓存失败: %v", err)
+		return
+	}
+	if err := tmp.Close(); err != nil {
+		log.Printf("helper: 关闭幂等缓存临时文件失败: %v", err)
+		return
+	}
+	if err := os.Rename(tmpName, s.cacheFile); err != nil {
+		log.Printf("helper: 替换幂等缓存失败: %v", err)
+		return
+	}
+	_ = os.Chmod(s.cacheFile, 0o600)
 }
 
 func fingerprintRequest(req Request) (string, error) {

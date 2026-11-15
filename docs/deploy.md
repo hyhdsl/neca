@@ -181,6 +181,10 @@ docker kill --signal=HUP neca-web
 `issue/revoke/unrevoke/reissue` 白名单，不接受任意路径/shell；Web 容器通过
 `/run/neca/web-helper.sock`（0660，root:neca-web）调用它。
 
+helper 的 requestId 幂等缓存默认持久化到 `/run/neca/web-helper-cache.json`
+（0600，TTL 24h）；compose 已设置 `NECA_WEB_HELPER_CACHE_FILE`。该文件损坏时
+helper 会忽略并从空缓存继续，不会阻塞写操作。
+
 关闭写能力：
 
 ```bash

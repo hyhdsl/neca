@@ -62,6 +62,28 @@ func TestServerReadOnlyRejectsExecute(t *testing.T) {
 	}
 }
 
+func TestServerCachePersistsAcrossRestart(t *testing.T) {
+	configPath, _ := writeHelperConfig(t, false)
+	cacheFile := filepath.Join(t.TempDir(), "web-helper-cache.json")
+	t.Setenv("NECA_WEB_HELPER_CACHE_FILE", cacheFile)
+	cfg, err := core.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := NewServer(cfg, configPath)
+	server.cache["req-persist"] = cacheEntry{
+		fingerprint: "fp", response: Response{OK: true, Protocol: ProtocolVersion},
+		expires: server.now().Add(CacheTTL),
+	}
+	server.saveCacheLocked()
+
+	reloaded := NewServer(cfg, configPath)
+	entry, ok := reloaded.cache["req-persist"]
+	if !ok || entry.fingerprint != "fp" || !entry.response.OK {
+		t.Fatalf("cache not reloaded: %+v", reloaded.cache)
+	}
+}
+
 func TestServerRequestIDConflict(t *testing.T) {
 	configPath, _ := writeHelperConfig(t, false)
 	cfg, err := core.LoadConfig()

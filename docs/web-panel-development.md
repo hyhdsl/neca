@@ -409,7 +409,8 @@ type PasskeyAuthenticator interface {
 
 - 服务器：Debian 12，Docker Compose，已有 strongSwan 容器；部署前已做快照与
   `/root/neca-m6b-backup-*` 配置/PKI 备份；
-- 镜像：`neca:v0.3.0`、`neca-web:v0.3.0`，commit `9ea20f9`；
+- 镜像：当前服务器运行 `neca:v0.3.0-preview.3`、
+  `neca-web:v0.3.0-preview.3`（commit `02001af`）；首个部署版本为 `v0.3.0`/`9ea20f9`；
 - 端口：`18080` 已被 other service 占用，Web 改用 `127.0.0.1:18080`；host network，
   不发布公网端口，通过 OpenSSH 本地转发访问；
 - Web：UID/GID 10001、只读根文件系统、无 docker.sock/ca.key；只挂载配置、
@@ -417,19 +418,22 @@ type PasskeyAuthenticator interface {
 - helper：独立 root 容器，`web-write` profile，socket `0660 root:neca-web`；
 - 验证：登录 303、未登录 API 401、capabilities readOnly/writable 切换、
   不存在 CN 的 revoke 返回 409（证明 Web→helper→core 链路，不修改 PKI）；
+- 浏览器验收（2026-11-15）：Edge + Playwright/Axe，检查登录、概览、证书列表、
+  证书详情、移动端、浅色/深色、中文/英文切换和可写表单；axe 无 serious/critical
+  违规；移动端无横向溢出；主题切换可持久化；
 - 部署后 `index.txt` SHA-256 `redacted…redacted`、CRL `redacted…redacted`
   与部署前一致；strongSwan 容器仍 healthy 且未重启；
 - 已完成可写链路验证后恢复默认 `web.readOnly=true`；如启用写操作：
   `neca web readonly off` 并重启 `neca-web`；
 - 初始管理员密码在服务器 `/root/neca-web-initial-password`（0600）。首次登录后
   建议删除该文件；需要重置时重新生成 `web-secrets/password.hash`；
-- GitHub 预览包：`v0.3.0-preview.2`（commit `9ec1b06`，prerelease），包含
+- GitHub 预览包：`v0.3.0-preview.3`（commit `02001af`，prerelease），包含
   CLI/necad/helper 的 amd64/arm64 二进制与 checksums；GHCR 预览镜像为
-  `neca:v0.3.0-preview.2` 与 `neca-web:v0.3.0-preview.2`。`neca:latest` 保持
+  `neca:v0.3.0-preview.3` 与 `neca-web:v0.3.0-preview.3`。`neca:latest` 保持
   v0.2.0；`neca-web:latest` 在首个正式 Web 版本前指向该预览；
 - 旧预览包策略：新预览发布后，旧预览只保留 GitHub 自动源代码归档，删除
-  二进制/容器资产；`v0.3.0-preview.1` 已恢复为 source-only prerelease。
-  后续使用 `scripts/archive-preview-release.sh <tag>` 处理。
+  二进制/容器资产；`v0.3.0-preview.1`、`v0.3.0-preview.2` 均已转为
+  source-only。后续使用 `scripts/archive-preview-release.sh <tag>` 处理。
 
 ## 21. Web 多语言预留（2026-11-15）
 

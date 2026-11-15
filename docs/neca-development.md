@@ -772,7 +772,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
-| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a/M6b 已实现并完成服务器正式部署，预览包 `v0.3.0-preview.2` 已发布。规格与实施记录见 [web-panel-development.md](web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
+| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a/M6b 已实现、服务器部署和 Playwright/axe 验收完成；预览包 `v0.3.0-preview.3` 已发布。规格与实施记录见 [web-panel-development.md](web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
 
@@ -851,7 +851,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | v0.2.0 | 新增 JSON 配置文件（`neca.json`）与 `--config`/`NECA_CONFIG`；优先级 CLI > env > JSON > 默认值；`config init/show/validate/export-env`；保持 index/meta/CRL 格式不变 |
 | 2026-11-15 | v0.2.0 验收 | 服务器快照后全量测试 **96 通过 / 0 失败**：config/language、五平台 issue/installers、p12、zip、downloads、verify、platform/package、revoke/unrevoke/reload、reissue/delete、JSON/错误/向导/wrapper；测试后索引/CRL/meta/clients 恢复基线，strongSwan 未重启 |
 | 2026-11-15 | M6a | 只读 Web 面板、签名会话/空闲超时、CSRF/限流、Web 配置 CLI、Passkey 接口占位、lite/neca-web 双镜像与 compose `web` profile；`go test -race`、镜像内容与 necad 容器健康检查通过；待 v0.3.0 发布与浏览器验收 |
-| 2026-11-15 | M6b | root helper（Unix socket、白名单、幂等、审计）、Web 写 API/UI、`neca web readonly off`、compose `web-write` profile；helper/lite 联动与只读拒绝测试通过；服务器正式部署完成，PKI 哈希未变、strongSwan 未重启；GitHub 预览包 `v0.3.0-preview.2` 与 GHCR 预览镜像已发布 |
+| 2026-11-15 | M6b | root helper（Unix socket、白名单、幂等、审计）、Web 写 API/UI、`neca web readonly off`、compose `web-write` profile；helper/lite 联动与只读拒绝测试通过；服务器正式部署完成，PKI 哈希未变、strongSwan 未重启；Playwright/axe 验收通过，GitHub 预览包 `v0.3.0-preview.3` 与 GHCR 预览镜像已发布 |
 
 ## 20. M6 开发准备（M6a 已实现）
 

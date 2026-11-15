@@ -1,6 +1,6 @@
 # neca Web 面板设计评估（M6）
 
-> 状态：**设计已确认；M6a/M6b 已实现、完成服务器正式部署并发布预览包**。日期：2026-11-15。
+> 状态：**设计已确认；M6a/M6b 已实现、服务器部署和 Playwright/axe 验收完成，预览包为 `v0.3.0-preview.3`**。日期：2026-11-15。
 > 本文回答 Web 面板的访问控制、只读开关、证书访问、鉴权、UI 与后续 SQLite 迁移问题。实现以本文确认后的版本为准。
 > 实施规格见 [web-panel-development.md](web-panel-development.md)。
 

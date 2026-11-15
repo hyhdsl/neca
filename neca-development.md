@@ -670,7 +670,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 - `docker.yml`：`permissions: packages: write` + `GITHUB_TOKEN` 登录 `ghcr.io`，**无需 PAT**；
 - 若未来需要跨仓操作，再考虑 GitHub App，不要引入长期 PAT。
 
-当前状态（2026-11-15）：`ci.yml` 已随 M0 落地，M1/M2 增加 `make shadow`（只读 + 写命令 + issue）门禁，M3 增加 `make check-locales`；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
+当前状态（2026-11-15）：`ci.yml` 已落地并加入 M1/M2 shadow 与 M3 `check-locales`；M5 新增 `release.yml`（tag 构建二进制 + checksums + Release）与 `docker.yml`（buildx amd64/arm64 推送 GHCR）。
 
 ### 15.3 发布流程
 
@@ -681,6 +681,11 @@ feature 分支 → 维护者内部合并（CI 全绿，不接受外部 PR）→ 
 ```
 
 回滚：保留上一个二进制为 `/usr/local/bin/neca.prev`，或直接从 Release 下载旧版本。
+
+Docker CLI 部署：镜像包含 openssl + 静态 docker CLI，挂载 `/opt/ipsec` 与
+`/var/run/docker.sock`；`deploy/docker-compose.neca.yml` 与服务器侧
+`/opt/ipsec/neca.env`（0600）配合使用，真实 `SERVER_ID`/`ORG`/`CA_CN` 不进入仓库。
+详见 `deploy/README.md`。
 
 发布完成后：确认 `README.md` 顶部警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 已定稿，再将仓库从私有转为 public；首个正式 Release 之前不得转公开。外部 PR 始终不接收。
 
@@ -734,7 +739,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M2 | pki / issue / reissue / revoke / unrevoke / platform / package / delete；flock；失败清理；Linux/macOS 平台包；安装脚本选项；p12 profile；zip/TTL/downloads | 临时 PKI 全流程；影子测试（`--installers windows`）通过；Linux/macOS 包与 zip TTL 测试通过 | 3 人日 |
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
-| M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | 生产连续两周无回退；公开后仓库合规检查通过 | 1 人日 |
+| M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | 🔄 Docker 部署与全功能测试通过；待 tag/Release、public 切换与两周观察 | 1 人日 |
 | M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`，含 30 分钟下载 TTL、鉴权与清理、Web 多语言） | 只读面板上线，与 CLI 共用 core；下载有效期与清理测试通过 | 4–5 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
@@ -752,6 +757,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 并发写坏索引 | 中 | 中 | 全局 flock + 原子替换 |
 | `--load-creds` 实验失败 | 已排除 | — | 2026-11-15 实测通过，默认 `creds`；`restart` 保留为回退 |
 | GHCR 推送权限配置错误 | 中 | 低 | 用内置 `GITHUB_TOKEN` + `packages: write` |
+| Docker CLI 容器挂载 docker.sock | 中 | 高 | 仅 root 可执行；network_mode none；env/目录 0600/0700；部署文档明确 root 等价风险 |
 | AGPL 网络服务源码义务被忽略 | 中 | 中 | README/NOTICE/AGPL 第 13 条提示；分发与 Web 服务前复核 |
 | zip 含 p12/pass 泄露 | 中 | 高 | 0700/0600、TTL、鉴权、清理；不提供目录列表 |
 | Linux/macOS 脚本未覆盖所有发行版 | 中 | 中 | 默认关闭，提供 NECA_DRY_RUN/NECA_ROOT，发布前在目标系统验证 |
@@ -792,7 +798,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
 | CI/CD 工作流 | ✅ `ci.yml` 已落地，M1/M2 影子对比 + M3 `check-locales`；`release.yml` / `docker.yml` 随 M5 |
-| 服务器 | 生产状态已还原：索引 8 行、CRL 5 条、容器未重启 |
+| 服务器 | ✅ Docker CLI 容器已部署并完成全流程测试；索引 8 行、CRL 5 条、容器未重启、IKE_SAs 0；测试前后索引哈希与 CRL 集合一致 |
 
 ### 19.2 变更记录
 
@@ -807,6 +813,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | 第 3 稿 | Linux/macOS 平台包、安装脚本选项、zip/TTL 下载管理、p12 profile、多语言语言包；许可与仓库公开/PR 策略草案；README 顶部警告 |
 | 2026-11-15 | M2 | 写命令落地：issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、安装脚本选项、p12 profile、zip/TTL；影子对比覆盖写命令与 issue |
 | 2026-11-15 | 第 4 稿 | 许可改为 **AGPL-3.0-only**，**禁止外部 PR**；实现 Linux/macOS 安装/卸载脚本；M3：通用 `--json`/`--dry-run`/`--lang`、交互向导、audit、兼容 flag、语言包与 `check-locales` |
+| 2026-11-15 | M5 | Docker CLI 镜像与生产 compose；服务器全流程测试通过（issue/verify/平台包/zip/revoke/unrevoke/reissue/delete/JSON/dry-run/向导/audit）；索引/CRL 已恢复基线；release.yml 与 docker.yml 落地 |
 
 ---
 

@@ -71,6 +71,23 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 平台包支持 Windows / Linux / macOS / Android / iOS；Linux/macOS 安装/卸载脚本已实现，但仍默认关闭，需 `--installers` 显式开启。
 
+## Docker 部署
+
+服务器使用独立 CLI 容器，镜像内包含 openssl 与静态 docker CLI；容器挂载
+`/opt/ipsec` 和 `/var/run/docker.sock`，通过 `swanctl --load-creds` 热加载 CRL：
+
+```bash
+make build
+docker build --build-arg TARGETARCH=amd64 -t neca:0.1.0 .
+docker save neca:0.1.0 -o /tmp/neca-0.1.0.tar
+docker load < /tmp/neca-0.1.0.tar
+cd /opt/ipsec
+docker compose -f docker-compose.neca.yml run --rm neca list
+```
+
+真实 `SERVER_ID` / `ORG` / `CA_CN` 只放在服务器 `/opt/ipsec/neca.env`（0600），
+不提交仓库。完整步骤、备份/回滚和 docker.sock 安全说明见 [deploy/README.md](deploy/README.md)。
+
 ## 目录结构
 
 ```text
@@ -118,7 +135,7 @@ dist/               构建产物（不入库）
 | M2 | 写命令、Linux/macOS 平台包、安装脚本选项、p12 算法 profile、zip 打包与清理 | ✅ 2026-11-15 |
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
-| M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | 待开始 |
+| M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | 🔄 部署验证完成，待发布/公开 |
 | M6 | Web 面板（含 30 分钟下载有效期与 Web 多语言） | 待开始 |
 
 ## 许可与二次开发
@@ -137,9 +154,11 @@ dist/               构建产物（不入库）
 | [LICENSE](LICENSE) | GNU AGPL-3.0-only 许可全文 |
 | [NOTICE](NOTICE) | 版权、AI 披露与署名 |
 | [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策（禁止外部 PR） |
+| [deploy/README.md](deploy/README.md) | Docker 服务器部署、备份/回滚与安全说明 |
 
 ## 现状
 
+- M5 部署验证：Docker CLI 镜像已部署到服务器，read-only、issue/verify、平台包、zip/downloads、revoke/unrevoke、reissue、delete、JSON/dry-run/向导/audit 全流程通过；生产索引与 CRL 已恢复到测试前状态。
 - M3 已完成：`--json` / `--dry-run` / `--lang`、交互向导、审计日志、旧 flag 兼容、zh-CN/en-US 语言文件与 `make check-locales`。
 - M2 已完成：issue / reissue / revoke / unrevoke / delete / platform / package / downloads；Linux/macOS 平台包、p12 profile、zip TTL 与安装脚本。
 - M1 已完成：list / verify / export / index sync；影子对比（旧 bash vs 新 neca）diff = 0。

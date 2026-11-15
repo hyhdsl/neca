@@ -1,5 +1,10 @@
 # neca
 
+**README 语言 / Language：** [简体中文（当前）](README.md) · [English](README_EN.md)
+
+> [!NOTE]
+> 本文件为**中文主版本**。其他语言版本将另行安排时间统一更新，可能滞后；日常只维护中文版本。英文翻译：[README_EN.md](README_EN.md)。
+
 > [!WARNING]
 > **AI 披露（使用前必读）**：本项目的代码、调试、测试、CI/构建/部署脚本、文档和帮助站内容主要由 AI 编程助手完成；人类维护者负责需求、审查、功能验收与生产操作。完整边界见 [AI-DISCLOSURE.md](AI-DISCLOSURE.md)。
 >

@@ -409,8 +409,8 @@ type PasskeyAuthenticator interface {
 
 - 服务器：Debian 12，Docker Compose，已有 strongSwan 容器；部署前已做快照与
   `/root/neca-m6b-backup-*` 配置/PKI 备份；正式版 v0.3.0 已发布并部署；
-- 镜像：当前服务器运行 `neca:v0.3.0-preview.3`、
-  `neca-web:v0.3.0-preview.3`（commit `02001af`）；首个部署版本为 `v0.3.0`/`9ea20f9`；
+- 镜像：正式版 `ghcr.io/hyhdsl/neca:v0.3.0`、`ghcr.io/hyhdsl/neca-web:v0.3.0`
+  （commit `824d642`）；服务器已切换到正式版；
 - 端口：`18080` 已被 other service 占用，Web 改用 `127.0.0.1:18080`；host network，
   不发布公网端口，通过 OpenSSH 本地转发访问；
 - Web：UID/GID 10001、只读根文件系统、无 docker.sock/ca.key；只挂载配置、
@@ -429,13 +429,12 @@ type PasskeyAuthenticator interface {
   `neca web readonly off` 并重启 `neca-web`；
 - 初始管理员密码在服务器 `/root/neca-web-initial-password`（0600）。首次登录后
   建议删除该文件；需要重置时重新生成 `web-secrets/password.hash`；
-- GitHub 预览包：`v0.3.0-preview.3`（commit `02001af`，prerelease），包含
-  CLI/necad/helper 的 amd64/arm64 二进制与 checksums；GHCR 预览镜像为
-  `neca:v0.3.0-preview.3` 与 `neca-web:v0.3.0-preview.3`。`neca:latest` 保持
-  v0.2.0；`neca-web:latest` 在首个正式 Web 版本前指向该预览；
-- 旧预览包策略：新预览发布后，旧预览只保留 GitHub 自动源代码归档，删除
-  二进制/容器资产；`v0.3.0-preview.1`、`v0.3.0-preview.2` 均已转为
-  source-only。后续使用 `scripts/archive-preview-release.sh <tag>` 处理。
+- 正式发布：`v0.3.0`（commit `824d642`），GitHub Release 含 CLI/necad/helper
+  amd64/arm64 二进制与 checksums；GHCR `neca:latest`、`neca-web:latest` 均指向
+  v0.3.0；
+- 旧预览包策略：新预览/正式版发布后，旧预览只保留 GitHub 自动源代码归档，
+  删除二进制/容器资产；preview.1–preview.3 均已转为 source-only，对应旧
+  GHCR 镜像已删除。后续使用 `scripts/archive-preview-release.sh <tag>` 处理。
 
 ## 21. Web 多语言预留（2026-11-15）
 

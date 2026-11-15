@@ -373,7 +373,7 @@ type PasskeyAuthenticator interface {
 后续完成情况（2026-11-15 正式版）：
 
 - Playwright DOM/计算样式/axe 浏览器验收已完成（Edge，无 serious/critical）；
-- 生产服务器部署与灰度为 OpenSSH 本地转发；反向代理/mTLS 仍是后续可选项；
+- 生产服务器部署已完成，访问通过 OpenSSH 本地转发；反向代理/mTLS 仍是后续可选项；
 - M6b helper、写 API 与写页面已完成；
 - SIGHUP 热重载仍未实现，修改配置后需重启 necad；
 - Passkey 仍仅保留接口，未注册登录路由。

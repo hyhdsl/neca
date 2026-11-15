@@ -13,6 +13,7 @@
 | Q4 鉴权调整 | mTLS（可选）+ 管理员密码哈希 + 签名 Cookie + CSRF + 限流；只读开关只允许 root CLI 修改，不能从 Web 自己解锁。 |
 | Q5 UI/SQLite | Go 模板 + CSS 变量，深浅色蓝白/蓝黑主题；不以截图作为像素级验收依据，使用 data-testid/DOM/Playwright。M6 不引入 SQLite，但预留 Store 接口与迁移路径。 |
 | Docker 发布 | 只发布 lite 默认镜像 + 可选 neca-web 面板包；lite 不替换即可增量安装 Web；停止/移除 Web 组件即回到 lite。 |
+| 仓库边界 | 建议保持 monorepo：共享 core、同版本、同 Docker base；独立仓库收益不足以抵消成本。 |
 
 ## 2. 总体架构
 
@@ -390,15 +391,98 @@ services:
 - 代价是镜像数量仍为两个、compose 需要 profiles、Web 与 lite 必须同版本；
 - 不建议把 Web 二进制以 tar 形式复制进运行中的 lite 容器：容器重建后丢失，且不可审计；应发布 neca-web 镜像或离线镜像 tar。
 
-## 12. 待确认
+## 12. 仓库边界：Web 是否独立仓库
+
+### 12.1 建议
+
+**M6/M6b 阶段继续放在 neca 主仓库，不拆分 Web 仓库。**
+
+Web 面板不是独立产品，而是 neca core 的一个可选展示层：
+
+- 直接复用 internal/core 的 list/verify/export/downloads；
+- 需要与 lite 共用配置 schema、版本号和 Docker base 层；
+- lite/neca-web 镜像必须同版本、同 commit；
+- 当前代码量和团队规模不足以抵消跨仓库成本。
+
+独立的 Web 仓库不会自动提高线上安全性；真正的安全边界是 **独立容器、非 root、无 ca.key/docker.sock、helper 白名单**，这些在 monorepo 中同样可以实现。
+
+### 12.2 对比
+
+| 维度 | monorepo（推荐） | 独立仓库 |
+|---|---|---|
+| 复用 core | 直接 import internal/core，原子修改 | 需要公开 core API、独立 core 模块或走 CLI/JSON |
+| 版本一致性 | 一个 vX tag 构建 neca + neca-web，天然同版本 | 两套 tag 与兼容矩阵，容易漂移 |
+| Docker 构建 | 同一 Dockerfile/base，lite/web 层共享 | Web 需 FROM lite 或复制 base，跨仓库发布 |
+| CI/发布 | 一套 CI、一个 release、一个 SBOM 流程 | 两套 CI、跨仓库触发、权限与密钥管理 |
+| 安全边界 | 镜像/容器/权限隔离 | 仓库隔离不是运行时隔离 |
+| AGPL | 一份 LICENSE/NOTICE/源码 | 两个仓库都要维护许可和源码义务 |
+| 开发效率 | Web/CLI 改动可同一 PR 验证 | 跨仓库改动需要协调 PR/版本 |
+| 发布节奏 | CLI 与 Web 绑定发布 | Web 可独立迭代，但需兼容旧 lite |
+| Issue/文档 | 一个入口，问题可一起排查 | 用户容易报错仓库；文档分裂 |
+| 贡献者边界 | 当前单维护者足够 | 多团队/多产品时更有意义 |
+
+### 12.3 为什么不建议现在拆
+
+1. **Go internal 包不能跨仓库 import**  
+   internal/core 在本模块外不可引用；拆分需要先把 core 提取成公开模块，或让 Web 通过 CLI/JSON 调用。前者是 API 重构，后者损失类型安全与性能。
+
+2. **lite/neca-web 必须共享精确版本**  
+   lite→full 要求两个镜像同 tag；同一仓库 tag 同时构建两个镜像最简单。
+
+3. **Web 仍然很小**  
+   M6 只读、M6b helper 写操作；目录分离（cmd/necad、internal/web）已足够，不需要仓库级隔离。
+
+4. **独立仓库不会减少攻击面**  
+   lite 镜像不包含 Web 二进制、Web 容器非 root、helper 单独容器，这些是镜像/部署问题，不是仓库问题。
+
+5. **当前 PR 政策**  
+   开发期暂不接受外部 PR；独立仓库带来的协作收益暂时不成立。
+
+### 12.4 以后可以考虑拆分的情形
+
+满足以下一项或多项时再评估：
+
+- Web 需要独立团队、独立发布节奏或独立 SLA；
+- Web 改用不同语言/框架，无法继续复用 Go core；
+- core 已稳定并提取为公开 Go module（例如 neca-core）；
+- Web 需要单独的公开 API/插件生态；
+- 外部 PR 开放后，Web 贡献者数量显著超过 CLI；
+- 安全审计要求把 Web 供应链从 CLI 镜像中完全分离。
+
+### 12.5 如果将来拆分
+
+不建议复制 internal/core。可选路径：
+
+1. 提取 neca-core 公开模块，Web 仓库依赖语义化版本；
+2. Web 只通过稳定的 CLI/JSON 契约调用，不直接依赖 core；
+3. 独立仓库的 Web 镜像 FROM lite base，保持基础层与版本标签一致；
+4. 建立兼容矩阵和跨仓库集成测试；
+5. 两侧都保留 AGPL、NOTICE、来源说明。
+
+### 12.6 对当前发布方案的影响
+
+保持 monorepo 后：
+
+- 同一 tag 构建 neca:lite 与 neca-web:addon；
+- lite 镜像与 neca-web 共享 base 层；
+- CI 同时测试 CLI 与 Web；
+- 文档继续放在 docs/；
+- 不需要 submodule/replace/跨仓库 token。
+
+结论：**当前不拆分；等 Web 成为独立产品或 core 公开 API 稳定后，再按 12.4 的条件评估。**
+
+## 13. 决策状态
+
+包装决策（Q6–Q8）已于 2026-11-15 确认；Q1–Q5 与 Q9 仍需最终确认。
 
 1. Q1：接受只读开关 + helper 写能力分期（M6a/M6b），还是要求 M6 一次完成写操作？
 2. Q2：接受 root helper 作为唯一写边界？
 3. Q3：访问方式选 SSH 隧道/Tailscale，还是反向代理 mTLS？若选 mTLS，管理员证书的 CN 与签发流程需定。
 4. Q4：密码哈希注入与会话密钥文件的具体路径/权限。
 5. Q5：先做只读页面与深浅色，SQLite 保持延后；确认是否接受 Go 模板而非 SPA。
-6. Q6：是否采用 neca（lite，默认）+ neca-web（可选面板包）两个镜像标签？
-7. Q7：Web 包采用独立 Docker 镜像（推荐），还是离线镜像 tar？不建议运行时二进制 tar。
-8. Q8：写模式 helper 是否使用独立 profile/容器（推荐 web-write）？
+6. ✅ Q6：采用 neca（lite，默认）+ neca-web（可选面板包）两个镜像标签（2026-11-15 已确认）。
+7. ✅ Q7：Web 包采用独立 Docker 镜像，不采用运行时二进制 tar（2026-11-15 已确认）。
+8. ✅ Q8：写模式 helper 使用独立 web-write profile/容器（2026-11-15 已确认）。
+9. Q9：Web 是否独立仓库？建议保持 monorepo（见第 12 节）。
 
 M6a 只读 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。

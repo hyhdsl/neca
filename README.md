@@ -5,7 +5,7 @@
 >
 > 1. **AI 披露**：本项目的代码、测试与文档由 AI 编程助手（DeepSeek Harness / DeepSeek 模型）辅助生成与修改。AI 输出可能存在错误、遗漏或不适用，使用前请自行审查、测试并自行承担风险。
 > 2. **责任限制**：在适用法律允许的最大范围内，原作者、AI 模型/工具提供方及其所属公司不对因使用、无法使用或误用本软件造成的任何直接、间接、偶然、特殊或后果性损失（包括但不限于数据丢失、业务中断、证书/密钥泄露、VPN 不可用）承担责任。本软件按“现状”提供，不提供任何明示或默示担保。
-> 3. **禁止外部 PR**：本项目不接受外部 Pull Request，仅维护者内部合并；如需修改请 fork，并遵守 AGPL 与 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
+> 3. **禁止外部 PR**：本项目因为未完全开发完毕，故不接受外部 Pull Request，仅维护者内部合并；如需修改请 fork，并遵守 AGPL 与 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
 >
 > 完整授权与二次开发要求见 [LICENSE](LICENSE)、[NOTICE](NOTICE) 与 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
 

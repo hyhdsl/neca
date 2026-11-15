@@ -212,7 +212,13 @@ dist/               构建产物（不入库）
 | M6b | root helper、issue/revoke/unrevoke/reissue 写能力、Web 写 API/UI | ✅ 2026-11-15 v0.3.0 正式发布；Web 默认只读 |
 | M7 | 文档与发布自动化：`check-docs`、CI 门禁、`docs/help` → `neca-help` 本地一键发布 | ✅ 2026-11-15：`make check-docs`、`make publish-help` / `publish-help-apply`；本地脚本发布验证；Actions 自动同步未采用 |
 | M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15 v0.4.0 首发、v0.4.1 补发布置修正；readOnly/idleTimeout 热重载、cache 落盘 `/run/neca`、继续 OpenSSH |
+| M9（计划） | 稳定性与可恢复性：一键备份/恢复演练、健康与日志保留、发布/回滚自动化 | ⏳ 下一阶段；先于公网访问 |
+| M10（计划） | 公网访问安全：TLS/mTLS 或 Tunnel/Access，按需选择；默认仍不暴露 | ⏳ 待 M9 完成 |
+| M11（计划） | API 稳定化与 OpenAPI（仅在外部自动化需求明确时） | ⏳ 按需 |
 
+> **下一阶段决定（2026-11-15）**：功能已进入维护节奏，暂不新增 Web 功能；
+> 先用 M9 补齐备份恢复、可观测性与回滚演练，再评估公网访问。
+>
 > **预览包策略**：正式版发布后，历史预览只保留 GitHub 自动源代码归档；使用
 > [scripts/archive-preview-release.sh](scripts/archive-preview-release.sh) 删除旧资产。
 > **Web 多语言**：`internal/web/locales/` 提供 zh-CN/en-US 翻译文件；页面支持

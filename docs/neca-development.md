@@ -779,6 +779,11 @@ gh auth login --hostname github.com --git-protocol https --web
 | M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a/M6b 已实现、服务器部署和 Playwright/axe 验收完成；**v0.3.0 正式发布**。规格与实施记录见 [web-panel-development.md](web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
 | M7 | 文档与发布自动化：Markdown 链接/围栏检查、帮助站发布脚本、CI 门禁 | ✅ 2026-11-15：`make check-docs`；`publish-help` 默认 dry-run，`publish-help-apply` 推送；本地脚本发布验证；Actions 自动同步未采用 | 0.5 人日 |
 | M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15：v0.4.0 首发，v0.4.1 补发配置目录挂载；readOnly/idleTimeout 热重载；helper cache 落盘 `/run/neca`；继续 OpenSSH | 1 人日 |
+| M9（计划） | 稳定性与可恢复性：备份/恢复脚本与演练、健康/日志保留、发布/回滚自动化 | 备份可恢复、发布/回滚有可重复检查清单；不改 PKI 格式 | 2–3 人日 |
+| M10（计划） | 公网访问安全：TLS + mTLS 或 Tunnel/Access；默认仍 OpenSSH | 访问方案评审通过；不默认暴露公网；证书/密钥生命周期明确 | 2–4 人日 |
+| M11（计划） | API 稳定化与 OpenAPI：Web API 契约、版本化与文档 | 仅在出现外部自动化需求后启动 | 按需 |
+
+> **2026-11-15 开发进程决定**：v0.4.1 后功能开发进入维护节奏；先做 **M9 稳定性与可恢复性**，再评估 **M10 公网访问安全**；**M11 API/OpenAPI 按需**。默认仍 OpenSSH 本地转发，不扩大攻击面。
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
 

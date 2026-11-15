@@ -79,5 +79,15 @@
   "web.notice.reissue": "Certificate reissued; the old certificate was archived",
   "web.notice.revoke": "Certificate revoked and CRL updated",
   "web.notice.unrevoke": "Certificate unrevoked and CRL updated",
-  "web.notice.already": "The operation was already completed; nothing was changed"
+  "web.notice.already": "The operation was already completed; nothing was changed",
+  "web.app.subtitle": "strongSwan IKEv2 client certificates",
+  "web.action.downloads": "Download center",
+  "web.action.language": "Language",
+  "web.action.theme_aria": "Theme: toggle light and dark",
+  "web.status.valid": "Valid",
+  "web.status.revoked": "Revoked",
+  "web.status.expired": "Expired",
+  "web.status.unindexed": "Unindexed",
+  "web.detail.title": "Certificate %s",
+  "web.login.rate_limited": "Too many failed attempts; try again later"
 }

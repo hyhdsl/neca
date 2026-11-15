@@ -3,7 +3,7 @@
   {{if .Downloads}}
   <div class="table-wrap">
     <table>
-      <thead><tr><th>CN</th><th>大小</th><th>创建</th><th>过期</th><th>SHA-256</th><th>操作</th></tr></thead>
+      <thead><tr><th>{{.T "web.downloads.cn"}}</th><th>{{.T "web.downloads.size"}}</th><th>{{.T "web.downloads.created"}}</th><th>{{.T "web.downloads.expires"}}</th><th>{{.T "web.downloads.sha"}}</th><th>{{.T "web.table.action"}}</th></tr></thead>
       <tbody>
       {{range .Downloads}}
         <tr>
@@ -12,14 +12,14 @@
           <td>{{formatTime .CreatedAt}}</td>
           <td>{{formatTime .ExpiresAt}}</td>
           <td class="mono wrap">{{.SHA256}}</td>
-          <td><a class="button secondary" href="/api/v1/downloads/{{.ID}}" data-testid="download-link">下载</a></td>
+          <td><a class="button secondary" href="/api/v1/downloads/{{.ID}}" data-testid="download-link">{{$.T "web.downloads.download"}}</a></td>
         </tr>
       {{end}}
       </tbody>
     </table>
   </div>
   {{else}}
-  <div class="empty" data-testid="empty-downloads">下载目录为空。CLI 生成 zip 后会出现在这里；默认 30 分钟过期。</div>
+  <div class="empty" data-testid="empty-downloads">{{.T "web.downloads.empty"}}</div>
   {{end}}
 </section>
 {{end}}

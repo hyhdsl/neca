@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="auto">
+<html lang="{{.Lang}}" data-theme="auto">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,51 +9,56 @@
   <script src="/static/app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">跳到主要内容</a>
+  <a class="skip-link" href="#main">{{.T "web.skip"}}</a>
   {{if .Login}}
   <main id="main" class="login-shell">
     {{template "content" .}}
   </main>
   {{else}}
   <div class="app-shell">
-    <aside class="sidebar" aria-label="主导航">
+    <aside class="sidebar" aria-label="{{.T "web.nav.dashboard"}}">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">N</span>
         <div>
           <strong>neca</strong>
-          <small>证书管理</small>
+          <small>{{.T "web.brand.subtitle"}}</small>
         </div>
       </div>
-      <nav class="nav" aria-label="页面">
-        <a href="/" data-testid="nav-dashboard" {{if eq .Nav "dashboard"}}aria-current="page"{{end}}>概览</a>
-        <a href="/certs" data-testid="nav-certs" {{if eq .Nav "certs"}}aria-current="page"{{end}}>证书</a>
-        {{if .Writable}}<a href="/certs/new" data-testid="nav-issue" {{if eq .Nav "issue"}}aria-current="page"{{end}}>签发</a>{{end}}
-        <a href="/downloads" data-testid="nav-downloads" {{if eq .Nav "downloads"}}aria-current="page"{{end}}>下载</a>
+      <nav class="nav" aria-label="{{.T "web.nav.certs"}}">
+        <a href="/" data-testid="nav-dashboard" {{if eq .Nav "dashboard"}}aria-current="page"{{end}}>{{.T "web.nav.dashboard"}}</a>
+        <a href="/certs" data-testid="nav-certs" {{if eq .Nav "certs"}}aria-current="page"{{end}}>{{.T "web.nav.certs"}}</a>
+        {{if .Writable}}<a href="/certs/new" data-testid="nav-issue" {{if eq .Nav "issue"}}aria-current="page"{{end}}>{{.T "web.nav.issue"}}</a>{{end}}
+        <a href="/downloads" data-testid="nav-downloads" {{if eq .Nav "downloads"}}aria-current="page"{{end}}>{{.T "web.nav.downloads"}}</a>
       </nav>
       <div class="sidebar-footer">
         <span class="mode-badge {{if .Writable}}is-writable{{else}}is-readonly{{end}}" data-testid="readonly-badge">
-          {{if .Writable}}可写{{else if .ReadOnly}}只读{{else}}只读（helper 不可用）{{end}}
+          {{if .Writable}}{{.T "web.mode.writable"}}{{else if .ReadOnly}}{{.T "web.mode.readonly"}}{{else}}{{.T "web.mode.helper_unavailable"}}{{end}}
         </span>
         {{if .UserCN}}<span class="muted small" data-testid="session-cn">{{.UserCN}}</span>{{end}}
-        <button type="button" class="icon-button" id="theme-toggle" data-testid="theme-toggle" aria-label="切换深浅色">主题</button>
+        <button type="button" class="icon-button" id="theme-toggle" data-testid="theme-toggle" aria-label="{{.T "web.action.theme_aria"}}">{{.T "web.action.theme"}}</button>
+        <span class="lang-switch" aria-label="{{.T "web.action.language"}}">
+          <a href="/language?lang=zh-CN&amp;next={{urlquery .Path}}" data-testid="lang-zh">中文</a>
+          <span aria-hidden="true">/</span>
+          <a href="/language?lang=en-US&amp;next={{urlquery .Path}}" data-testid="lang-en">EN</a>
+        </span>
         <form method="post" action="/logout" class="inline-form">
           <input type="hidden" name="csrf_token" value="{{.CSRF}}">
-          <button type="submit" class="link-button" data-testid="logout">退出</button>
+          <button type="submit" class="link-button" data-testid="logout">{{.T "web.action.logout"}}</button>
         </form>
-        <span class="muted small">v{{.Version}}</span>
+        <span class="muted small">{{.Version}}</span>
       </div>
     </aside>
     <main id="main" class="content">
       <header class="topbar">
         <div>
           <h1>{{.Title}}</h1>
-          <p class="muted">strongSwan IKEv2 客户端证书</p>
+          <p class="muted">{{.T "web.app.subtitle"}}</p>
         </div>
-        <a class="button secondary" href="/downloads" data-testid="top-downloads">下载中心</a>
+        <a class="button secondary" href="/downloads" data-testid="top-downloads">{{.T "web.action.downloads"}}</a>
       </header>
       {{if .Error}}<div class="alert danger" role="alert" data-testid="page-error">{{.Error}}</div>{{end}}
       {{template "content" .}}
-      <footer class="footer muted small">neca {{.Version}} · Web 面板{{if .Writable}}可写{{else}}只读{{end}}模式 · {{formatTime .Now}}</footer>
+      <footer class="footer muted small">neca {{.Version}} · {{if .Writable}}{{.T "web.footer.writable"}}{{else}}{{.T "web.footer.readonly"}}{{end}} · {{formatTime .Now}}</footer>
     </main>
   </div>
   {{end}}

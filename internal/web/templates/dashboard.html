@@ -1,24 +1,24 @@
 {{define "content"}}
-<section class="stats-grid" aria-label="证书统计">
-  <article class="stat-card"><span>证书总数</span><strong data-testid="stat-total">{{.Stats.Total}}</strong></article>
-  <article class="stat-card is-ok"><span>有效</span><strong data-testid="stat-valid">{{.Stats.Valid}}</strong></article>
-  <article class="stat-card is-danger"><span>已吊销</span><strong data-testid="stat-revoked">{{.Stats.Revoked}}</strong></article>
-  <article class="stat-card"><span>CRL 条目</span><strong data-testid="stat-crl">{{.Stats.CRLRevoked}}</strong></article>
+<section class="stats-grid" aria-label="{{.T "web.dashboard.title"}}">
+  <article class="stat-card"><span>{{.T "web.dashboard.total"}}</span><strong data-testid="stat-total">{{.Stats.Total}}</strong></article>
+  <article class="stat-card is-ok"><span>{{.T "web.dashboard.valid"}}</span><strong data-testid="stat-valid">{{.Stats.Valid}}</strong></article>
+  <article class="stat-card is-danger"><span>{{.T "web.dashboard.revoked"}}</span><strong data-testid="stat-revoked">{{.Stats.Revoked}}</strong></article>
+  <article class="stat-card"><span>{{.T "web.dashboard.crl"}}</span><strong data-testid="stat-crl">{{.Stats.CRLRevoked}}</strong></article>
 </section>
 <section class="panel">
   <div class="panel-head">
-    <h2>最近证书</h2>
-    <a href="/certs" class="link">查看全部</a>
+    <h2>{{.T "web.dashboard.recent"}}</h2>
+    <a href="/certs" class="link">{{.T "web.dashboard.view_all"}}</a>
   </div>
   {{if .Certs}}
   <div class="table-wrap">
     <table>
-      <thead><tr><th>CN</th><th>状态</th><th>平台</th><th>到期</th></tr></thead>
+      <thead><tr><th>{{.T "web.table.cn"}}</th><th>{{.T "web.table.status"}}</th><th>{{.T "web.table.platforms"}}</th><th>{{.T "web.table.expires"}}</th></tr></thead>
       <tbody>
       {{range .Certs}}
         <tr>
           <td><a href="/certs/{{.CN}}">{{.CN}}</a></td>
-          <td><span class="status {{statusClass .Status}}" data-testid="status">{{.StatusText}}</span></td>
+          <td><span class="status {{statusClass .Status}}" data-testid="status">{{$.StatusLabel .Status}}</span></td>
           <td>{{if .Platforms}}{{join .Platforms ", "}}{{else}}-{{end}}</td>
           <td>{{.Expires}}</td>
         </tr>
@@ -27,7 +27,7 @@
     </table>
   </div>
   {{else}}
-  <div class="empty" data-testid="empty-certs">还没有客户端证书。使用 CLI 签发后，证书会出现在这里。</div>
+  <div class="empty" data-testid="empty-certs">{{.T "web.dashboard.empty"}}</div>
   {{end}}
 </section>
 {{end}}

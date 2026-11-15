@@ -79,5 +79,15 @@
   "web.notice.reissue": "证书已重签并归档旧证书",
   "web.notice.revoke": "证书已吊销，CRL 已更新",
   "web.notice.unrevoke": "证书已恢复，CRL 已更新",
-  "web.notice.already": "操作已完成过，未重复修改"
+  "web.notice.already": "操作已完成过，未重复修改",
+  "web.app.subtitle": "strongSwan IKEv2 客户端证书",
+  "web.action.downloads": "下载中心",
+  "web.action.language": "语言",
+  "web.action.theme_aria": "主题：切换深浅色",
+  "web.status.valid": "有效",
+  "web.status.revoked": "已吊销",
+  "web.status.expired": "已过期",
+  "web.status.unindexed": "未索引",
+  "web.detail.title": "证书 %s",
+  "web.login.rate_limited": "登录失败次数过多，请稍后再试"
 }

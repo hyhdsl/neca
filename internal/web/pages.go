@@ -41,8 +41,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		s.limiter.fail(ip, now)
 		s.audit.log("login-failed", ip, clientCN, "password")
 		s.renderStatus(w, r, http.StatusUnauthorized, "login", pageData{
-			Title: "登录", Nav: "login", Login: true, Next: next,
-			Error: "密码错误或登录已受限",
+			TitleKey: "web.login.title", Nav: "login", Login: true, Next: next,
+			Error: s.translatorFor(r).T("web.login.error"),
 		})
 		return
 	}
@@ -94,7 +94,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	s.render(w, r, "dashboard", pageData{
-		Title: "概览", Nav: "dashboard", Stats: stats,
+		TitleKey: "web.dashboard.title", Nav: "dashboard", Stats: stats,
 		Certs: list.Certs, Downloads: downloads, CRLRevoked: list.CRLRevoked,
 		Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 	})
@@ -110,7 +110,7 @@ func (s *Server) handleCertList(w http.ResponseWriter, r *http.Request) {
 	status := strings.TrimSpace(r.URL.Query().Get("status"))
 	certs := filterCerts(list.Certs, query, status)
 	s.render(w, r, "certs", pageData{
-		Title: "证书", Nav: "certs", Certs: certs, Query: query, Status: status,
+		TitleKey: "web.certs.title", Nav: "certs", Certs: certs, Query: query, Status: status,
 		CRLRevoked: list.CRLRevoked, Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 	})
 }
@@ -131,9 +131,9 @@ func (s *Server) handleCertDetail(w http.ResponseWriter, r *http.Request) {
 		report = &core.VerifyReport{CN: cn, Warnings: []string{verifyErr.Error()}}
 	}
 	s.render(w, r, "cert_detail", pageData{
-		Title: "证书 " + cn, Nav: "certs", Cert: cert, Verify: report,
+		TitleKey: "web.detail.title", TitleArg: cn, Nav: "certs", Cert: cert, Verify: report,
 		Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
-		Notice: noticeText(r.URL.Query().Get("notice")),
+		NoticeKey: noticeKey(r.URL.Query().Get("notice")),
 	})
 }
 
@@ -143,7 +143,7 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 		s.renderError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
-	s.render(w, r, "downloads", pageData{Title: "下载", Nav: "downloads", Downloads: views, Writable: s.writable(r.Context())})
+	s.render(w, r, "downloads", pageData{TitleKey: "web.downloads.title", Nav: "downloads", Downloads: views, Writable: s.writable(r.Context())})
 }
 
 func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +152,7 @@ func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, r, "cert_new", pageData{
-		Title: "签发证书", Nav: "certs", Writable: true, HelperAvailable: true,
+		TitleKey: "web.new.title", Nav: "certs", Writable: true, HelperAvailable: true,
 		Days: s.cfg.DefaultDays, Platforms: "windows,android", P12Profile: string(s.cfg.P12Profile),
 	})
 }
@@ -208,7 +208,7 @@ func (s *Server) handleCertAction(op helper.Op) http.HandlerFunc {
 }
 
 func (s *Server) renderError(w http.ResponseWriter, r *http.Request, status int, message string) {
-	s.renderStatus(w, r, status, "error", pageData{Title: "错误", Nav: "", Error: message})
+	s.renderStatus(w, r, status, "error", pageData{TitleKey: "web.error.title", Nav: "", Error: message})
 }
 
 func (s *Server) renderWriteError(w http.ResponseWriter, r *http.Request, err error) {
@@ -239,18 +239,18 @@ func splitPlatforms(raw string) []string {
 	return platforms
 }
 
-func noticeText(code string) string {
+func noticeKey(code string) string {
 	switch code {
 	case "issued":
-		return "证书已签发"
+		return "web.notice.issued"
 	case "reissue":
-		return "证书已重签并归档旧证书"
+		return "web.notice.reissue"
 	case "revoke":
-		return "证书已吊销，CRL 已更新"
+		return "web.notice.revoke"
 	case "unrevoke":
-		return "证书已恢复，CRL 已更新"
+		return "web.notice.unrevoke"
 	case "already":
-		return "操作已完成过，未重复修改"
+		return "web.notice.already"
 	default:
 		return ""
 	}

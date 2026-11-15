@@ -414,6 +414,25 @@ func TestWebWriteAPIWithHelper(t *testing.T) {
 	}
 }
 
+func TestWebLanguageSwitch(t *testing.T) {
+	h := newWebHarness(t)
+	defer h.close()
+	resp := h.do(t, http.MethodGet, "/language?lang=en-US&next=/login", nil)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusSeeOther {
+		t.Fatalf("language switch status = %d", resp.StatusCode)
+	}
+	resp = h.do(t, http.MethodGet, "/login", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("english login status = %d", resp.StatusCode)
+	}
+	data, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if !strings.Contains(string(data), "Administrator sign-in") || !strings.Contains(string(data), "lang=\"en-US\"") {
+		t.Fatalf("english login page not translated: %s", data)
+	}
+}
+
 func TestWebCSRFAndDownloads(t *testing.T) {
 	h := newWebHarness(t)
 	defer h.close()

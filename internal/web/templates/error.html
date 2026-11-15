@@ -1,7 +1,7 @@
 {{define "content"}}
 <section class="panel error-panel">
-  <h2>请求无法完成</h2>
+  <h2>{{.T "web.error.title"}}</h2>
   <p data-testid="error-message">{{.Error}}</p>
-  <a href="/" class="button secondary">返回概览</a>
+  <a href="/" class="button secondary">{{.T "web.error.back"}}</a>
 </section>
 {{end}}

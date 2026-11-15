@@ -1,44 +1,44 @@
 {{define "content"}}
 <section class="panel">
   <div class="panel-head">
-    <h2>证书</h2>
-    {{if .Writable}}<a class="button primary" href="/certs/new" data-testid="new-cert-link">签发证书</a>{{end}}
+    <h2>{{.T "web.certs.title"}}</h2>
+    {{if .Writable}}<a class="button primary" href="/certs/new" data-testid="new-cert-link">{{.T "web.certs.new"}}</a>{{end}}
   </div>
   <form method="get" action="/certs" class="filters" role="search">
-    <label for="q">搜索</label>
-    <input id="q" name="q" type="search" value="{{.Query}}" placeholder="CN、序列号或平台" data-testid="cert-search">
-    <label for="status">状态</label>
+    <label for="q">{{.T "web.certs.search"}}</label>
+    <input id="q" name="q" type="search" value="{{.Query}}" placeholder="{{.T "web.certs.search_placeholder"}}" data-testid="cert-search">
+    <label for="status">{{.T "web.certs.status"}}</label>
     <select id="status" name="status" data-testid="cert-status">
-      <option value="" {{if eq .Status ""}}selected{{end}}>全部</option>
-      <option value="valid" {{if eq .Status "valid"}}selected{{end}}>有效</option>
-      <option value="revoked" {{if eq .Status "revoked"}}selected{{end}}>已吊销</option>
-      <option value="expired" {{if eq .Status "expired"}}selected{{end}}>已过期</option>
-      <option value="unindexed" {{if eq .Status "unindexed"}}selected{{end}}>未索引</option>
+      <option value="" {{if eq .Status ""}}selected{{end}}>{{.T "web.certs.all"}}</option>
+      <option value="valid" {{if eq .Status "valid"}}selected{{end}}>{{.T "web.certs.valid"}}</option>
+      <option value="revoked" {{if eq .Status "revoked"}}selected{{end}}>{{.T "web.certs.revoked"}}</option>
+      <option value="expired" {{if eq .Status "expired"}}selected{{end}}>{{.T "web.certs.expired"}}</option>
+      <option value="unindexed" {{if eq .Status "unindexed"}}selected{{end}}>{{.T "web.certs.unindexed"}}</option>
     </select>
-    <button type="submit" class="button secondary" data-testid="cert-filter">筛选</button>
-    <a href="/certs" class="link">清除</a>
+    <button type="submit" class="button secondary" data-testid="cert-filter">{{.T "web.certs.filter"}}</button>
+    <a href="/certs" class="link">{{.T "web.certs.clear"}}</a>
   </form>
   {{if .Certs}}
   <div class="table-wrap">
     <table>
-      <thead><tr><th>CN</th><th>状态</th><th>序列号</th><th>平台</th><th>到期</th><th>操作</th></tr></thead>
+      <thead><tr><th>{{.T "web.table.cn"}}</th><th>{{.T "web.table.status"}}</th><th>{{.T "web.table.serial"}}</th><th>{{.T "web.table.platforms"}}</th><th>{{.T "web.table.expires"}}</th><th>{{.T "web.table.action"}}</th></tr></thead>
       <tbody>
       {{range .Certs}}
         <tr>
           <td><a href="/certs/{{.CN}}" data-testid="cert-link">{{.CN}}</a></td>
-          <td><span class="status {{statusClass .Status}}">{{.StatusText}}</span></td>
+          <td><span class="status {{statusClass .Status}}">{{$.StatusLabel .Status}}</span></td>
           <td class="mono">{{.Serial}}</td>
           <td>{{if .Platforms}}{{join .Platforms ", "}}{{else}}-{{end}}</td>
           <td>{{.Expires}}</td>
-          <td><a href="/certs/{{.CN}}" class="link">详情</a></td>
+          <td><a href="/certs/{{.CN}}" class="link">{{$.T "web.table.detail"}}</a></td>
         </tr>
       {{end}}
       </tbody>
     </table>
   </div>
   {{else}}
-  <div class="empty" data-testid="empty-certs">没有匹配的证书。</div>
+  <div class="empty" data-testid="empty-certs">{{.T "web.certs.empty"}}</div>
   {{end}}
-  <p class="muted small">CRL 吊销条目：{{.CRLRevoked}}</p>
+  <p class="muted small">{{.T "web.certs.crl"}}: {{.CRLRevoked}}</p>
 </section>
 {{end}}

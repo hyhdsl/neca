@@ -434,8 +434,8 @@ type PasskeyAuthenticator interface {
 ## 21. Web 多语言预留（2026-11-15）
 
 - 新增 `internal/web/locales/zh-CN.json`、`en-US.json`，按页面/组件命名 key；
-- 新增 `webTranslator`，默认 zh-CN，按配置 `language` 选择；模板数据已带
-  `.T` 与 `.Lang`，后续可逐项把模板文案迁移到 key；
-- 当前页面文案仍以中文为主，尚未加入语言切换控件；翻译文件、key 一致性与
-  回退测试已准备；
-- 后续可增加每用户语言 Cookie/设置，不需要改 Web 配置 schema。
+- 新增 `webTranslator`，默认 zh-CN，按配置 `language` 选择；
+- 布局、登录、概览、证书列表/详情、下载、签发与错误页文案已迁移到 `.T`；
+- 侧栏与登录页增加语言切换（Cookie `neca_lang`），不改变 `neca.json` schema；
+- key 一致性与回退测试已加入 `make check-locales`；
+- 后续可增加每用户语言设置/管理界面。

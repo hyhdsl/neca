@@ -1,24 +1,24 @@
 {{define "content"}}
 <section class="panel">
   <div class="panel-head">
-    <h2>签发新证书</h2>
-    <a href="/certs" class="link">返回证书列表</a>
+    <h2>{{.T "web.new.title"}}</h2>
+    <a href="/certs" class="link">{{.T "web.new.back"}}</a>
   </div>
-  <p class="muted">写操作通过 root helper 执行；CN 只允许字母数字 . _ -，签发后立即生成 p12 与平台包。</p>
+  <p class="muted">{{.T "web.new.desc"}}</p>
   <form method="post" action="/certs/new" class="stack form-grid" data-testid="issue-form">
     <input type="hidden" name="csrf_token" value="{{.CSRF}}">
-    <label for="cn">CN</label>
+    <label for="cn">{{.T "web.new.cn"}}</label>
     <input id="cn" name="cn" required pattern="[A-Za-z0-9._-]+" autocomplete="off" data-testid="issue-cn">
-    <label for="days">有效期（天）</label>
+    <label for="days">{{.T "web.new.days"}}</label>
     <input id="days" name="days" type="number" min="1" max="3650" value="{{.Days}}" required data-testid="issue-days">
-    <label for="platforms">平台</label>
+    <label for="platforms">{{.T "web.new.platforms"}}</label>
     <input id="platforms" name="platforms" value="{{.Platforms}}" placeholder="windows,android" data-testid="issue-platforms">
-    <label for="p12Profile">p12 profile</label>
+    <label for="p12Profile">{{.T "web.new.profile"}}</label>
     <select id="p12Profile" name="p12Profile" data-testid="issue-profile">
       <option value="compat" {{if eq .P12Profile "compat"}}selected{{end}}>compat（3DES/SHA1）</option>
       <option value="modern" {{if eq .P12Profile "modern"}}selected{{end}}>modern（AES-256/SHA256）</option>
     </select>
-    <button type="submit" class="button primary" data-testid="issue-submit">签发</button>
+    <button type="submit" class="button primary" data-testid="issue-submit">{{.T "web.new.submit"}}</button>
   </form>
 </section>
 {{end}}

@@ -4,19 +4,24 @@
     <span class="brand-mark" aria-hidden="true">N</span>
     <div>
       <strong>neca</strong>
-      <small>证书管理</small>
+      <small>{{.T "web.brand.subtitle"}}</small>
     </div>
   </div>
-  <h1 id="login-title">管理员登录</h1>
-  <p class="muted">通过 OpenSSH 本地转发或反向代理访问。密码只在本机验证。</p>
+  <h1 id="login-title">{{.T "web.login.title"}}</h1>
+  <p class="muted">{{.T "web.login.desc"}}</p>
   {{if .Error}}<div class="alert danger" role="alert" data-testid="login-error">{{.Error}}</div>{{end}}
   <form method="post" action="/login" class="stack" data-testid="login-form">
     <input type="hidden" name="csrf_token" value="{{.CSRF}}">
     <input type="hidden" name="next" value="{{.Next}}">
-    <label for="password">管理员密码</label>
+    <label for="password">{{.T "web.login.password"}}</label>
     <input id="password" name="password" type="password" autocomplete="current-password" required autofocus data-testid="password">
-    <button type="submit" class="button primary" data-testid="login-submit">登录</button>
+    <button type="submit" class="button primary" data-testid="login-submit">{{.T "web.login.submit"}}</button>
   </form>
-  <p class="muted small">连续失败会触发临时限流；会话默认 30 分钟无操作失效，最长 24 小时。</p>
+  <p class="muted small">{{.T "web.login.note"}}</p>
+  <p class="lang-switch login-lang" aria-label="{{.T "web.action.language"}}">
+    <a href="/language?lang=zh-CN&amp;next={{urlquery .Path}}" data-testid="lang-zh">中文</a>
+    <span aria-hidden="true">/</span>
+    <a href="/language?lang=en-US&amp;next={{urlquery .Path}}" data-testid="lang-en">EN</a>
+  </p>
 </section>
 {{end}}

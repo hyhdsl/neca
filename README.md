@@ -206,8 +206,8 @@ dist/               构建产物（不入库）
 
 > **预览包策略**：最新预览可附二进制/checksums；旧预览只保留 GitHub 自动源代码归档，
 > 使用 [scripts/archive-preview-release.sh](scripts/archive-preview-release.sh) 删除旧资产。
-> **Web 多语言**：`internal/web/locales/` 已准备 zh-CN/en-US 翻译文件与 `.T` 接口，
-> 当前 UI 仍以中文为主，后续逐项迁移。
+> **Web 多语言**：`internal/web/locales/` 提供 zh-CN/en-US 翻译文件；页面支持
+> 侧栏/登录页语言切换（`neca_lang` Cookie），默认跟随 `neca.json` 的 `language`。
 
 ## 许可与二次开发
 

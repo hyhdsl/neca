@@ -53,6 +53,7 @@ type Server struct {
 	audit            *auditLogger
 	helperClient     *helper.Client
 	translator       *webTranslator
+	translators      map[string]*webTranslator
 	now              func() time.Time
 	templates        map[string]*template.Template
 	static           http.Handler
@@ -96,9 +97,17 @@ func New(opts Options) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	translator, err := newWebTranslator(opts.Config.Language)
-	if err != nil {
-		return nil, err
+	translators := map[string]*webTranslator{}
+	for _, lang := range []string{"zh-CN", "en-US"} {
+		translator, err := newWebTranslator(lang)
+		if err != nil {
+			return nil, err
+		}
+		translators[lang] = translator
+	}
+	defaultTranslator := translators[normalizeWebLanguage(opts.Config.Language)]
+	if defaultTranslator == nil {
+		defaultTranslator = translators[webDefaultLanguage]
 	}
 	var helperClient *helper.Client
 	if strings.TrimSpace(opts.HelperSocket) != "" {
@@ -109,9 +118,9 @@ func New(opts Options) (*Server, error) {
 		passwordHash: opts.PasswordHash, proxySecret: []byte(opts.ProxySecret),
 		secureCookies: opts.SecureCookies, allowNonLoopback: opts.AllowNonLoopback,
 		helperClient: helperClient,
-		translator:   translator,
-		sessions:     newSessionManager(opts.SessionKey, idle, now),
-		limiter:      newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
+		translator:   defaultTranslator, translators: translators,
+		sessions: newSessionManager(opts.SessionKey, idle, now),
+		limiter:  newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
 		templates: templates, static: http.FileServer(http.FS(staticFS)),
 	}, nil
 }
@@ -120,6 +129,7 @@ func New(opts Options) (*Server, error) {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
+	mux.HandleFunc("GET /language", s.handleLanguage)
 	mux.HandleFunc("GET /login", s.handleLoginPage)
 	mux.HandleFunc("POST /login", s.handleLogin)
 	mux.HandleFunc("POST /logout", s.handleLogout)
@@ -204,7 +214,7 @@ func isWriteEndpoint(path string) bool {
 
 func (s *Server) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/healthz" || r.URL.Path == "/login" || strings.HasPrefix(r.URL.Path, "/static/") {
+		if r.URL.Path == "/healthz" || r.URL.Path == "/language" || r.URL.Path == "/login" || strings.HasPrefix(r.URL.Path, "/static/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -298,7 +308,11 @@ type pageData struct {
 	Login           bool
 	Next            string
 	Lang            string
-	T               func(string, ...any) string
+	Tr              *webTranslator
+	Path            string
+	TitleKey        string
+	TitleArg        string
+	NoticeKey       string
 	Stats           dashboardStats
 	Certs           []core.WebCert
 	Query           string
@@ -330,8 +344,20 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 func (s *Server) renderStatus(w http.ResponseWriter, r *http.Request, status int, name string, data pageData) {
 	data.ReadOnly = s.cfg.Web.ReadOnly
 	data.Version = version.Get().Version
-	data.Lang = s.translator.Language()
-	data.T = s.translator.T
+	data.Path = r.URL.RequestURI()
+	tr := s.translatorFor(r)
+	data.Lang = tr.Language()
+	data.Tr = tr
+	if data.TitleKey != "" {
+		if data.TitleArg != "" {
+			data.Title = tr.T(data.TitleKey, data.TitleArg)
+		} else {
+			data.Title = tr.T(data.TitleKey)
+		}
+	}
+	if data.NoticeKey != "" {
+		data.Notice = tr.T(data.NoticeKey)
+	}
 	data.Now = s.now()
 	data.CSRF = s.ensureCSRF(w, r)
 	if claims, ok := sessionClaimsFrom(r.Context()); ok {
@@ -429,7 +455,7 @@ func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	next := safeNext(r.URL.Query().Get("next"))
-	s.render(w, r, "login", pageData{Title: "登录", Nav: "login", Login: true, Next: next})
+	s.render(w, r, "login", pageData{TitleKey: "web.login.title", Nav: "login", Login: true, Next: next})
 }
 
 func safeNext(next string) string {

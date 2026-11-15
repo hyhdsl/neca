@@ -327,7 +327,7 @@ type PasskeyAuthenticator interface {
 
 ## 15. 发布
 
-- 版本建议 v0.3.0（M6a）；
+- 版本 v0.3.0（M6a/M6b 合并发布，已正式发布）；
 - 同 tag 构建 neca 与 neca-web；
 - amd64/arm64、SBOM、checksums；
 - release notes 明确默认 lite、Web 可选；
@@ -335,6 +335,9 @@ type PasskeyAuthenticator interface {
 - 文档更新 README、docs 索引、部署说明。
 
 ## 16. 实施前置条件
+
+> 当前状态（2026-11-15）：生产使用 OpenSSH 本地转发，未启用公网域名/TLS/mTLS；
+> 其余权限、UID/GID 与挂载条件已满足。以下为筹备期检查项。
 
 这些不影响代码开工，但部署/验收前需要确定：
 
@@ -353,7 +356,7 @@ type PasskeyAuthenticator interface {
 - 空闲超时、Passkey 接口、Go 模板、SQLite 延后；
 - 保持 monorepo。
 
-未发现与已确认决策冲突的项。M6a 已按本文实施，M6b 待开始。
+未发现与已确认决策冲突的项。M6a/M6b 均已按本文实施，并随 v0.3.0 正式发布。
 
 ## 18. M6a 实施记录（2026-11-15）
 
@@ -367,13 +370,13 @@ type PasskeyAuthenticator interface {
 - 部署：`deploy/init-web-secrets.sh` 初始化 web-secrets；M6a 不启动 helper；
 - 验证：`go vet ./...`、`go test -race ./...`、lite/neca-web 镜像内容检查、necad 容器 `/healthz` 健康检查通过。
 
-尚未完成：
+后续完成情况（2026-11-15 正式版）：
 
-- Playwright DOM/计算样式/axe 浏览器验收；
-- 生产服务器灰度与反向代理/mTLS 实机验证；
-- SIGHUP 热重载（当前修改配置后需重启 necad）；
-- M6b helper、写 API 与写页面；
-- Passkey 实际注册/登录（仅接口与配置开关）。
+- Playwright DOM/计算样式/axe 浏览器验收已完成（Edge，无 serious/critical）；
+- 生产服务器部署与灰度为 OpenSSH 本地转发；反向代理/mTLS 仍是后续可选项；
+- M6b helper、写 API 与写页面已完成；
+- SIGHUP 热重载仍未实现，修改配置后需重启 necad；
+- Passkey 仍仅保留接口，未注册登录路由。
 
 部署权限要点：
 
@@ -397,13 +400,12 @@ type PasskeyAuthenticator interface {
 - compose 新增 `web-write` profile：helper 独立 root 容器，挂载 PKI、docker.sock、`/run/neca`；Web/lite 只共享 socket；
 - 测试：helper 协议/客户端/只读拒绝/requestId 冲突；Web 写 API 与 helper 假服务；CLI readonly off；`go test -race`。
 
-尚未完成 / 限制：
+已完成 / 仍有限制：
 
-- Playwright/axe 浏览器验收；
-- SIGHUP 热重载；
-- helper 幂等缓存为进程内（重启后丢失），M6b 可接受；
-- delete 不开放；
-- Web UI 目前仅中文（en-US 页面未接入）。
+- Playwright/axe 浏览器验收已完成（Edge，无 serious/critical）；
+- Web UI 已接入 zh-CN/en-US（`neca_lang` Cookie），深浅色/移动端通过；
+- 仍有：SIGHUP 热重载未实现；helper 幂等缓存为进程内（重启后丢失）；
+- 仍有：delete 不开放；Passkey 仅接口。
 
 ## 20. 正式部署记录（2026-11-15）
 
@@ -427,8 +429,8 @@ type PasskeyAuthenticator interface {
   与部署前一致；strongSwan 容器仍 healthy 且未重启；
 - 已完成可写链路验证后恢复默认 `web.readOnly=true`；如启用写操作：
   `neca web readonly off` 并重启 `neca-web`；
-- 初始管理员密码在服务器 `/root/neca-web-initial-password`（0600）。首次登录后
-  建议删除该文件；需要重置时重新生成 `web-secrets/password.hash`；
+- 初始管理员密码由部署流程生成/交付；首次登录后建议删除临时密码文件；
+  需要重置时重新生成 `web-secrets/password.hash`；
 - 正式发布：`v0.3.0`（commit `824d642`），GitHub Release 含 CLI/necad/helper
   amd64/arm64 二进制与 checksums；GHCR `neca:latest`、`neca-web:latest` 均指向
   v0.3.0；
@@ -436,7 +438,7 @@ type PasskeyAuthenticator interface {
   删除二进制/容器资产；preview.1–preview.3 均已转为 source-only，对应旧
   GHCR 镜像已删除。后续使用 `scripts/archive-preview-release.sh <tag>` 处理。
 
-## 21. Web 多语言预留（2026-11-15）
+## 21. Web 多语言（2026-11-15，已完成）
 
 - 新增 `internal/web/locales/zh-CN.json`、`en-US.json`，按页面/组件命名 key；
 - 新增 `webTranslator`，默认 zh-CN，按配置 `language` 选择；

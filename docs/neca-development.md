@@ -1,7 +1,8 @@
-# neca 开发文档（v0.1 规划稿）
+# neca 开发文档（M0–M6，v0.3.0）
 
 > 项目代号：**neca**（CA 管理工具；品牌、域名与服务器标识在仓库中一律使用占位值）
-> 文档版本：2026-11-15 第 4 稿（AGPL-3.0-only、开发期暂不接受外部 PR、Linux/macOS 安装/卸载脚本、M3：JSON/dry-run/向导/语言/审计）
+> 文档版本：2026-11-15 第 5 稿（v0.3.0 正式版；M6a/M6b 完成；帮助文档站点）
+> 本文保留从 v0.1 规划到 v0.3.0 的实施记录；当前发布状态与验收以 §19 为准。
 > 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
 
@@ -25,7 +26,7 @@
 | D10 | 平台扩展与安装脚本 | 支持 Windows/Linux/macOS/Android/iOS；一键安装脚本默认关闭，`--installers` 显式开启（2026-11-15 决定） |
 | D11 | p12 算法 profile | 默认 `compat`（3DES+SHA1，MIUI 兼容）；新增 `modern`（AES-256/SHA256）可选，默认行为不变 |
 | D12 | 多语言 | 语言文件 JSON，默认 `zh-CN`，内置 `en-US`；社区可扩展；Web 多语言 M6 单独实现（2026-11-15 决定） |
-| D13 | 许可与仓库策略 | **AGPL-3.0-only**（OSI 开源，允许商业使用但须履行源码公开义务）；**开发期暂不接受外部 PR**，完成后重新评估开放；v0.1.0 后已转 public |
+| D13 | 许可与仓库策略 | **AGPL-3.0-only**（OSI 开源，允许商业使用但须履行源码公开义务）；**开发期暂不接受外部 PR**，完成后重新评估开放；v0.1.0 后已转 public，v0.3.0 仍为 public |
 
 D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7，差距仅 1.6 分，属于"按阶段优先级取舍"而非"语言能力差距"。选 Go 的理由是**一次到位**：未来 Web 面板与多用户都复用同一份强类型 core，不再做第二次语言迁移；代价是阶段一的模板与文本处理工作量增加约 30–50%，以及需要先搭 Go 工具链。
 
@@ -112,11 +113,11 @@ D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7�
 2. **有替换需求才抽接口**：本轮只落地已经明确的 `IndexStore` 与配置 `Source`/`Resolver`；其余先登记为候选，等 M1/M2 出现第一个真实实现时再抽象，不为假想需求写空接口。
 3. **构造函数注入**：core 的领域函数接收接口参数，不在包内直接 new 具体实现；测试用内存假实现替换。
 4. **注册表集中管理**：CLI 子命令通过 `cli.Registry` 注册，未来平台包生成器（Bundler）也用同样方式注册；业务代码里禁止出现按类型分支的 type switch。
-5. **internal 不承诺兼容**：v0.1.0 之前接口可演进，但每次演进必须同步更新本节与测试假实现。
+5. **internal 不承诺兼容**：v1.0 之前接口可演进，但每次演进必须同步更新本节与测试假实现。
 
 #### 3.1.1 已落地契约
 
-| 扩展点 | 接口/类型 | 位置 | 首个实现（计划） | 后续可接入 |
+| 扩展点 | 接口/类型 | 位置 | 首个实现（已落地） | 后续可接入 |
 |---|---|---|---|---|
 | 索引存储 | `ports.IndexStore`、`ports.Row`、`ports.Index` | `internal/core/ports/index.go` | M1：`index.txt` 文件后端（flock + 原子替换） | 测试内存实现、Web 只读查询、只读缓存 |
 | 配置来源 | `ports.Source`、`ports.Resolver` | `internal/core/ports/config.go` | M1：环境变量、`--config` 文件 | Web 设置、数据库覆盖、测试注入 |
@@ -141,17 +142,17 @@ CLI 注册表要点：
 - 注册冲突（重名、别名冲突、nil Run）在启动时立即报错；内置命令用 `MustRegister` 在测试阶段暴露问题；
 - `help` 文本由注册表自动生成，新增命令不需要改帮助代码。
 
-#### 3.1.2 候选扩展点（先登记，暂不落接口）
+#### 3.1.2 候选扩展点（登记；按需抽象）
 
-| 扩展点 | 预计触发时机 | 未来实现示例 |
+| 扩展点 | 触发/现状 | 未来实现示例 |
 |---|---|---|
-| 引擎重载 Engine | M2 实现 `engine.go` | docker restart、`swanctl --load-creds`、systemd、K8s Job |
-| 审计输出 AuditSink | M2 实现 `audit.go` | 追加文件、SQLite、远程日志 |
-| 平台包 Bundler | M1 实现 `bundle/` | Windows、Android、iOS、未来 macOS/Linux |
+| 引擎重载 Engine | M2 已实现 `engine.go`（creds/restart） | systemd、K8s Job、其他引擎 |
+| 审计输出 AuditSink | M3 已实现追加文件审计 | SQLite、远程日志 |
+| 平台包 Bundler | M2 已实现 `bundle/` | 更多平台、签名分发 |
 | 签名后端 Signer | 出现外部 CA/HSM 需求时 | 本地 openssl、企业 CA、PKCS#11 |
 | 通知回调 Notifier | 需要 IM/Webhook 时 | 飞书、企业微信、邮件 |
 
-候选扩展点不写空接口：M1/M2 实现时按 §3.1.3 的步骤抽象，避免接口形状被假想需求带偏。
+候选扩展点不写空接口：出现真实实现时按 §3.1.3 的步骤抽象，避免接口形状被假想需求带偏。
 
 #### 3.1.3 新增扩展点的步骤
 
@@ -227,7 +228,7 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 |---|---|---|
 | CLI 解析 | **标准库 `flag` + 子命令 switch** | 10 个子命令，不值得引入 cobra；零依赖、帮助文本可控 |
 | 中文宽度 | `golang.org/x/text/width` | `--list` 对齐需要 East Asian Width |
-| 密码哈希 | `golang.org/x/crypto/bcrypt` | Web 管理员密码只存 bcrypt 哈希；M6a 引入 |
+| 密码哈希 | `golang.org/x/crypto/bcrypt` | Web 管理员密码只存 bcrypt 哈希；M6 引入 |
 | plist | 手写 XML 生成（`encoding/xml` + `encoding/base64`） | mobileconfig 结构固定，约 100 行；用测试解析回来校验 |
 | CSV | `encoding/csv` | 标准库 |
 | 文件锁 | `syscall.Flock`（Linux） | 标准库，无依赖 |
@@ -315,7 +316,7 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 
 错误时 `ok=false`，附 `error: {code, message}`；退出码不变。
 
-M3 已实现：`list/verify/version/issue/reissue/revoke/unrevoke/delete/platform/package/downloads/export/index sync` 原生结构化输出；M6a 增加 `web status/readonly/idle-timeout` 的 JSON 输出。其余命令以 `data.output` 兜底，stdout 始终是单个合法 JSON 对象。
+M3 已实现：`list/verify/version/issue/reissue/revoke/unrevoke/delete/platform/package/downloads/export/index sync` 原生结构化输出；M6 增加 `web status/readonly/idle-timeout` 的 JSON 输出。其余命令以 `data.output` 兜底，stdout 始终是单个合法 JSON 对象。
 
 ### 6.5 交互向导
 
@@ -679,7 +680,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 | 项 | 建议 |
 |---|---|
 | 仓库 | `github.com/hyhdsl/neca`，**public**（2026-11-15 随 v0.1.0 转公开） |
-| 默认分支 | `main`，维护者内部合并必须 CI 通过；开发期暂不接受外部 PR。私有免费计划暂无法启用分支保护，以 CI 为门禁 |
+| 默认分支 | `main`，维护者内部合并必须 CI 通过；开发期暂不接受外部 PR。当前未启用 GitHub 分支保护，以 CI 为门禁 |
 | 分支命名 | `feat/…`、`fix/…`、`chore/…` |
 | 提交信息 | Conventional Commits（`feat:`、`fix:`、`chore:`、`docs:`） |
 | 版本 | SemVer；tag `v0.1.0` 起 |
@@ -708,8 +709,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 
 ```text
 feature 分支 → 维护者内部合并（CI 全绿；开发期暂不接受外部 PR）→ squash merge 到 main
-  → 打 tag v0.1.0 → release.yml 产出二进制 + Release
-  → docker.yml 推送镜像 → 服务器下载二进制替换 /usr/local/bin/neca
+  → 打 tag vX.Y.Z（当前 v0.3.0）→ release.yml 产出二进制 + Release
+  → docker.yml 推送镜像 → 服务器更新 Compose 镜像标签/重启对应容器
 ```
 
 回滚：保留上一个二进制为 `/usr/local/bin/neca.prev`，或直接从 Release 下载旧版本。
@@ -719,7 +720,7 @@ Docker CLI 部署：镜像包含 openssl + 静态 docker CLI，挂载 `/opt/ipse
 `/opt/ipsec/neca.env`（0600）配合使用，真实 `SERVER_ID`/`ORG`/`CA_CN` 不进入仓库。
 详见 `deploy.md`。
 
-发布已完成（2026-11-15）：v0.1.0 的二进制、checksums 与 GHCR 镜像已发布，仓库已转 public；README 警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已就位。外部 PR 在开发期暂不接收，完成后重新评估。
+发布已完成（2026-11-15）：v0.3.0 的二进制、checksums 与 GHCR 镜像已发布，仓库保持 public；README 警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已就位。外部 PR 在开发期暂不接收，完成后重新评估。
 
 ### 15.4 DSH 的 GitHub 集成
 
@@ -740,7 +741,7 @@ gh auth login --hostname github.com --git-protocol https --web
 
 `gh auth login --web` 走 GitHub 官方 device flow：终端显示一次性代码，浏览器打开 `github.com/login/device` 输入即可。
 
-当前状态：已登录账号 **hyhdsl**，scope 为 `read:org`、`repo`、`workflow`、`write:packages`；`github_api` 与 `github_repo` 已实测可调用。
+当前状态：已登录账号 **hyhdsl**，scope 为 `read:org`、`repo`、`workflow`、`write:packages`、`delete:packages`、`gist`；`github_api` 与 `github_repo` 已实测可调用。
 
 已注册的工具族（与本项目相关）：
 
@@ -800,16 +801,16 @@ gh auth login --hostname github.com --git-protocol https --web
 
 ## 18. 待定事项
 
-1. ~~GitHub 仓库 owner/名称~~：已定 `github.com/hyhdsl/neca`（私有）；
+1. ~~GitHub 仓库 owner/名称~~：已定 `github.com/hyhdsl/neca`（public）；
 2. 运行镜像：已定 **debian-slim**（内置 openssl，约 80MB；scratch/distroless 无法运行 openssl 子进程）；
 3. ~~Go 版本锁定~~：镜像内实测 `go1.25.14`，`go.mod` 声明 `go 1.25`；
 4. ~~旧 bash 脚本归档~~：已归档到 `legacy/`（2026-11-15，M0）；
 5. ~~许可与 PR 策略~~：已定 **AGPL-3.0-only**；**开发期暂不接受外部 PR**，完成后重新评估（2026-11-15 决定）；
 6. **Linux/macOS 一键脚本**：已实现，默认关闭；在 Debian/Ubuntu、RHEL 系、macOS 目标版本完成人工验证后再决定是否默认开放；
-7. **下载目录与 TTL**：CLI 与 Web 共用 `NECA_DOWNLOAD_DIR`；Web 鉴权与清理策略在 M6 前确定；
+7. ~~下载目录与 TTL~~：CLI 与 Web 共用 `NECA_DOWNLOAD_DIR`；已定 30m TTL、登录后按 sidecar ID 鉴权下载、过期返回 410/404；
 8. **社区语言包**：M3 已实现框架；开发期通过 Issue/fork 提供，PR 待开发完成后开放；
-9. **阶段二 Web 权限方案**（§12.2 的三选一）；
-10. ~~首个正式 Release 后转 public 的检查清单~~：已完成（2026-11-15）；后续仅保留旧脚本两周观察。
+9. ~~阶段二 Web 权限方案~~：已定非 root Web + root helper（§12.2 方案 2），实施见 [web-panel-development.md](web-panel-development.md)；
+10. ~~首个正式 Release 后转 public 的检查清单~~：已完成（2026-11-15）；旧脚本继续保留为回退/影子测试基准。
 
 ---
 
@@ -819,19 +820,19 @@ gh auth login --hostname github.com --git-protocol https --web
 
 | 项 | 状态 |
 |---|---|
-| 仓库 | `github.com/hyhdsl/neca`（public）已发布 v0.1.0；`main` 历史已安全清理 |
-| 代码 | ✅ M3 已完成：M1/M2 全部命令 + JSON/dry-run/向导/audit/兼容 flag/语言文件；影子对比 diff=0 |
+| 仓库 | `github.com/hyhdsl/neca`（public）已发布 v0.3.0；`main` 历史已安全清理 |
+| 代码 | ✅ M6 已完成：M1–M6 全部 CLI/Web/helper；JSON/dry-run/向导/audit/兼容 flag/语言文件；影子对比 diff=0 |
 | 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
 | 平台与打包 | ✅ Windows/Linux/macOS/Android/iOS；Linux/macOS 安装/卸载脚本已实现（默认 none）；zip/TTL/downloads |
 | p12 算法 | ✅ M2 已实现 `compat`/`modern` profile，默认兼容不变 |
-| 多语言 | ✅ M3：`internal/i18n` + zh-CN/en-US 语言文件、`--lang`/`NECA_LANG`、`make check-locales` |
+| 多语言 | ✅ M3：`internal/i18n` + zh-CN/en-US 语言文件、`--lang`/`NECA_LANG`；M6 Web 支持 zh-CN/en-US 页面切换；`make check-locales` |
 | 配置 | ✅ v0.2.0：JSON 配置、`--config`/`NECA_CONFIG`、config init/show/validate/export-env；优先级 CLI > env > JSON > 默认值 |
-| 许可/公开 | ✅ **AGPL-3.0-only**；**开发期暂不接受外部 PR**（完成后重新评估）；v0.1.0 后已转 public |
+| 许可/公开 | ✅ **AGPL-3.0-only**；**开发期暂不接受外部 PR**（完成后重新评估）；v0.1.0 后已转 public，v0.3.0 仍为 public |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
-| CI/CD 工作流 | ✅ `ci.yml` 已落地，M1/M2 影子对比 + M3 `check-locales`；`release.yml` / `docker.yml` 随 M5 |
-| 服务器 | ✅ Docker CLI 容器已部署；v0.2.0 全量验收 96/0（2026-11-15 快照后）：索引 8 行、CRL 5 条、容器未重启、既有 IKE SA 保留；测试后索引哈希 `redacted…redacted`、CRL/meta/clients 恢复基线，临时 CN/下载/配置/审计残留清零 |
+| CI/CD 工作流 | ✅ `ci.yml`、`release.yml`、`docker.yml` 均已落地；完成 v0.3.0 多架构发布与 GHCR 推送 |
+| 服务器 | ✅ v0.3.0 已部署（lite + neca-web + helper）；Web 监听 127.0.0.1:18080、默认只读；索引哈希 `redacted…redacted`、CRL `redacted…redacted` 与部署前一致，strongSwan 未重启 |
 
 ### 19.2 变更记录
 
@@ -850,12 +851,13 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | v0.1.1 | 修复 `--lang en-US` 仅翻译帮助、不翻译命令输出的问题；新增 `deploy/neca-wrapper.sh`，转发 `NECA_LANG` 并处理非交互 TTY；服务器镜像升级 |
 | 2026-11-15 | v0.2.0 | 新增 JSON 配置文件（`neca.json`）与 `--config`/`NECA_CONFIG`；优先级 CLI > env > JSON > 默认值；`config init/show/validate/export-env`；保持 index/meta/CRL 格式不变 |
 | 2026-11-15 | v0.2.0 验收 | 服务器快照后全量测试 **96 通过 / 0 失败**：config/language、五平台 issue/installers、p12、zip、downloads、verify、platform/package、revoke/unrevoke/reload、reissue/delete、JSON/错误/向导/wrapper；测试后索引/CRL/meta/clients 恢复基线，strongSwan 未重启 |
-| 2026-11-15 | M6a | 只读 Web 面板、签名会话/空闲超时、CSRF/限流、Web 配置 CLI、Passkey 接口占位、lite/neca-web 双镜像与 compose `web` profile；`go test -race`、镜像内容与 necad 容器健康检查通过；待 v0.3.0 发布与浏览器验收 |
+| 2026-11-15 | M6a | 只读 Web 面板、签名会话/空闲超时、CSRF/限流、Web 配置 CLI、Passkey 接口占位、lite/neca-web 双镜像与 compose `web` profile；`go test -race`、镜像内容与 necad 容器健康检查通过；后随 v0.3.0 发布并完成浏览器验收 |
 | 2026-11-15 | M6b | root helper（Unix socket、白名单、幂等、审计）、Web 写 API/UI、`neca web readonly off`、compose `web-write` profile；helper/lite 联动与只读拒绝测试通过；服务器正式部署完成，PKI 哈希未变、strongSwan 未重启；Playwright/axe 验收通过，**v0.3.0 正式发布**，历史预览转为 source-only |
+| 2026-11-15 | v0.3.0 | 正式版发布：CLI/necad/helper amd64/arm64 二进制与 checksums；GHCR `neca`/`neca-web` 的 `latest` 指向 v0.3.0；preview.1–preview.3 均转 source-only；用户帮助中心建立并发布 |
 
-## 20. M6 开发准备（M6a 已实现）
+## 20. M6 开发记录（已完成）
 
-> Web 面板的评估见 [web-panel.md](web-panel.md)，开发规格与 M6a 实施记录见 [web-panel-development.md](web-panel-development.md)。Q1–Q11 已确认；本节以下保留筹备期记录，若与开发文档 §18 不一致，以开发文档为准。
+> Web 面板的评估见 [web-panel.md](web-panel.md)，开发规格与实施记录见 [web-panel-development.md](web-panel-development.md)。Q1–Q11 已确认；本节保留筹备期记录，最终以开发文档 §18–§20 为准。
 >
 > **状态（2026-11-15）**：M6a 只读面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite/neca-web 双镜像与 compose `web` profile 已实现；M6b root helper、写 API/UI、`readonly off` 与 `web-write` profile 已实现，并在服务器完成正式部署。
 
@@ -864,15 +866,15 @@ gh auth login --hostname github.com --git-protocol https --web
 - v0.2.0 在服务器完成全量验收（2026-11-15，快照 15:12:34 之后）：最终 **96 项通过 / 0 失败**。
 - 覆盖：config/language、dry-run、五平台 issue、installers、compat/modern p12、zip/manifest/no key、downloads TTL/clean、verify、platform add/set、package、export、revoke/unrevoke/幂等/reload、reissue/archive/delete、吊销证书删除拒绝与 purge、JSON 错误、help/version/wizard/wrapper。
 - 测试后：索引哈希 `redacted…redacted`、CRL 5 条、证书 8 个、meta 3 个、clients 3 个、archive/downloads 为空；测试 CN、配置、CSV、审计与下载残留清零；strongSwan 容器 healthy 且未重启，既有 IKE SA 保留。
-- 生产运行镜像仍为 `neca:v0.2.0`；本次未改变 CLI/core 代码。
+- 筹备时生产仍为 `neca:v0.2.0`；v0.3.0 发布后已升级为 `ghcr.io/hyhdsl/neca:v0.3.0` 与 `neca-web:v0.3.0`。
 
-### 20.2 推荐范围：只读 Web MVP
+### 20.2 M6a 只读 Web MVP（已完成）
 
 M6 按原出口标准先做**只读面板**，不把签发/吊销等写操作放进第一阶段：
 
 - 新增 `cmd/necad` + `internal/web`，复用 `internal/core` 的 list/verify/export 只读逻辑；不复制业务规则。
 - `necad` 以**非 root** 运行，只读挂载 `neca.json`、`pki/ca/index.txt`、`pki/meta`、`clients`、`downloads` 和 CA 公钥；**不挂载 `ca.key`、`docker.sock`**。
-- 监听 `127.0.0.1:18080`，由 Caddy/Nginx 终止 TLS 并对外提供 HTTPS；不让应用直接暴露公网。
+- 监听 `127.0.0.1:18080`。筹备期计划由 Caddy/Nginx 终止 TLS 并对外提供 HTTPS；当前生产使用 OpenSSH 本地转发，未启用公网 TLS/mTLS，且不让应用直接暴露公网。
 - 页面：概览（证书数/CRL 数/到期提醒）、证书列表与搜索、证书详情、p12 verify、下载列表/下载。
 - 鉴权：单管理员；密码只以 Argon2id/bcrypt 哈希形式通过 `NECA_WEB_PASSWORD_HASH` 注入；会话密钥放 0600 文件，使用 HttpOnly + SameSite 的签名 Cookie；登录限流。
 - 下载：必须登录；只接受由 sidecar 元数据解析出的下载 ID，不接受任意路径；TTL 30 分钟，过期返回 410/404；后台定时清理；不提供目录列表。
@@ -880,16 +882,16 @@ M6 按原出口标准先做**只读面板**，不把签发/吊销等写操作放
 - 配置：只读 `neca.json`；M6 不提供设置写回。
 - SQLite：**M6 不引入**。只读查询和签名 Cookie 会话不需要数据库；等写操作/多用户阶段再评估 SQLite（只存会话、任务、归属，不替代 index.txt）。
 
-### 20.3 M6 暂不做
+### 20.3 M6a 暂不做（M6b 已开放部分写能力）
 
-- Web 端 issue/revoke/reissue/delete/package 与设置编辑；
+- Web 端 delete/package 与设置编辑仍未开放；
 - 多用户/RBAC；
 - 内置 TLS（优先反向代理）；
-- 把 `ca.key` 暴露给 Web 进程。
+- 把 `ca.key` 暴露给 Web 进程。M6b 的 issue/revoke/unrevoke/reissue 由 root helper 执行。
 
-如果后续要把写操作放进 Web，再按 §12.2 方案 2 增加 root helper（Unix socket + 命令白名单），Web 进程继续保持非 root。
+M6b 已按 §12.2 方案 2 增加 root helper（Unix socket + 命令白名单），Web 进程继续保持非 root；后续若开放 delete/package，仍需走同一白名单边界。
 
-### 20.4 开发顺序
+### 20.4 开发顺序（已完成）
 
 1. 确认下列 Q1–Q5，冻结 M6 只读契约与 API；
 2. 新增 `cmd/necad` + `internal/web` 骨架、只读 config 加载、健康检查；
@@ -898,7 +900,7 @@ M6 按原出口标准先做**只读面板**，不把签发/吊销等写操作放
 5. 非 root 容器、反向代理示例、i18n 与安全测试；
 6. `go test`、`httptest`、路径遍历/TTL/鉴权/并发测试，服务器灰度验收后发 v0.3.0。
 
-### 20.5 需要确认的决策
+### 20.5 筹备期决策（均已确认）
 
 | # | 决策 | 推荐 |
 |---|---|---|
@@ -908,7 +910,7 @@ M6 按原出口标准先做**只读面板**，不把签发/吊销等写操作放
 | Q4 | 登录凭据与会话 | **env 注入密码哈希 + 0600 会话密钥文件 + 签名 Cookie** |
 | Q5 | UI 技术 | **Go 模板 + 原生 JS/embed**，不做 SPA；SQLite 继续延后 |
 
-M6 粗估 4–5 人日；上述 5 项确认后即可开始。
+M6 粗估 4–5 人日；上述 5 项已确认并完成，实际发布 v0.3.0。
 
 ---
 

@@ -9,12 +9,12 @@
 >
 > 完整授权与二次开发要求见 [LICENSE](LICENSE)、[NOTICE](NOTICE) 与 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
 
-基于 Go 的 strongSwan IKEv2 用户证书管理工具（CLI + 可选只读 Web 面板）。
+基于 Go 的 strongSwan IKEv2 用户证书管理工具（CLI + 可选 Web 面板；默认只读，root helper 受控开放写能力）。
 
 前身是 [legacy/vpn-cert-manager.sh](legacy/vpn-cert-manager.sh)（506 行 bash），
 负责 `/opt/ipsec` 下的证书签发、吊销、重签发、平台包生成与 CRL 维护。
 
-- 仓库：https://github.com/hyhdsl/neca （私有；首个正式 Release 后转 public）
+- 仓库：https://github.com/hyhdsl/neca （public；v0.3.0 正式版）
 - 技术路线：Go 1.25，单静态二进制，`CGO_ENABLED=0`
 - 运行形态：服务器上以 root 执行，`ca.key` 保持 `0600 root:root`
 - 开发环境：本地 Docker（开发机不需要安装 Go，见文档 §14）
@@ -40,7 +40,7 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 进入交互式开发容器（宿主机需有 make 与 docker）——`make dev`。
 
-## 命令（M1–M6a）
+## 命令（M1–M6）
 
 | 命令 | 作用 |
 |---|---|
@@ -68,16 +68,17 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 所有命令都遵循 `[OK]/[INFO]/[WARN]/[ERR]` 前缀与 0/1/2/3 退出码契约（开发文档 §6.3）。
 
-## Web 面板（M6a）
+## Web 面板（M6）
 
-M6a 提供可选只读 Web 面板：登录、证书列表/详情、p12 检查、受保护下载与
-深浅色 UI。Web 以独立 `neca-web` 镜像发布，默认 **lite** 镜像不含 Web 服务端。
+M6 提供可选 Web 面板：默认只读，登录、证书列表/详情、p12 检查、受保护下载与
+深浅色 UI；启用 root helper 后可显式开放 issue/revoke/unrevoke/reissue 写能力。
+Web 以独立 `neca-web` 镜像发布，默认 **lite** 镜像不含 Web 服务端。
 
 ```bash
 # 默认只跑 CLI
 neca list
 
-# 可选只读 Web（服务端）
+# 可选只读 Web（服务端，默认）
 docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web up -d web
 
 # M6b：加 root helper 后可显式开启写能力
@@ -86,8 +87,9 @@ docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web --profile web
 neca web readonly off
 ```
 
-Web 只监听 `127.0.0.1:18080`，通过系统原生 OpenSSH 本地转发或反向代理访问；
-不引入 Tailscale/WireGuard 等第三方 VPN。登录、会话与权限细节见
+Web 默认监听 `127.0.0.1:18080`；本次生产部署因 18080 已被 other service 占用，使用
+`127.0.0.1:18080`。通过系统原生 OpenSSH 本地转发或反向代理访问；不引入
+Tailscale/WireGuard 等第三方 VPN。登录、会话与权限细节见
 [docs/web-panel-development.md](docs/web-panel-development.md)，部署步骤见
 [docs/deploy.md](docs/deploy.md)。
 
@@ -106,7 +108,7 @@ root 执行 `neca web readonly off` 且 helper 健康后才开放写操作。
 make build
 # 默认 lite 镜像
 docker build --target lite -t ghcr.io/hyhdsl/neca:v0.3.0 .
-# 可选只读 Web 面板包
+# 可选 Web 面板包（默认只读）
 docker build --target web -t ghcr.io/hyhdsl/neca-web:v0.3.0 .
 install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
 neca list
@@ -228,11 +230,13 @@ dist/               构建产物（不入库）
 | [docs/legacy-vpn-cert-manager.md](docs/legacy-vpn-cert-manager.md) | 旧 bash 脚本的使用与二次开发说明（归档） |
 | [docs/deploy.md](docs/deploy.md) | Docker 服务器部署、备份/回滚与安全说明 |
 | [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策（开发期暂不接受外部 PR） |
+| [docs/help/](docs/help/README.md) | 用户帮助中心（GitBook 兼容 Markdown + GitHub Pages 站点） |
 | [LICENSE](LICENSE) | GNU AGPL-3.0-only 许可全文 |
 | [NOTICE](NOTICE) | 版权、AI 披露与署名 |
 
 ## 现状
 
+- **v0.3.0（M6）已完成**：[v0.3.0](https://github.com/hyhdsl/neca/releases/tag/v0.3.0) 正式发布；lite + neca-web + root helper 已部署，Web 默认只读；Playwright/axe、zh-CN/en-US、深浅色与移动端验收通过；用户帮助见 [帮助中心](https://neca.nekobiglazyer.work)。
 - M5 已完成：[v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 已发布并转 public；[v0.1.1](https://github.com/hyhdsl/neca/releases/tag/v0.1.1) 修复 `--lang`；[v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0) 引入 JSON 配置。Docker CLI 镜像已部署到服务器；全功能测试通过；生产索引与 CRL 已恢复到测试前状态。
 - M3 已完成：`--json` / `--dry-run` / `--lang`、交互向导、审计日志、旧 flag 兼容、zh-CN/en-US 语言文件与 `make check-locales`。
 - M2 已完成：issue / reissue / revoke / unrevoke / delete / platform / package / downloads；Linux/macOS 平台包、p12 profile、zip TTL 与安装脚本。

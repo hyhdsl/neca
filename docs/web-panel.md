@@ -42,6 +42,11 @@ necad（非 root，只读）
 - 只读模式由 necad 的 HTTP 中间件强制，helper 再做一次 defense in depth；
 - 反向代理是唯一对外入口，Web 不监听 0.0.0.0。
 
+> 端口说明：代码默认监听 `127.0.0.1:18080`；本次生产环境因 18080 被 other service
+> 占用，实际使用 18080。下文端口示例保留默认值，部署时按 `web.listen` 调整。
+> 当前生产使用 OpenSSH 本地转发，未启用反向代理 TLS/mTLS；图中的 Caddy/Nginx
+> 是可选路径，不是当前部署的硬依赖。
+
 ## 3. Q1：后台只读开关与 CLI
 
 ### 3.1 可行性
@@ -474,7 +479,7 @@ services:
 
 | 场景 | 必须验证 |
 |---|---|
-| lite CLI | 与 v0.2.0 全量测试一致；无 necad/helper |
+| lite CLI | 与 v0.2.0 基线一致；v0.3.0 已发布；无 necad/helper |
 | lite + web 只读 | 登录、列表、下载、readonly；Web 非 root，无 ca.key/docker.sock |
 | lite + web + helper | helper 白名单、CSRF、审计；只读开关拒绝写 |
 | lite→full | 只拉 neca-web，lite 不重启/不换镜像；无 PKI 迁移 |
@@ -573,8 +578,6 @@ Web 面板不是独立产品，而是 neca core 的一个可选展示层：
 
 ## 13. 决策状态
 
-## 13. 决策状态
-
 截至 2026-11-15：
 
 1. ✅ Q1：M6a 只读 + M6b 写能力分期（已确认）。
@@ -591,4 +594,4 @@ Web 面板不是独立产品，而是 neca core 的一个可选展示层：
 
 **Q1–Q11 均已确认；无剩余设计问题。实施规格见 [web-panel-development.md](web-panel-development.md)。**
 
-M6a 只读 + 会话超时 + Passkey 接口占位 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。
+M6a 只读 + 会话超时 + Passkey 接口占位 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。M6a/M6b 均已实现并随 v0.3.0 正式发布，实施记录见 [web-panel-development.md](web-panel-development.md)。

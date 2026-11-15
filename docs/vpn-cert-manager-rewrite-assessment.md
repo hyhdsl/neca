@@ -1,11 +1,14 @@
 # vpn-cert-manager 2.0 技术选型评估：Python vs Go
 
-> **决策更新（2026-11-15）**：项目最终选定 **Go**，本文的 Python 推荐已被覆盖。决策记录、仓库规划与开发计划见 [neca-development.md](neca-development.md)。
+> **决策更新（2026-11-15）**：项目最终选定 **Go**，本文的 Python 推荐已被覆盖。
+> 本文是历史选型评估，不是当前部署依据；v0.3.0 已发布。决策记录、仓库规划与
+> 开发计划见 [neca-development.md](neca-development.md)，用户帮助见
+> [帮助中心](https://neca.nekobiglazyer.work)。
 
 > 评估对象：`legacy/vpn-cert-manager.sh`（506 行 bash，当前部署于 `<SERVER_IP>:/opt/ipsec/scripts/`）
 > 评估日期：2026-11-15
 > 评估范围：阶段一（控制台 CLI/向导）→ 阶段二（Web 面板）→ 阶段三（多用户平台）的技术栈选择
-> 关联文档：`legacy/vpn-cert-manager.md`（现有脚本使用与二次开发说明）、`vpn/ipsec-vpn-deployment.md`（服务端部署，另一工作区）
+> 关联文档：`legacy-vpn-cert-manager.md`（现有脚本使用与二次开发说明）、`vpn/ipsec-vpn-deployment.md`（服务端部署，另一工作区）
 
 ---
 
@@ -381,7 +384,7 @@ DB 增加 `users`、`roles`、`cert_owner`，引入申请-审批-签发流程。
 ## 14. 测试策略（影子测试）
 
 1. **临时 PKI**：tests/fixtures 用 mktemp 生成独立目录树（PKI_DIR、CLIENTS_DIR 等全部用环境变量指向它），绝不触碰 /opt/ipsec。
-2. **用例集**：直接采用 `legacy/vpn-cert-manager.md` §14 的回归清单（签发、加平台、导出、吊销、恢复、重签、删除），外加并发、缺 CA、容器缺失等故障用例。
+2. **用例集**：直接采用 `legacy-vpn-cert-manager.md` §14 的回归清单（签发、加平台、导出、吊销、恢复、重签、删除），外加并发、缺 CA、容器缺失等故障用例。
 3. **影子对比**：同一份 fixture 分别用旧 bash 与新 CLI 跑同一命令，比对：
    - `--list` 的表体（忽略列宽填充）；
    - 导出 CSV（去掉时间戳列后逐行 diff）；

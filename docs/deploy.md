@@ -77,7 +77,7 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 写操作建议先 `--dry-run`，再在维护窗口执行。审计日志在
 `NECA_AUDIT_LOG`（默认 `/opt/ipsec/pki/audit.log`）。
 
-## 5. 可选只读 Web（M6a）
+## 5. 可选 Web 面板（M6）
 
 ### 5.1 启用配置
 
@@ -96,7 +96,7 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 }
 ```
 
-允许的空闲超时为 5m–24h，绝对会话上限固定 24h。默认只读；M6a 只有只读
+允许的空闲超时为 5m–24h，绝对会话上限固定 24h。默认只读；M6a 只提供只读
 面板，M6b 在 root helper 启动后才允许 `neca web readonly off`。
 
 ### 5.2 初始化 web-secrets
@@ -152,8 +152,9 @@ docker compose -f docker-compose.neca.yml --profile web logs -f web
 ```
 
 Web 默认监听 `127.0.0.1:18080`，compose 使用 host network 但不发布端口。
-若 18080 已被其它服务占用，修改 `web.listen` 与 SSH 隧道端口即可（本次服务器
-使用 18080）。推荐通过系统原生 OpenSSH 本地转发访问：
+本次生产环境 18080 已被 other service 占用，`web.listen` 使用 18080；下面以生产端口
+为例。若使用默认端口，将命令中的 18080 换成 18080。推荐通过系统原生 OpenSSH
+本地转发访问：
 
 ```bash
 ssh -L 18080:127.0.0.1:18080 root@<SERVER>

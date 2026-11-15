@@ -1,5 +1,9 @@
 # vpn-cert-manager.sh 使用与二次开发说明
 
+> **归档状态**：本说明对应旧 bash 脚本，只用于回退、影子测试和历史参考。
+> 新部署请使用 neca v0.3.0：[帮助中心](https://neca.nekobiglazyer.work) /
+> [项目 README](../README.md)。
+
 适用版本：2026-11-15 版脚本（约 506 行），文件位置 vpn/ipsec/vpn-cert-manager.sh（服务器：/opt/ipsec/scripts/vpn-cert-manager.sh）。
 本文档只描述该脚本本身；服务端 VPN 部署见 vpn/ipsec-vpn-deployment.md。
 

@@ -276,7 +276,7 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 | `--dry-run` | 只打印将执行的动作，不落盘、不调 docker（M3 已实现） | 关 |
 | `--no-reload` | 只生成 CRL，不重载引擎 | 关 |
 | `--reload-mode restart\|creds` | 重载方式；CLI 开关待接入，当前用 `NECA_RELOAD_MODE` | creds |
-| `--config <file>` | 读取配置文件（未来用），优先级低于环境变量 | 无 |
+| `--config <file>` | 读取 JSON 配置文件；优先级低于环境变量、高于默认值 | 无 |
 | `--lang zh-CN\|en-US` | 控制台语言；M3 起从语言文件加载，默认 `zh-CN` | zh-CN |
 | `-q` / `--quiet` | 仅输出错误 | 关 |
 | `--version` | 打印版本 | — |
@@ -341,12 +341,38 @@ M3 已实现：`list/verify/version/issue/reissue/revoke/unrevoke/delete/platfor
 | `NECA_P12_PROFILE` | `compat`（3DES+SHA1；可选 `modern`） |
 | `NECA_INSTALLERS` | `none`（可选 `all` 或平台列表） |
 | `NECA_AUDIT_LOG` | `$PKI_DIR/audit.log`（追加式审计） |
+| `NECA_CONFIG` | `/opt/ipsec/neca.json`（JSON 配置路径） |
 | `NECA_LANG` | `zh-CN`（M3 已生效） |
 | `NECA_LOCALE_DIR` | 未启用；当前仅内置语言包 |
 
 > `SERVER_ID` / `ORG` / `CA_CN` 的默认值是仓库占位值（`vpn.example.com` / `ExampleOrg` / `ExampleOrg VPN CA`）。生产部署必须用环境变量注入真实值，不要把真实服务器标识写回仓库。
 
 `config.Load()` 负责读取、补默认值、校验目录可写、校验 CA 存在；缺失时返回退出码 3 的错误。
+
+### 7.1 JSON 配置（v0.2.0）
+
+优先级固定为：**CLI flag > 环境变量 > `neca.json` > 默认值**。`--config`
+（或 `NECA_CONFIG`）指定路径，默认 `/opt/ipsec/neca.json`；文件不存在时全部使用
+环境变量/默认值，不影响旧部署。
+
+```json
+{
+  "schemaVersion": 1,
+  "serverId": "vpn.example.com",
+  "org": "ExampleOrg",
+  "caCn": "ExampleOrg VPN CA",
+  "language": "zh-CN",
+  "auditLog": "/opt/ipsec/pki/audit.log",
+  "paths": { "pkiDir": "/opt/ipsec/pki", "clientsDir": "/opt/ipsec/clients" },
+  "defaults": { "days": 365, "keyBits": 3072, "p12Profile": "compat", "installers": "none" },
+  "reload": { "mode": "creds", "container": "ipsec-vpn", "dockerBin": "docker" },
+  "download": { "dir": "/opt/ipsec/downloads", "ttl": "30m", "maxFiles": 50 }
+}
+```
+
+- 只保存路径与普通配置，不保存 CA 私钥、p12 密码；文件 0600，写入使用临时文件 + rename。
+- `config init [--from-env]` 生成配置；`config show/validate/export-env` 查看、校验、导出环境变量。
+- `pki/meta/<CN>.env`、`index.txt`、CRL 仍保持原有格式，不迁入 JSON；SQLite 仅在 M6 Web 有明确并发需求时评估。
 
 ---
 
@@ -793,6 +819,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 平台与打包 | ✅ Windows/Linux/macOS/Android/iOS；Linux/macOS 安装/卸载脚本已实现（默认 none）；zip/TTL/downloads |
 | p12 算法 | ✅ M2 已实现 `compat`/`modern` profile，默认兼容不变 |
 | 多语言 | ✅ M3：`internal/i18n` + zh-CN/en-US 语言文件、`--lang`/`NECA_LANG`、`make check-locales` |
+| 配置 | ✅ v0.2.0：JSON 配置、`--config`/`NECA_CONFIG`、config init/show/validate/export-env；优先级 CLI > env > JSON > 默认值 |
 | 许可/公开 | ✅ **AGPL-3.0-only**；**开发期暂不接受外部 PR**（完成后重新评估）；v0.1.0 后已转 public |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
@@ -815,6 +842,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | 第 4 稿 | 许可改为 **AGPL-3.0-only**，开发期暂不接受外部 PR（完成后重新评估）；实现 Linux/macOS 安装/卸载脚本；M3：通用 `--json`/`--dry-run`/`--lang`、交互向导、audit、兼容 flag、语言包与 `check-locales` |
 | 2026-11-15 | M5 | Docker CLI 镜像与生产 compose；服务器全流程测试通过（issue/verify/平台包/zip/revoke/unrevoke/reissue/delete/JSON/dry-run/向导/audit）；索引/CRL 已恢复基线；v0.1.0 Release + GHCR 镜像发布；仓库转 public |
 | 2026-11-15 | v0.1.1 | 修复 `--lang en-US` 仅翻译帮助、不翻译命令输出的问题；新增 `deploy/neca-wrapper.sh`，转发 `NECA_LANG` 并处理非交互 TTY；服务器镜像升级 |
+| 2026-11-15 | v0.2.0 | 新增 JSON 配置文件（`neca.json`）与 `--config`/`NECA_CONFIG`；优先级 CLI > env > JSON > 默认值；`config init/show/validate/export-env`；保持 index/meta/CRL 格式不变 |
 
 ---
 

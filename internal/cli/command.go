@@ -145,6 +145,7 @@ func (r *Registry) WriteHelp(w io.Writer) {
 	fmt.Fprintln(w, i18n.T("app.global.json"))
 	fmt.Fprintln(w, i18n.T("app.global.dry_run"))
 	fmt.Fprintln(w, i18n.T("app.global.lang"))
+	fmt.Fprintln(w, i18n.T("app.global.config"))
 	fmt.Fprintln(w, i18n.T("app.global.quiet"))
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, i18n.T("app.footer"))

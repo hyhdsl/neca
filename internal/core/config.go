@@ -42,7 +42,7 @@ var configEnvKeys = []string{
 	"EXPORT_DIR", "CONTAINER", "DOCKER_BIN", "SERVER_ID", "ORG", "CA_CN",
 	"DEFAULT_DAYS", "KEY_BITS", "NECA_RELOAD_MODE", "NECA_LOCK_FILE",
 	"NECA_DOWNLOAD_DIR", "NECA_DOWNLOAD_TTL", "NECA_DOWNLOAD_MAX_FILES",
-	"NECA_P12_PROFILE", "NECA_INSTALLERS", "NECA_AUDIT_LOG",
+	"NECA_P12_PROFILE", "NECA_INSTALLERS", "NECA_AUDIT_LOG", "NECA_LANG",
 }
 
 // Config 是 neca 的全部运行时路径与开关。
@@ -79,6 +79,8 @@ type Config struct {
 	P12Profile       P12Profile    // compat | modern
 	Installers       string        // none | all | 平台列表
 	AuditFile        string        // 追加式审计日志
+	Language         string        // 控制台语言偏好
+	ConfigFile       string        // 实际读取的 JSON 配置路径
 }
 
 // EnvSource 从环境变量读取配置层。
@@ -149,9 +151,20 @@ func (s FileSource) Load(ctx context.Context) (map[string]string, error) {
 	return values, nil
 }
 
-// LoadConfig 从环境变量加载配置。
+// LoadConfig 从环境变量与 JSON 配置文件加载配置。
+//
+// 优先级：环境变量 > JSON 文件 > 默认值；--config 由 CLI 写入 NECA_CONFIG。
 func LoadConfig() (*Config, error) {
-	return LoadConfigFrom(EnvSource{})
+	path := ConfigFilePath()
+	sources := []ports.Source{EnvSource{}}
+	if path != "" {
+		sources = append(sources, JSONSource{Path: path})
+	}
+	cfg, err := LoadConfigFrom(sources...)
+	if cfg != nil {
+		cfg.ConfigFile = path
+	}
+	return cfg, err
 }
 
 // LoadConfigFrom 从给定来源加载配置，先注册的优先（ports.Resolver 语义）。
@@ -190,6 +203,7 @@ func LoadConfigFrom(sources ...ports.Source) (*Config, error) {
 		DownloadsDir: values["NECA_DOWNLOAD_DIR"],
 		Installers:   values["NECA_INSTALLERS"],
 		AuditFile:    values["NECA_AUDIT_LOG"],
+		Language:     values["NECA_LANG"],
 	}
 	cfg.applyDefaults()
 	if err := cfg.parseNumbers(values); err != nil {
@@ -277,6 +291,9 @@ func (c *Config) applyDefaults() {
 	}
 	if c.AuditFile == "" {
 		c.AuditFile = filepath.Join(c.PKIDir, "audit.log")
+	}
+	if c.Language == "" {
+		c.Language = "zh-CN"
 	}
 }
 

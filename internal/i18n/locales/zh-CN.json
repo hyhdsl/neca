@@ -8,6 +8,7 @@
   "app.global.json": "  --json         结构化 JSON 输出",
   "app.global.dry_run": "  --dry-run      只打印将执行的动作，不落盘、不调 docker",
   "app.global.lang": "  --lang LANG    控制台语言：zh-CN（默认）或 en-US",
+  "app.global.config": "  --config FILE  JSON 配置路径（默认 /opt/ipsec/neca.json）",
   "app.global.quiet": "  -q, --quiet    仅输出错误",
   "app.footer": "输入 neca 无参数可进入交互向导；所有写操作建议先加 --dry-run。",
   "error.unknown_command": "未知子命令：%s",
@@ -37,5 +38,6 @@
   "cmd.platform.summary": "平台包与平台标注（platform add|set）",
   "cmd.package.summary": "从现有证书重建平台包（可选 zip）",
   "cmd.downloads.summary": "管理下载目录中的 zip（list|clean）",
+  "cmd.config.summary": "管理 JSON 配置文件（init/show/validate/export-env）",
   "cmd.wizard.summary": "进入交互向导"
 }

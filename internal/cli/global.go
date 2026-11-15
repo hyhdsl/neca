@@ -7,11 +7,13 @@ import (
 
 // globalOptions 是 M3 通用开关；命令专属开关仍由各命令解析。
 type globalOptions struct {
-	JSON    bool
-	DryRun  bool
-	Quiet   bool
-	Lang    string
-	Version bool
+	JSON       bool
+	DryRun     bool
+	Quiet      bool
+	Lang       string
+	Version    bool
+	Config     string
+	ReloadMode string
 }
 
 // parseGlobals 从任意位置提取通用开关，返回剩余参数。
@@ -29,6 +31,22 @@ func parseGlobals(args []string) ([]string, globalOptions, error) {
 			opts.Quiet = true
 		case arg == "--version" || arg == "-V":
 			opts.Version = true
+		case arg == "--config":
+			if index+1 >= len(args) {
+				return nil, opts, fmt.Errorf("--config 缺少文件路径")
+			}
+			opts.Config = args[index+1]
+			index++
+		case strings.HasPrefix(arg, "--config="):
+			opts.Config = strings.TrimPrefix(arg, "--config=")
+		case arg == "--reload-mode":
+			if index+1 >= len(args) {
+				return nil, opts, fmt.Errorf("--reload-mode 缺少值")
+			}
+			opts.ReloadMode = args[index+1]
+			index++
+		case strings.HasPrefix(arg, "--reload-mode="):
+			opts.ReloadMode = strings.TrimPrefix(arg, "--reload-mode=")
 		case arg == "--lang":
 			if index+1 >= len(args) {
 				return nil, opts, fmt.Errorf("--lang 缺少值")

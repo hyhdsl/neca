@@ -186,6 +186,8 @@ func replaceCommon(line string) string {
 		"[WARN] 审计日志:", "[WARN] audit log:",
 		"[ERR]  找不到证书:", "[ERR]  certificate not found:",
 		"[ERR]  证书已存在:", "[ERR]  certificate already exists:",
+		"[OK]   配置已写入:", "[OK]   Config written:",
+		"[OK]   配置有效:", "[OK]   Configuration valid:",
 		"(证书已删除)", "(deleted)",
 		"文件已删除", "file deleted",
 		"已处于吊销状态", "is already revoked",

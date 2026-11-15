@@ -11,7 +11,7 @@ name: neca-cli
 
 services:
   neca:
-    image: ${NECA_IMAGE:-neca:v0.1.1}
+    image: ${NECA_IMAGE:-neca:v0.2.0}
     container_name: neca-cli
     restart: "no"
     working_dir: /opt/ipsec

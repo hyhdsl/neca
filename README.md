@@ -55,6 +55,7 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 | `neca platform add\|set <CN> --platforms ...` | 补平台包 / 改平台标注 |
 | `neca package <CN> [--platforms ...] [--zip]` | 从现有证书重建平台包 |
 | `neca downloads list` / `clean [--expired\|--all]` | 管理下载 zip（默认 30 分钟过期） |
+| `neca config init\|show\|validate\|export-env` | 管理 `/opt/ipsec/neca.json` 设置 |
 | `neca`（无参数）/ `neca wizard` | 进入交互向导（菜单 0–10） |
 | `neca <命令> --json` | 结构化 JSON 输出 |
 | `neca <写命令> --dry-run` | 只打印将执行的动作，不落盘 |
@@ -78,15 +79,23 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 ```bash
 make build
-docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.1 .
-docker save neca:v0.1.1 -o /tmp/neca-v0.1.1.tar
-docker load < /tmp/neca-v0.1.1.tar
+docker build --build-arg TARGETARCH=amd64 -t neca:v0.2.0 .
+docker save neca:v0.2.0 -o /tmp/neca-v0.2.0.tar
+docker load < /tmp/neca-v0.2.0.tar
 install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
 neca list
 ```
 
-真实 `SERVER_ID` / `ORG` / `CA_CN` 只放在服务器 `/opt/ipsec/neca.env`（0600），
-不提交仓库。完整步骤、备份/回滚和 docker.sock 安全说明见 [deploy/README.md](deploy/README.md)。
+业务设置放在服务器 `/opt/ipsec/neca.json`（0600），`neca.env` 只保留
+`NECA_CONFIG=/opt/ipsec/neca.json` 作为 bootstrap；真实 `SERVER_ID` / `ORG` /
+`CA_CN` 不提交仓库。优先级：**CLI flag > 环境变量 > neca.json > 默认值**。
+完整步骤、备份/回滚和 docker.sock 安全说明见 [deploy/README.md](deploy/README.md)。
+
+```bash
+neca config show           # 查看有效设置
+neca config validate       # 校验 JSON + PKI
+neca config init --from-env  # 从现有环境变量生成 neca.json
+```
 
 语言切换是**单次命令**生效：
 

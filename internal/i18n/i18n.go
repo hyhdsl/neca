@@ -71,10 +71,21 @@ func NormalizeLanguage(raw string) (string, error) {
 
 // Resolve 按 --lang > NECA_LANG > LC_ALL/LANG > zh-CN 选择语言。
 func Resolve(explicit string) (string, error) {
+	return ResolveWithConfig(explicit, "")
+}
+
+// ResolveWithConfig 在环境变量与系统 LANG 之间插入 JSON 配置的 language。
+func ResolveWithConfig(explicit, configLang string) (string, error) {
 	if strings.TrimSpace(explicit) != "" {
 		return NormalizeLanguage(explicit)
 	}
-	for _, key := range []string{"NECA_LANG", "LC_ALL", "LANG"} {
+	if value := os.Getenv("NECA_LANG"); value != "" {
+		return NormalizeLanguage(value)
+	}
+	if strings.TrimSpace(configLang) != "" {
+		return NormalizeLanguage(configLang)
+	}
+	for _, key := range []string{"LC_ALL", "LANG"} {
 		if value := os.Getenv(key); value != "" {
 			if lang, err := NormalizeLanguage(value); err == nil {
 				return lang, nil

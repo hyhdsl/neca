@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "serverId": "vpn.example.com",
+  "org": "ExampleOrg",
+  "caCn": "ExampleOrg VPN CA",
+  "language": "zh-CN",
+  "auditLog": "/opt/ipsec/pki/audit.log",
+  "paths": {
+    "pkiDir": "/opt/ipsec/pki",
+    "caCert": "/opt/ipsec/pki/ca.crt",
+    "caKey": "/opt/ipsec/pki/ca.key",
+    "caDbDir": "/opt/ipsec/pki/ca",
+    "indexFile": "/opt/ipsec/pki/ca/index.txt",
+    "crlNumFile": "/opt/ipsec/pki/ca/crlnumber",
+    "caConf": "/opt/ipsec/pki/ca/openssl.cnf",
+    "crlDir": "/opt/ipsec/swanctl/x509crl",
+    "crlFile": "/opt/ipsec/swanctl/x509crl/ca.crl.pem",
+    "clientsDir": "/opt/ipsec/clients",
+    "metaDir": "/opt/ipsec/pki/meta",
+    "archiveDir": "/opt/ipsec/pki/archive",
+    "exportDir": "/opt/ipsec/exports",
+    "lockFile": "/opt/ipsec/pki/.lock"
+  },
+  "defaults": {
+    "days": 365,
+    "keyBits": 3072,
+    "p12Profile": "compat",
+    "installers": "none"
+  },
+  "reload": {
+    "mode": "creds",
+    "container": "ipsec-vpn",
+    "dockerBin": "docker"
+  },
+  "download": {
+    "dir": "/opt/ipsec/downloads",
+    "ttl": "30m",
+    "maxFiles": 50
+  }
+}

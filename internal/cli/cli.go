@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hyhdsl/neca/internal/core"
 	"github.com/hyhdsl/neca/internal/i18n"
 	"github.com/hyhdsl/neca/internal/version"
 )
@@ -48,7 +49,28 @@ func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "[ERR]  %v\n", err)
 		return ExitUsage
 	}
-	lang, err := i18n.Resolve(opts.Lang)
+	if opts.Config != "" {
+		if err := os.Setenv("NECA_CONFIG", opts.Config); err != nil {
+			fmt.Fprintf(stderr, "[ERR]  设置 NECA_CONFIG: %v\n", err)
+			return ExitRuntime
+		}
+	}
+	if opts.ReloadMode != "" {
+		if opts.ReloadMode != "creds" && opts.ReloadMode != "restart" {
+			fmt.Fprintf(stderr, "[ERR]  --reload-mode 必须是 creds 或 restart\n")
+			return ExitUsage
+		}
+		if err := os.Setenv("NECA_RELOAD_MODE", opts.ReloadMode); err != nil {
+			fmt.Fprintf(stderr, "[ERR]  设置 NECA_RELOAD_MODE: %v\n", err)
+			return ExitRuntime
+		}
+	}
+	configLang, err := core.ReadConfigLanguage(core.ConfigFilePath())
+	if err != nil {
+		fmt.Fprintf(stderr, "[ERR]  %v\n", err)
+		return ExitUsage
+	}
+	lang, err := i18n.ResolveWithConfig(opts.Lang, configLang)
 	if err != nil {
 		fmt.Fprintf(stderr, "[ERR]  %s\n", i18n.T("error.language", opts.Lang))
 		return ExitUsage
@@ -169,6 +191,7 @@ func newBuiltinRegistry() *Registry {
 	registry.MustRegister(newPlatformCommand())
 	registry.MustRegister(newPackageCommand())
 	registry.MustRegister(newDownloadsCommand())
+	registry.MustRegister(newConfigCommand())
 
 	// M3 交互向导。
 	registry.MustRegister(newWizardCommand(registry))

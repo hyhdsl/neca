@@ -10,27 +10,38 @@
 
 ```bash
 make build
-docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.1 .
-docker save neca:v0.1.1 | gzip > /tmp/neca-v0.1.1.tar.gz
-scp /tmp/neca-v0.1.1.tar.gz root@<SERVER>:/tmp/
+docker build --build-arg TARGETARCH=amd64 -t neca:v0.2.0 .
+docker save neca:v0.2.0 | gzip > /tmp/neca-v0.2.0.tar.gz
+scp /tmp/neca-v0.2.0.tar.gz root@<SERVER>:/tmp/
 ```
 
 服务器：
 
 ```bash
-docker load < /tmp/neca-v0.1.1.tar.gz
+docker load < /tmp/neca-v0.2.0.tar.gz
 ```
 
 ## 2. 部署文件
 
 ```bash
 install -m 0600 deploy/neca.env.example /opt/ipsec/neca.env
-# 编辑真实值；必须与 /opt/ipsec 现有路径一致
 install -m 0644 deploy/docker-compose.neca.yml /opt/ipsec/docker-compose.neca.yml
 chmod 0600 /opt/ipsec/neca.env
 ```
 
-真实 `SERVER_ID` / `ORG` / `CA_CN` 只写服务器 env 文件，不提交仓库。
+业务设置统一放在 `/opt/ipsec/neca.json`，`neca.env` 只保留 bootstrap：
+
+```bash
+# 新部署：从模板创建后编辑真实值
+install -m 0600 deploy/neca.json.example /opt/ipsec/neca.json
+
+# 从已有环境变量迁移（neca.env 仍含完整设置时）
+neca config init --from-env
+neca config validate
+```
+
+真实 `SERVER_ID` / `ORG` / `CA_CN` 只写服务器 `/opt/ipsec/neca.json`，
+不提交仓库。优先级：**CLI flag > 环境变量 > neca.json > 默认值**。
 
 ## 3. 安装便捷命令
 
@@ -43,7 +54,7 @@ neca list
 包装命令会在非交互环境自动加 `docker compose run -T`，并把当前 shell 的
 `NECA_LANG` 传入容器。
 
-## 4. 直接运行
+## 5. 直接运行
 
 ```bash
 cd /opt/ipsec
@@ -55,7 +66,7 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 写操作建议先 `--dry-run`，再在维护窗口执行。审计日志在
 `NECA_AUDIT_LOG`（默认 `/opt/ipsec/pki/audit.log`）。
 
-## 4. 备份与回滚
+## 6. 备份与回滚
 
 升级前至少备份：
 
@@ -66,9 +77,9 @@ tar -C /opt/ipsec -czf /root/ipsec-backup-$(date +%Y%m%d-%H%M%S).tar.gz pki clie
 回滚：恢复备份，并 `docker run --rm -v /opt/ipsec:/opt/ipsec ...` 使用旧镜像
 版本；strongSwan 容器本身不需要重建。
 
-## 5. 安全
+## 7. 安全
 
 - 挂载 `docker.sock` 等价于宿主 root 权限，仅 root 可执行/读取配置；
-- `/opt/ipsec/pki`、`clients`、`neca.env` 含 CA 私钥或 p12，权限保持 0600/0700；
+- `/opt/ipsec/pki`、`clients`、`neca.env`、`neca.json` 含敏感路径或 p12，权限保持 0600/0700；
 - 不要把镜像、env 文件或 `/opt/ipsec` 目录整体上传到公共 registry；
 - 容器默认 `network_mode: none`，只通过 docker socket 工作。

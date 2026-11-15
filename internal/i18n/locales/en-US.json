@@ -8,6 +8,7 @@
   "app.global.json": "  --json         structured JSON output",
   "app.global.dry_run": "  --dry-run      print planned actions; do not write or call docker",
   "app.global.lang": "  --lang LANG    console language: zh-CN (default) or en-US",
+  "app.global.config": "  --config FILE  JSON config path (default /opt/ipsec/neca.json)",
   "app.global.quiet": "  -q, --quiet    errors only",
   "app.footer": "Run neca without arguments for the interactive wizard; use --dry-run before production changes.",
   "error.unknown_command": "unknown command: %s",
@@ -37,5 +38,6 @@
   "cmd.platform.summary": "platform bundles and metadata (platform add|set)",
   "cmd.package.summary": "rebuild platform bundles from an existing certificate (optional zip)",
   "cmd.downloads.summary": "manage downloadable zips (list|clean)",
+  "cmd.config.summary": "manage the JSON config file (init/show/validate/export-env)",
   "cmd.wizard.summary": "enter the interactive wizard"
 }

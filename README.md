@@ -153,14 +153,14 @@ dist/               构建产物（不入库）
 | M2 | 写命令、Linux/macOS 平台包、安装脚本选项、p12 算法 profile、zip 打包与清理 | ✅ 2026-11-15 |
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
-| M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 + v0.1.1 语言补丁，仓库已 public） |
+| M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
 | M6 | Web 面板（含 30 分钟下载有效期与 Web 多语言） | 待开始 |
 
 ## 许可与二次开发
 
 - **许可**：**AGPL-3.0-only**（OSI 认可的开源协议；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码），全文见 [LICENSE](LICENSE)。
 - **二次开发**：必须保留原作者与仓库链接、保留 AGPL 许可与源码公开义务；详见 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
-- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；当前补丁版本为 [v0.1.1](https://github.com/hyhdsl/neca/releases/tag/v0.1.1)（语言修复）。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
+- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；当前版本为 [v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0)（JSON 配置）。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
 
 ## 文档
 
@@ -176,7 +176,7 @@ dist/               构建产物（不入库）
 
 ## 现状
 
-- M5 已完成：[v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 已发布并转 public；[v0.1.1](https://github.com/hyhdsl/neca/releases/tag/v0.1.1) 修复 `--lang` 命令输出翻译并补齐部署包装命令。Docker CLI 镜像已部署到服务器；read-only、issue/verify、平台包、zip/downloads、revoke/unrevoke、reissue、delete、JSON/dry-run/向导/audit 全流程通过；生产索引与 CRL 已恢复到测试前状态。
+- M5 已完成：[v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 已发布并转 public；[v0.1.1](https://github.com/hyhdsl/neca/releases/tag/v0.1.1) 修复 `--lang`；[v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0) 引入 JSON 配置。Docker CLI 镜像已部署到服务器；全功能测试通过；生产索引与 CRL 已恢复到测试前状态。
 - M3 已完成：`--json` / `--dry-run` / `--lang`、交互向导、审计日志、旧 flag 兼容、zh-CN/en-US 语言文件与 `make check-locales`。
 - M2 已完成：issue / reissue / revoke / unrevoke / delete / platform / package / downloads；Linux/macOS 平台包、p12 profile、zip TTL 与安装脚本。
 - M1 已完成：list / verify / export / index sync；影子对比（旧 bash vs 新 neca）diff = 0。

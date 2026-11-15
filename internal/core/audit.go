@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"strings"
 	"time"
 )
@@ -15,13 +16,22 @@ func AppendAudit(cfg *Config, action, cn, serial, result string) error {
 	if cfg == nil || strings.TrimSpace(cfg.AuditFile) == "" {
 		return nil
 	}
-	user := os.Getenv("USER")
-	if user == "" {
-		user = "unknown"
+	username := os.Getenv("USER")
+	if username == "" {
+		if current, err := user.Current(); err == nil && current.Username != "" {
+			username = current.Username
+		}
+	}
+	if username == "" {
+		if os.Getuid() == 0 {
+			username = "root"
+		} else {
+			username = "unknown"
+		}
 	}
 	line := fmt.Sprintf("%s %d:%s %s %s %s %s\n",
 		time.Now().UTC().Format(time.RFC3339),
-		os.Getuid(), sanitizeAudit(user),
+		os.Getuid(), sanitizeAudit(username),
 		sanitizeAudit(action), sanitizeAudit(cn), sanitizeAudit(serial), sanitizeAudit(result),
 	)
 	file, err := os.OpenFile(cfg.AuditFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)

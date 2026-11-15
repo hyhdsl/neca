@@ -646,13 +646,13 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 
 | 项 | 建议 |
 |---|---|
-| 仓库 | `github.com/hyhdsl/neca`，**私有**，已创建并推送基线（2026-11-15） |
+| 仓库 | `github.com/hyhdsl/neca`，**public**（2026-11-15 随 v0.1.0 转公开） |
 | 默认分支 | `main`，维护者内部合并必须 CI 通过；不接受外部 PR。私有免费计划暂无法启用分支保护，以 CI 为门禁 |
 | 分支命名 | `feat/…`、`fix/…`、`chore/…` |
 | 提交信息 | Conventional Commits（`feat:`、`fix:`、`chore:`、`docs:`） |
 | 版本 | SemVer；tag `v0.1.0` 起 |
 | 许可证 | **AGPL-3.0-only**（OSI 认可；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码）；见 `LICENSE` / `NOTICE` / `SECONDARY-DEVELOPMENT.md` |
-| 公开时间 | 首个正式 Release（v0.1.0）后由私有转为 public；之前保持私有 |
+| 公开时间 | ✅ v0.1.0 发布后（2026-11-15）已由私有转为 public |
 | PR 策略 | **永久禁止外部 PR**（仅维护者内部合并）；问题走 Issue，修改请 fork 并遵守 AGPL |
 | 二次开发 | 保留原作者与仓库链接、保留 AGPL 许可、履行源码公开义务；商业使用本身允许 |
 
@@ -687,7 +687,7 @@ Docker CLI 部署：镜像包含 openssl + 静态 docker CLI，挂载 `/opt/ipse
 `/opt/ipsec/neca.env`（0600）配合使用，真实 `SERVER_ID`/`ORG`/`CA_CN` 不进入仓库。
 详见 `deploy/README.md`。
 
-发布完成后：确认 `README.md` 顶部警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 已定稿，再将仓库从私有转为 public；首个正式 Release 之前不得转公开。外部 PR 始终不接收。
+发布已完成（2026-11-15）：v0.1.0 的二进制、checksums 与 GHCR 镜像已发布，仓库已转 public；README 警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已就位。外部 PR 始终不接收。
 
 ### 15.4 DSH 的 GitHub 集成
 
@@ -739,7 +739,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M2 | pki / issue / reissue / revoke / unrevoke / platform / package / delete；flock；失败清理；Linux/macOS 平台包；安装脚本选项；p12 profile；zip/TTL/downloads | 临时 PKI 全流程；影子测试（`--installers windows`）通过；Linux/macOS 包与 zip TTL 测试通过 | 3 人日 |
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
-| M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | 🔄 Docker 部署与全功能测试通过；待 tag/Release、public 切换与两周观察 | 1 人日 |
+| M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
 | M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`，含 30 分钟下载 TTL、鉴权与清理、Web 多语言） | 只读面板上线，与 CLI 共用 core；下载有效期与清理测试通过 | 4–5 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
@@ -777,7 +777,7 @@ gh auth login --hostname github.com --git-protocol https --web
 7. **下载目录与 TTL**：CLI 与 Web 共用 `NECA_DOWNLOAD_DIR`；Web 鉴权与清理策略在 M6 前确定；
 8. **社区语言包**：M3 已实现框架；外部 PR 不接收，通过 Issue/fork 提供；
 9. **阶段二 Web 权限方案**（§12.2 的三选一）；
-10. **首个正式 Release 后转 public 的检查清单**：AGPL LICENSE、README 警告、NOTICE、二次开发说明、分支保护/CI 门禁。
+10. ~~首个正式 Release 后转 public 的检查清单~~：已完成（2026-11-15）；后续仅保留旧脚本两周观察。
 
 ---
 
@@ -787,13 +787,13 @@ gh auth login --hostname github.com --git-protocol https --web
 
 | 项 | 状态 |
 |---|---|
-| 仓库 | `github.com/hyhdsl/neca`（私有）已创建；`main` 已于 2026-11-15 重写历史并推送安全清理提交 |
+| 仓库 | `github.com/hyhdsl/neca`（public）已发布 v0.1.0；`main` 历史已安全清理 |
 | 代码 | ✅ M3 已完成：M1/M2 全部命令 + JSON/dry-run/向导/audit/兼容 flag/语言文件；影子对比 diff=0 |
 | 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
 | 平台与打包 | ✅ Windows/Linux/macOS/Android/iOS；Linux/macOS 安装/卸载脚本已实现（默认 none）；zip/TTL/downloads |
 | p12 算法 | ✅ M2 已实现 `compat`/`modern` profile，默认兼容不变 |
 | 多语言 | ✅ M3：`internal/i18n` + zh-CN/en-US 语言文件、`--lang`/`NECA_LANG`、`make check-locales` |
-| 许可/公开 | ✅ **AGPL-3.0-only**；**永久禁止外部 PR**；首个正式 Release 后转 public |
+| 许可/公开 | ✅ **AGPL-3.0-only**；**永久禁止外部 PR**；v0.1.0 后已转 public |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
@@ -813,7 +813,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | 第 3 稿 | Linux/macOS 平台包、安装脚本选项、zip/TTL 下载管理、p12 profile、多语言语言包；许可与仓库公开/PR 策略草案；README 顶部警告 |
 | 2026-11-15 | M2 | 写命令落地：issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、安装脚本选项、p12 profile、zip/TTL；影子对比覆盖写命令与 issue |
 | 2026-11-15 | 第 4 稿 | 许可改为 **AGPL-3.0-only**，**禁止外部 PR**；实现 Linux/macOS 安装/卸载脚本；M3：通用 `--json`/`--dry-run`/`--lang`、交互向导、audit、兼容 flag、语言包与 `check-locales` |
-| 2026-11-15 | M5 | Docker CLI 镜像与生产 compose；服务器全流程测试通过（issue/verify/平台包/zip/revoke/unrevoke/reissue/delete/JSON/dry-run/向导/audit）；索引/CRL 已恢复基线；release.yml 与 docker.yml 落地 |
+| 2026-11-15 | M5 | Docker CLI 镜像与生产 compose；服务器全流程测试通过（issue/verify/平台包/zip/revoke/unrevoke/reissue/delete/JSON/dry-run/向导/audit）；索引/CRL 已恢复基线；v0.1.0 Release + GHCR 镜像发布；仓库转 public |
 
 ---
 

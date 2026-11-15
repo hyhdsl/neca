@@ -21,14 +21,23 @@ func writeJSONError(w http.ResponseWriter, status int, code, message string) {
 }
 
 func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
+	state := s.helperState(r.Context())
+	writable := !s.cfg.Web.ReadOnly && state.Available && !state.ReadOnly
+	operations := []string{"read"}
+	if writable {
+		operations = append(operations, "issue", "revoke", "unrevoke", "reissue")
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"webEnabled": s.cfg.Web.Enabled,
 		"readOnly":   s.cfg.Web.ReadOnly,
+		"writable":   writable,
+		"helper":     state,
 		"passkey": map[string]any{
 			"enabled": s.cfg.Web.Passkey.Enabled, "implemented": false,
 		},
-		"operations": []string{"read"},
+		"operations": operations,
 		"m6a":        true,
+		"m6b":        true,
 	})
 }
 

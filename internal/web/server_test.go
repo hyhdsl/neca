@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/hyhdsl/neca/internal/core"
+	"github.com/hyhdsl/neca/internal/helper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -310,6 +312,105 @@ func TestPasskeyRoutesAbsent(t *testing.T) {
 		if resp.StatusCode != http.StatusNotFound {
 			t.Fatalf("passkey route %s = %d, want 404", path, resp.StatusCode)
 		}
+	}
+}
+
+func startFakeHelper(t *testing.T) string {
+	t.Helper()
+	socket := filepath.Join(t.TempDir(), "helper.sock")
+	listener, err := net.Listen("unix", socket)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/healthz":
+			_ = json.NewEncoder(w).Encode(helper.Status{OK: true, Protocol: helper.ProtocolVersion, Version: "test", ReadOnly: false})
+		case "/v1/execute":
+			var req helper.Request
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			_ = json.NewEncoder(w).Encode(helper.Response{OK: true, Protocol: helper.ProtocolVersion, Result: &helper.Result{CN: req.CN, Serial: "ABC123"}})
+		default:
+			http.NotFound(w, r)
+		}
+	})}
+	go server.Serve(listener)
+	t.Cleanup(func() { _ = server.Close() })
+	return socket
+}
+
+func csrfToken(t *testing.T, h *webHarness) string {
+	t.Helper()
+	for _, cookie := range h.jar.Cookies(mustURL(t, h.http.URL+"/")) {
+		if cookie.Name == csrfCookieName {
+			return cookie.Value
+		}
+	}
+	t.Fatal("missing CSRF cookie")
+	return ""
+}
+
+func postJSON(t *testing.T, h *webHarness, path, token, body string) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodPost, h.http.URL+path, strings.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-CSRF-Token", token)
+	client := &http.Client{Jar: h.jar, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return resp
+}
+
+func TestWebWriteAPIWithHelper(t *testing.T) {
+	h := newWebHarness(t)
+	defer h.close()
+	h.login(t)
+	socket := startFakeHelper(t)
+	h.server.cfg.Web.ReadOnly = false
+	h.server.helperClient = helper.NewClient(socket)
+	token := csrfToken(t, h)
+
+	body := `{"requestId":"req-1","cn":"TMP01","days":30,"platforms":["windows"],"p12Profile":"compat"}`
+	resp := postJSON(t, h, "/api/v1/certs", token, body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("write API status = %d", resp.StatusCode)
+	}
+	var result map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if result["ok"] != true {
+		t.Fatalf("write result = %+v", result)
+	}
+
+	resp = h.do(t, http.MethodGet, "/api/v1/capabilities", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("capabilities status = %d", resp.StatusCode)
+	}
+	var capabilities struct {
+		Writable bool        `json:"writable"`
+		Helper   helperState `json:"helper"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&capabilities); err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if !capabilities.Writable || !capabilities.Helper.Available {
+		t.Fatalf("capabilities = %+v", capabilities)
+	}
+
+	h.server.cfg.Web.ReadOnly = true
+	resp = postJSON(t, h, "/api/v1/certs", token, body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("read-only write status = %d, want 403", resp.StatusCode)
 	}
 }
 

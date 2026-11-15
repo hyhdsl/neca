@@ -1,4 +1,5 @@
 {{define "content"}}
+{{if .Notice}}<div class="alert ok" role="status" data-testid="write-notice">{{.Notice}}</div>{{end}}
 {{with .Cert}}
 <section class="detail-grid">
   <article class="panel">
@@ -20,7 +21,27 @@
     {{else}}
       <p class="muted">没有可显示的检查结果。</p>
     {{end}}
-    <p class="muted small">Web 面板在 M6a 只读；签发、吊销、重签请使用 CLI。</p>
+    {{if $.Writable}}
+    <div class="actions" data-testid="cert-actions">
+      {{if eq .Status "revoked"}}
+      <form method="post" action="/certs/{{.CN}}/unrevoke" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+        <button type="submit" class="button secondary" data-testid="unrevoke">恢复吊销</button>
+      </form>
+      {{else}}
+      <form method="post" action="/certs/{{.CN}}/revoke" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+        <button type="submit" class="button danger" data-testid="revoke">吊销</button>
+      </form>
+      {{end}}
+      <form method="post" action="/certs/{{.CN}}/reissue" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+        <button type="submit" class="button secondary" data-testid="reissue">重签</button>
+      </form>
+    </div>
+    {{else}}
+    <p class="muted small">当前为只读，或 root helper 不可用；签发/吊销/重签请使用 CLI 或由 root 启用 helper。</p>
+    {{end}}
     <a href="/certs" class="link">返回证书列表</a>
   </article>
 </section>

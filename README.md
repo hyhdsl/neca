@@ -57,7 +57,7 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 | `neca downloads list` / `clean [--expired\|--all]` | 管理下载 zip（默认 30 分钟过期） |
 | `neca config init\|show\|validate\|export-env` | 管理 `/opt/ipsec/neca.json` 设置 |
 | `neca web status` | 查看 Web 配置、只读模式、空闲超时与 helper 状态 |
-| `neca web readonly status\|on\|off` | 只读开关；M6a 的 `off` 会拒绝（helper 尚未实现） |
+| `neca web readonly status\|on\|off` | 只读开关；`off` 需要运行中的 root helper |
 | `neca web idle-timeout status\|<duration>` | 查看/设置空闲超时（5m–24h，绝对上限 24h） |
 | `neca web hash-password` | 从 stdin 生成 bcrypt 哈希（用于 `web-secrets/password.hash`） |
 | `neca`（无参数）/ `neca wizard` | 进入交互向导（菜单 0–10） |
@@ -79,6 +79,11 @@ neca list
 
 # 可选只读 Web（服务端）
 docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web up -d web
+
+# M6b：加 root helper 后可显式开启写能力
+mkdir -p /run/neca
+docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web --profile web-write up -d web web-helper
+neca web readonly off
 ```
 
 Web 只监听 `127.0.0.1:18080`，通过系统原生 OpenSSH 本地转发或反向代理访问；
@@ -86,8 +91,9 @@ Web 只监听 `127.0.0.1:18080`，通过系统原生 OpenSSH 本地转发或反�
 [docs/web-panel-development.md](docs/web-panel-development.md)，部署步骤见
 [docs/deploy.md](docs/deploy.md)。
 
-M6b 才会增加 root helper 与 issue/revoke/reissue 写能力；M6a 的
-`neca web readonly off` 会拒绝，避免出现“配置可写但没有写边界”的半状态。
+M6b 增加独立 root helper 与 issue/revoke/unrevoke/reissue 写能力。Web 容器
+始终非 root；只有 helper 容器挂载 CA 私钥与 docker.sock。默认 `readOnly=true`，
+root 执行 `neca web readonly off` 且 helper 健康后才开放写操作。
 
 平台包支持 Windows / Linux / macOS / Android / iOS；Linux/macOS 安装/卸载脚本已实现，但仍默认关闭，需 `--installers` 显式开启。
 
@@ -147,7 +153,7 @@ neca list
 ```text
 cmd/neca/           CLI 入口（薄壳，仅转发给 internal/cli）
 cmd/necad/          Web 服务端入口（仅 neca-web 镜像）
-cmd/neca-web-helper/ M6b root helper 占位（M6a 不开放写能力）
+cmd/neca-web-helper/ M6b root helper（Unix socket 白名单写边界）
 internal/cli/       参数解析、子命令注册表、输出渲染
 internal/core/      业务核心（M1 只读 + M2 写命令 + M3 audit；不依赖展示层）
 internal/web/       Go 模板、会话、只读 API、静态资源与 Web 配置
@@ -196,7 +202,7 @@ dist/               构建产物（不入库）
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
 | M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
 | M6a | 只读 Web 面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite + neca-web 双镜像 | 🟡 已实现，待发布；见 [docs/web-panel-development.md](docs/web-panel-development.md) |
-| M6b | root helper、issue/revoke/reissue 写能力 | ⏳ 待开发 |
+| M6b | root helper、issue/revoke/unrevoke/reissue 写能力、Web 写 API/UI | 🟡 已实现，待服务器部署 |
 
 ## 许可与二次开发
 

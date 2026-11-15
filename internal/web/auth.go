@@ -118,9 +118,9 @@ func (s *Server) validCSRF(r *http.Request) bool {
 	if err != nil || cookie.Value == "" {
 		return false
 	}
-	provided := r.FormValue("csrf_token")
+	provided := r.Header.Get("X-CSRF-Token")
 	if provided == "" {
-		provided = r.Header.Get("X-CSRF-Token")
+		provided = r.FormValue("csrf_token")
 	}
 	return subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(provided)) == 1
 }

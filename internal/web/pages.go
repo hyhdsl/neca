@@ -1,10 +1,15 @@
 package web
 
 import (
+	"context"
+	"errors"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/hyhdsl/neca/internal/core"
+	"github.com/hyhdsl/neca/internal/helper"
 )
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +96,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, "dashboard", pageData{
 		Title: "概览", Nav: "dashboard", Stats: stats,
 		Certs: list.Certs, Downloads: downloads, CRLRevoked: list.CRLRevoked,
+		Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 	})
 }
 
@@ -105,7 +111,7 @@ func (s *Server) handleCertList(w http.ResponseWriter, r *http.Request) {
 	certs := filterCerts(list.Certs, query, status)
 	s.render(w, r, "certs", pageData{
 		Title: "证书", Nav: "certs", Certs: certs, Query: query, Status: status,
-		CRLRevoked: list.CRLRevoked,
+		CRLRevoked: list.CRLRevoked, Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 	})
 }
 
@@ -126,6 +132,8 @@ func (s *Server) handleCertDetail(w http.ResponseWriter, r *http.Request) {
 	}
 	s.render(w, r, "cert_detail", pageData{
 		Title: "证书 " + cn, Nav: "certs", Cert: cert, Verify: report,
+		Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
+		Notice: noticeText(r.URL.Query().Get("notice")),
 	})
 }
 
@@ -135,9 +143,115 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 		s.renderError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
-	s.render(w, r, "downloads", pageData{Title: "下载", Nav: "downloads", Downloads: views})
+	s.render(w, r, "downloads", pageData{Title: "下载", Nav: "downloads", Downloads: views, Writable: s.writable(r.Context())})
+}
+
+func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {
+	if !s.writable(r.Context()) {
+		s.renderError(w, r, http.StatusForbidden, "Web 面板当前为只读或 root helper 不可用")
+		return
+	}
+	s.render(w, r, "cert_new", pageData{
+		Title: "签发证书", Nav: "certs", Writable: true, HelperAvailable: true,
+		Days: s.cfg.DefaultDays, Platforms: "windows,android", P12Profile: string(s.cfg.P12Profile),
+	})
+}
+
+func (s *Server) handleNewCert(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil || !s.validCSRF(r) {
+		http.Error(w, "CSRF token 无效", http.StatusForbidden)
+		return
+	}
+	cn := strings.TrimSpace(r.FormValue("cn"))
+	days, err := strconv.Atoi(strings.TrimSpace(r.FormValue("days")))
+	if err != nil {
+		s.renderError(w, r, http.StatusBadRequest, "有效期必须是整数天数")
+		return
+	}
+	platforms := splitPlatforms(r.FormValue("platforms"))
+	profile := r.FormValue("p12Profile")
+	response, err := s.executeWrite(r.Context(), helper.Request{
+		RequestID: newWriteRequestID(), Op: helper.OpIssue, CN: cn, Days: days,
+		Platforms: platforms, P12Profile: profile,
+	})
+	if err != nil {
+		s.renderWriteError(w, r, err)
+		return
+	}
+	notice := "issued"
+	if response.Result != nil && response.Result.Already {
+		notice = "already"
+	}
+	http.Redirect(w, r, "/certs/"+url.PathEscape(cn)+"?notice="+notice, http.StatusSeeOther)
+}
+
+func (s *Server) handleCertAction(op helper.Op) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cn := r.PathValue("cn")
+		if err := r.ParseForm(); err != nil || !s.validCSRF(r) {
+			http.Error(w, "CSRF token 无效", http.StatusForbidden)
+			return
+		}
+		response, err := s.executeWrite(r.Context(), helper.Request{
+			RequestID: newWriteRequestID(), Op: op, CN: cn,
+		})
+		if err != nil {
+			s.renderWriteError(w, r, err)
+			return
+		}
+		notice := string(op)
+		if response.Result != nil && response.Result.Already {
+			notice = "already"
+		}
+		http.Redirect(w, r, "/certs/"+url.PathEscape(cn)+"?notice="+url.QueryEscape(notice), http.StatusSeeOther)
+	}
 }
 
 func (s *Server) renderError(w http.ResponseWriter, r *http.Request, status int, message string) {
 	s.renderStatus(w, r, status, "error", pageData{Title: "错误", Nav: "", Error: message})
+}
+
+func (s *Server) renderWriteError(w http.ResponseWriter, r *http.Request, err error) {
+	var failure *writeFailure
+	if errors.As(err, &failure) {
+		s.renderError(w, r, failure.Status, failure.Message)
+		return
+	}
+	s.renderError(w, r, http.StatusInternalServerError, err.Error())
+}
+
+func (s *Server) writable(ctx context.Context) bool {
+	state := s.helperState(ctx)
+	return !s.cfg.Web.ReadOnly && state.Available && !state.ReadOnly
+}
+
+func (s *Server) helperAvailable(r *http.Request) bool {
+	return s.helperState(r.Context()).Available
+}
+
+func splitPlatforms(raw string) []string {
+	var platforms []string
+	for _, part := range strings.Split(raw, ",") {
+		if part = strings.TrimSpace(part); part != "" {
+			platforms = append(platforms, part)
+		}
+	}
+	return platforms
+}
+
+func noticeText(code string) string {
+	switch code {
+	case "issued":
+		return "证书已签发"
+	case "reissue":
+		return "证书已重签并归档旧证书"
+	case "revoke":
+		return "证书已吊销，CRL 已更新"
+	case "unrevoke":
+		return "证书已恢复，CRL 已更新"
+	case "already":
+		return "操作已完成过，未重复修改"
+	default:
+		return ""
+	}
 }

@@ -73,7 +73,8 @@ func main() {
 		Config: cfg, Store: core.NewFileIndexStore(cfg.IndexFile, cfg.LockFile),
 		OpenSSL: core.NewOpenSSL(runner), PasswordHash: passwordHash, SessionKey: sessionKey,
 		ProxySecret: proxySecret, SecureCookies: parseBool(os.Getenv("NECA_WEB_SECURE_COOKIES")),
-		Audit: audit,
+		HelperSocket: strings.TrimSpace(os.Getenv("NECA_WEB_HELPER_SOCKET")),
+		Audit:        audit,
 	})
 	if err != nil {
 		log.Fatal(err)

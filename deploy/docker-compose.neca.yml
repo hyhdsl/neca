@@ -23,6 +23,7 @@ services:
     volumes:
       - /opt/ipsec:/opt/ipsec
       - /var/run/docker.sock:/var/run/docker.sock
+      - /run/neca:/run/neca:ro
     network_mode: "none"
     entrypoint: ["/usr/local/bin/neca"]
     command: ["list"]
@@ -49,6 +50,7 @@ services:
       NECA_WEB_SESSION_KEY_FILE: /opt/ipsec/web-secrets/session.key
       NECA_WEB_PASSWORD_HASH_FILE: /opt/ipsec/web-secrets/password.hash
       NECA_WEB_AUDIT_LOG: /opt/ipsec/web-secrets/web-audit.log
+      NECA_WEB_HELPER_SOCKET: /run/neca/web-helper.sock
       # 反向代理 TLS 终止后在 neca.env 设置 NECA_WEB_SECURE_COOKIES=1；
       # OpenSSH 本地转发 HTTP 时保持未设置/0。
     volumes:
@@ -63,9 +65,36 @@ services:
       - /opt/ipsec/web-secrets/session.key:/opt/ipsec/web-secrets/session.key:ro
       - /opt/ipsec/web-secrets/password.hash:/opt/ipsec/web-secrets/password.hash:ro
       - /opt/ipsec/web-secrets/web-audit.log:/opt/ipsec/web-secrets/web-audit.log:rw
+      - /run/neca:/run/neca:ro
     healthcheck:
       test: ["CMD", "/usr/local/bin/necad", "-healthcheck"]
       interval: 30s
       timeout: 4s
       start_period: 5s
       retries: 3
+
+  web-helper:
+    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v0.3.0}
+    container_name: neca-web-helper
+    profiles: ["web-write"]
+    restart: unless-stopped
+    # helper 是唯一 root 写边界；只挂载 PKI、docker.sock 与 helper socket。
+    user: "0:0"
+    network_mode: "none"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - ${NECA_ENV_FILE:-/opt/ipsec/neca.env}
+    environment:
+      NECA_CONFIG: /opt/ipsec/neca.json
+      NECA_WEB_HELPER_SOCKET: /run/neca/web-helper.sock
+      NECA_WEB_HELPER_GID: "10001"
+    volumes:
+      - /opt/ipsec:/opt/ipsec
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/neca:/run/neca
+    entrypoint: ["/usr/local/bin/neca-web-helper"]
+    command: ["-socket", "/run/neca/web-helper.sock"]

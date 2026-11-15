@@ -2,10 +2,15 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hyhdsl/neca/internal/helper"
 )
 
 func setupWebCLI(t *testing.T) (string, string) {
@@ -43,6 +48,52 @@ func runCLIWithInput(args []string, input string) (int, string, string) {
 	return code, out.String(), errBuf.String()
 }
 
+func startCLIHelper(t *testing.T, readOnly bool) string {
+	t.Helper()
+	socket := filepath.Join(t.TempDir(), "helper.sock")
+	listener, err := net.Listen("unix", socket)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(socket, 0o660); err != nil {
+		t.Fatal(err)
+	}
+	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/healthz" {
+			_ = json.NewEncoder(w).Encode(helper.Status{OK: true, Protocol: helper.ProtocolVersion, Version: "test", ReadOnly: readOnly})
+			return
+		}
+		http.NotFound(w, r)
+	})}
+	go server.Serve(listener)
+	t.Cleanup(func() { _ = server.Close() })
+	return socket
+}
+
+func TestWebReadOnlyOffWithHelper(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("readonly off requires root")
+	}
+	configPath, pki := setupWebCLI(t)
+	if err := os.WriteFile(filepath.Join(pki, "ca.key"), []byte("dummy"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	socket := startCLIHelper(t, true)
+	t.Setenv("NECA_WEB_HELPER_SOCKET", socket)
+	code, out, errOut := runCLI("web", "readonly", "off")
+	if code != ExitOK || !strings.Contains(out, "可写") || !strings.Contains(errOut, "需重启") {
+		t.Fatalf("readonly off: code=%d out=%q err=%q", code, out, errOut)
+	}
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `"readOnly": false`) {
+		t.Fatalf("config not writable: %s", data)
+	}
+}
+
 func TestWebStatusAndReadOnly(t *testing.T) {
 	setupWebCLI(t)
 	code, out, errOut := runCLI("web", "status")
@@ -64,8 +115,8 @@ func TestWebStatusAndReadOnly(t *testing.T) {
 	if code != ExitPrecondition {
 		t.Fatalf("readonly off must be rejected in M6a: code=%d err=%q", code, errOut)
 	}
-	if !strings.Contains(errOut, "M6a") {
-		t.Fatalf("off error should explain M6a: %q", errOut)
+	if !strings.Contains(errOut, "helper") {
+		t.Fatalf("off error should explain helper availability: %q", errOut)
 	}
 }
 

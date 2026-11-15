@@ -1,6 +1,6 @@
 # neca Web 面板开发文档（M6）
 
-> 状态：**M6a 已实现（代码/测试/镜像验证），待发布；M6b 未开始**。日期：2026-11-15。
+> 状态：**M6a/M6b 代码已实现；M6a 镜像验证完成，M6b 待正式部署**。日期：2026-11-15。
 > 设计依据：[web-panel.md](web-panel.md)。本文把已确认的 Q1–Q11 落成可执行的开发任务。
 > 目标：M6a 只读面板 + M6b helper 写能力；默认 lite，Web 作为可选 neca-web 面板包。
 
@@ -383,3 +383,24 @@ type PasskeyAuthenticator interface {
 - Web 容器使用固定 UID/GID 10001、只读根文件系统、`no-new-privileges`、无 docker.sock。
 
 未发现与 Q1–Q11 的冲突。
+
+## 19. M6b 实施记录（2026-11-15）
+
+已落地：
+
+- `internal/helper`：Unix socket HTTP 协议、请求白名单、CN/days/platform/profile 校验、请求 ID 幂等缓存、串行执行、结构化结果；
+- `cmd/neca-web-helper`：root 进程，socket `/run/neca/web-helper.sock`，0660 root:neca-web（GID 10001）；
+- helper 端点：`GET /healthz`、`POST /v1/execute`；只接受 issue/revoke/unrevoke/reissue；
+- Web 写能力：`POST /api/v1/certs`、`/revoke`、`/unrevoke`、`/reissue`，以及 `/certs/new` 与证书详情写按钮；
+- 双检查：Web 配置 readOnly 与 helper 实时状态；CSRF 对表单和 API（`X-CSRF-Token`）强制；
+- `neca web readonly off`：检查 helper 状态、socket 权限、CA 私钥存在后原子写配置；helper 每次请求重新读取 readOnly；
+- compose 新增 `web-write` profile：helper 独立 root 容器，挂载 PKI、docker.sock、`/run/neca`；Web/lite 只共享 socket；
+- 测试：helper 协议/客户端/只读拒绝/requestId 冲突；Web 写 API 与 helper 假服务；CLI readonly off；`go test -race`。
+
+尚未完成 / 限制：
+
+- 生产服务器正式部署尚未执行（下一步）；
+- Playwright/axe 浏览器验收；
+- SIGHUP 热重载；
+- helper 幂等缓存为进程内（重启后丢失），M6b 可接受；
+- delete 不开放。

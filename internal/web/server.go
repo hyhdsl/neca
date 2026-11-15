@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/hyhdsl/neca/internal/core"
+	"github.com/hyhdsl/neca/internal/helper"
 	"github.com/hyhdsl/neca/internal/version"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -35,9 +36,10 @@ type Options struct {
 	AllowNonLoopback bool
 	Audit            io.Writer
 	Now              func() time.Time
+	HelperSocket     string
 }
 
-// Server 是只读 Web 面板的 HTTP 服务。
+// Server 是 Web 面板的 HTTP 服务；写能力由 helper 与 readOnly 双重控制。
 type Server struct {
 	cfg              *core.Config
 	store            *core.FileIndexStore
@@ -49,6 +51,7 @@ type Server struct {
 	sessions         *sessionManager
 	limiter          *loginLimiter
 	audit            *auditLogger
+	helperClient     *helper.Client
 	now              func() time.Time
 	templates        map[string]*template.Template
 	static           http.Handler
@@ -92,12 +95,17 @@ func New(opts Options) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	var helperClient *helper.Client
+	if strings.TrimSpace(opts.HelperSocket) != "" {
+		helperClient = helper.NewClient(opts.HelperSocket)
+	}
 	return &Server{
 		cfg: opts.Config, store: opts.Store, oss: opts.OpenSSL,
 		passwordHash: opts.PasswordHash, proxySecret: []byte(opts.ProxySecret),
 		secureCookies: opts.SecureCookies, allowNonLoopback: opts.AllowNonLoopback,
-		sessions: newSessionManager(opts.SessionKey, idle, now),
-		limiter:  newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
+		helperClient: helperClient,
+		sessions:     newSessionManager(opts.SessionKey, idle, now),
+		limiter:      newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
 		templates: templates, static: http.FileServer(http.FS(staticFS)),
 	}, nil
 }
@@ -111,13 +119,22 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /logout", s.handleLogout)
 	mux.HandleFunc("GET /{$}", s.handleDashboard)
 	mux.HandleFunc("GET /certs", s.handleCertList)
+	mux.HandleFunc("GET /certs/new", s.handleNewCertPage)
+	mux.HandleFunc("POST /certs/new", s.handleNewCert)
 	mux.HandleFunc("GET /certs/{cn}", s.handleCertDetail)
+	mux.HandleFunc("POST /certs/{cn}/revoke", s.handleCertAction(helper.OpRevoke))
+	mux.HandleFunc("POST /certs/{cn}/unrevoke", s.handleCertAction(helper.OpUnrevoke))
+	mux.HandleFunc("POST /certs/{cn}/reissue", s.handleCertAction(helper.OpReissue))
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", s.static))
 	mux.HandleFunc("GET /api/v1/capabilities", s.handleCapabilities)
 	mux.HandleFunc("GET /api/v1/certs", s.handleAPICerts)
 	mux.HandleFunc("GET /api/v1/certs/{cn}", s.handleAPICertDetail)
 	mux.HandleFunc("GET /api/v1/certs/{cn}/verify", s.handleAPIVerify)
+	mux.HandleFunc("POST /api/v1/certs", s.handleAPIIssue)
+	mux.HandleFunc("POST /api/v1/certs/{cn}/revoke", s.handleAPICertAction(helper.OpRevoke))
+	mux.HandleFunc("POST /api/v1/certs/{cn}/unrevoke", s.handleAPICertAction(helper.OpUnrevoke))
+	mux.HandleFunc("POST /api/v1/certs/{cn}/reissue", s.handleAPICertAction(helper.OpReissue))
 	mux.HandleFunc("GET /api/v1/downloads", s.handleAPIDownloads)
 	mux.HandleFunc("GET /api/v1/downloads/{id}", s.handleAPIDownload)
 	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) })
@@ -144,17 +161,17 @@ func (s *Server) securityHeaders(next http.Handler) http.Handler {
 	})
 }
 
-// readOnlyGuard 在 M6a 强制只读。
+// readOnlyGuard 保留 M6a 的安全兜底，并放行 M6b 的写路由。
 //
-// 登录/登出是认证协议的一部分，允许 POST；其余非 GET/HEAD 方法一律 403。
-// 即使以后增加写 API，也必须由 helper 可用性和 readOnly 双重检查。
+// 写路由自身必须再次检查 readOnly、helper 可用性与 CSRF；这里的放行
+// 不是授权，只是让请求到达 handler。未知 POST 仍然 403。
 func (s *Server) readOnlyGuard(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet || r.Method == http.MethodHead {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if r.URL.Path == "/login" || r.URL.Path == "/logout" {
+		if r.URL.Path == "/login" || r.URL.Path == "/logout" || isWriteEndpoint(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -164,6 +181,19 @@ func (s *Server) readOnlyGuard(next http.Handler) http.Handler {
 		}
 		http.Error(w, "Web 面板当前为只读模式", http.StatusForbidden)
 	})
+}
+
+func isWriteEndpoint(path string) bool {
+	if path == "/certs/new" || path == "/api/v1/certs" {
+		return true
+	}
+	if strings.HasPrefix(path, "/api/v1/certs/") {
+		return strings.HasSuffix(path, "/revoke") || strings.HasSuffix(path, "/unrevoke") || strings.HasSuffix(path, "/reissue")
+	}
+	if strings.HasPrefix(path, "/certs/") {
+		return strings.HasSuffix(path, "/revoke") || strings.HasSuffix(path, "/unrevoke") || strings.HasSuffix(path, "/reissue")
+	}
+	return false
 }
 
 func (s *Server) authenticate(next http.Handler) http.Handler {
@@ -247,26 +277,32 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 
 // pageData 是所有模板共用的数据。
 type pageData struct {
-	Title      string
-	Nav        string
-	ReadOnly   bool
-	UserCN     string
-	ClientCN   string
-	CSRF       string
-	Version    string
-	Now        time.Time
-	Flash      string
-	Error      string
-	Login      bool
-	Next       string
-	Stats      dashboardStats
-	Certs      []core.WebCert
-	Query      string
-	Status     string
-	Cert       *core.WebCert
-	Verify     *core.VerifyReport
-	Downloads  []downloadView
-	CRLRevoked int
+	Title           string
+	Nav             string
+	ReadOnly        bool
+	Writable        bool
+	HelperAvailable bool
+	UserCN          string
+	ClientCN        string
+	CSRF            string
+	Version         string
+	Now             time.Time
+	Flash           string
+	Error           string
+	Login           bool
+	Next            string
+	Stats           dashboardStats
+	Certs           []core.WebCert
+	Query           string
+	Status          string
+	Cert            *core.WebCert
+	Verify          *core.VerifyReport
+	Downloads       []downloadView
+	CRLRevoked      int
+	Notice          string
+	Days            int
+	Platforms       string
+	P12Profile      string
 }
 
 type dashboardStats struct {
@@ -350,7 +386,7 @@ func loadTemplates() (map[string]*template.Template, error) {
 		"join":      strings.Join,
 		"hasPrefix": strings.HasPrefix,
 	}
-	pages := []string{"login", "dashboard", "certs", "cert_detail", "downloads", "error"}
+	pages := []string{"login", "dashboard", "certs", "cert_new", "cert_detail", "downloads", "error"}
 	out := make(map[string]*template.Template, len(pages))
 	for _, page := range pages {
 		tmpl, err := template.New("layout").Funcs(funcs).ParseFS(assets, "templates/layout.html", "templates/"+page+".html")

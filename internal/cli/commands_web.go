@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -9,13 +10,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/hyhdsl/neca/internal/core"
+	"github.com/hyhdsl/neca/internal/helper"
 )
 
 // newWebCommand 构造 neca web 管理命令。
 //
 // lite 镜像只带管理命令，不包含 necad；Web 服务由 neca-web 镜像启动。
-// readonly off 在 M6a 永远拒绝：helper 尚未实现，不能留下“配置已可写、
-// 实际没有写边界”的半状态。
+// readonly off 需要 root helper 可用，避免出现“配置已可写、实际没有
+// 写边界”的半状态。
 func newWebCommand() Command {
 	return Command{
 		Name:    "web",
@@ -51,12 +53,14 @@ func runWebStatus(env Env) int {
 	}
 	idle, idleErr := cfg.Web.IdleTimeout()
 	validationErr := cfg.Web.Validate()
-	helper := helperSocketState()
+	helperStatus, helperErr := probeHelper(context.Background())
+	helperText := helperSummary(helperStatus, helperErr)
 	if env.JSON {
 		data := map[string]any{
 			"enabled":       cfg.Web.Enabled,
 			"listen":        cfg.Web.Listen,
 			"readOnly":      cfg.Web.ReadOnly,
+			"writable":      !cfg.Web.ReadOnly && helperErr == nil && helperStatus != nil && !helperStatus.ReadOnly,
 			"idleTimeout":   cfg.Web.IdleTimeoutRaw,
 			"absoluteLimit": core.AbsoluteWebSessionTimeout.String(),
 			"adminCNs":      cfg.Web.AdminCNs,
@@ -65,7 +69,22 @@ func runWebStatus(env Env) int {
 				"rpId":    cfg.Web.Passkey.RPID,
 				"rpName":  cfg.Web.Passkey.RPName,
 			},
-			"helper": helper,
+			"helper": map[string]any{
+				"socket": helperSocketPath(), "available": helperErr == nil,
+				"readOnly": helperStatus != nil && helperStatus.ReadOnly,
+				"version": func() string {
+					if helperStatus != nil {
+						return helperStatus.Version
+					}
+					return ""
+				}(),
+				"error": func() string {
+					if helperErr != nil {
+						return helperErr.Error()
+					}
+					return ""
+				}(),
+			},
 		}
 		if idleErr == nil {
 			data["idleTimeoutEffective"] = idle.String()
@@ -85,7 +104,11 @@ func runWebStatus(env Env) int {
 	fmt.Fprintf(env.Stdout, "[INFO] 监听: %s\n", cfg.Web.Listen)
 	mode := "只读"
 	if !cfg.Web.ReadOnly {
-		mode = "可写"
+		if helperErr == nil && helperStatus != nil && !helperStatus.ReadOnly {
+			mode = "可写"
+		} else {
+			mode = "配置可写（helper 不可用）"
+		}
 	}
 	fmt.Fprintf(env.Stdout, "[INFO] 模式: %s\n", mode)
 	if idleErr == nil {
@@ -97,11 +120,11 @@ func runWebStatus(env Env) int {
 		fmt.Fprintf(env.Stdout, "[WARN] Web 配置无效: %v\n", validationErr)
 	}
 	if cfg.Web.Passkey.Enabled {
-		fmt.Fprintf(env.Stdout, "[INFO] Passkey: 已启用（M6a 仅保留接口，不注册路由）rpId=%s\n", cfg.Web.Passkey.RPID)
+		fmt.Fprintf(env.Stdout, "[INFO] Passkey: 已启用（当前仅保留接口，不注册路由）rpId=%s\n", cfg.Web.Passkey.RPID)
 	} else {
-		fmt.Fprintln(env.Stdout, "[INFO] Passkey: 关闭（M6a 仅保留接口）")
+		fmt.Fprintln(env.Stdout, "[INFO] Passkey: 关闭（当前仅保留接口）")
 	}
-	fmt.Fprintf(env.Stdout, "[INFO] helper: %s\n", helper)
+	fmt.Fprintf(env.Stdout, "[INFO] helper: %s\n", helperText)
 	return ExitOK
 }
 
@@ -137,7 +160,7 @@ func runWebReadOnly(env Env, args []string) int {
 		return fail(env, err)
 	}
 	if args[0] == "off" {
-		return fail(env, webHelperUnavailable())
+		return runWebReadWrite(env, cfg)
 	}
 	updated, err := core.UpdateWebReadOnly(cfg.ConfigFile, true)
 	if err != nil {
@@ -232,26 +255,71 @@ func requireRoot() error {
 	return &core.Error{Kind: core.KindPrecondition, Op: "权限检查", Err: fmt.Errorf("此操作只允许 root 执行")}
 }
 
-// helperSocketState 只检查 socket 路径是否存在，不建立协议连接。
-// M6a 没有 helper，因此这仅用于 status 展示与明确的失败提示。
-func helperSocketState() string {
-	path := strings.TrimSpace(os.Getenv("NECA_WEB_HELPER_SOCKET"))
-	if path == "" {
-		return "未安装（M6a 无 helper）"
+func helperSocketPath() string {
+	if path := strings.TrimSpace(os.Getenv("NECA_WEB_HELPER_SOCKET")); path != "" {
+		return path
 	}
-	info, err := os.Stat(path)
+	return helper.DefaultSocketPath
+}
+
+func probeHelper(ctx context.Context) (*helper.Status, error) {
+	status, err := helper.NewClient(helperSocketPath()).Status(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return status, nil
+}
+
+func helperSummary(status *helper.Status, err error) string {
 	if err != nil {
 		return "不可用: " + err.Error()
 	}
-	return fmt.Sprintf("存在（%s）", info.Mode().String())
+	if status == nil {
+		return "不可用"
+	}
+	mode := "只读"
+	if !status.ReadOnly {
+		mode = "可写"
+	}
+	return fmt.Sprintf("可用（%s，%s）", status.Version, mode)
 }
 
-func webHelperUnavailable() error {
-	return &core.Error{
-		Kind: core.KindPrecondition,
-		Op:   "切换 Web 写模式",
-		Err:  fmt.Errorf("Web 写能力未就绪：M6a 未实现 root helper，拒绝关闭只读（M6b 提供 helper 后再启用）"),
+func runWebReadWrite(env Env, cfg *core.Config) int {
+	path := helperSocketPath()
+	status, err := helper.NewClient(path).Status(context.Background())
+	if err != nil {
+		return fail(env, helperPrecondition("root helper 不可用: %v", err))
 	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return fail(env, helperPrecondition("helper socket 不可读: %v", err))
+	}
+	if info.Mode().Perm()&0o060 != 0o060 {
+		return fail(env, helperPrecondition("helper socket 权限必须允许 necad 组读写，实际为 %s", info.Mode().Perm()))
+	}
+	if _, err := os.Stat(cfg.CAKey); err != nil {
+		return fail(env, helperPrecondition("找不到 CA 私钥，拒绝关闭只读: %s", cfg.CAKey))
+	}
+	if !status.OK || status.Protocol != helper.ProtocolVersion {
+		return fail(env, helperPrecondition("helper 协议不匹配: %q", status.Protocol))
+	}
+	updated, err := core.UpdateWebReadOnly(cfg.ConfigFile, false)
+	if err != nil {
+		return fail(env, err)
+	}
+	appendWebAudit(cfg, "web-readonly", "readonly", "readwrite")
+	writeWebReloadHint(env, cfg.ConfigFile)
+	if env.JSON {
+		return emitJSON(env, "web-readonly-off", "", nil, map[string]any{
+			"readOnly": updated.ReadOnly, "helper": map[string]any{"available": true, "version": status.Version},
+		})
+	}
+	fmt.Fprintln(env.Stdout, "[OK]   Web 已切换为可写（root helper 已就绪）")
+	return ExitOK
+}
+
+func helperPrecondition(format string, args ...any) error {
+	return &core.Error{Kind: core.KindPrecondition, Op: "Web 写模式", Err: fmt.Errorf(format, args...)}
 }
 
 func appendWebAudit(cfg *core.Config, action, oldValue, newValue string) {
@@ -260,7 +328,7 @@ func appendWebAudit(cfg *core.Config, action, oldValue, newValue string) {
 
 func writeWebReloadHint(env Env, path string) {
 	if !env.Quiet {
-		fmt.Fprintf(env.Stderr, "[INFO] 配置已写入 %s；运行中的 necad 需重启或发送 SIGHUP 后生效\n", path)
+		fmt.Fprintf(env.Stderr, "[INFO] 配置已写入 %s；运行中的 necad 需重启后生效（SIGHUP 热重载尚未实现）\n", path)
 	}
 }
 

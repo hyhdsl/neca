@@ -96,8 +96,8 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 }
 ```
 
-允许的空闲超时为 5m–24h，绝对会话上限固定 24h。默认只读；M6a 不提供
-Web 写操作，`neca web readonly off` 会拒绝。
+允许的空闲超时为 5m–24h，绝对会话上限固定 24h。默认只读；M6a 只有只读
+面板，M6b 在 root helper 启动后才允许 `neca web readonly off`。
 
 ### 5.2 初始化 web-secrets
 
@@ -145,6 +145,7 @@ chmod -R a+rX /opt/ipsec/pki/meta
 ### 5.4 启动与访问
 
 ```bash
+mkdir -p /run/neca && chmod 0755 /run/neca
 cd /opt/ipsec
 docker compose -f docker-compose.neca.yml --profile web up -d web
 docker compose -f docker-compose.neca.yml --profile web logs -f web
@@ -161,7 +162,31 @@ ssh -L 18080:127.0.0.1:18080 root@<SERVER>
 如果必须在浏览器直接访问，使用系统原生 IKEv2 连接 VPN，由反向代理终止
 TLS 并校验证书；不要使用 Tailscale/WireGuard 等第三方 VPN 客户端。
 
-### 5.5 反向代理 mTLS（可选）
+### 5.5 启用 root helper（M6b 写能力）
+
+默认 `readOnly=true`，Web 仍只能读。需要签发/吊销/重签时，启动独立的 root
+helper 容器，再由 root 执行 `readonly off`：
+
+```bash
+cd /opt/ipsec
+docker compose -f docker-compose.neca.yml --profile web --profile web-write up -d web web-helper
+neca web status                 # helper 应显示“可用”
+neca web readonly off           # 检查 socket/CA key 后原子写配置
+docker compose -f docker-compose.neca.yml --profile web restart web
+```
+
+`web-helper` 是 M6b 的**唯一 root 写边界**：挂载 PKI 与 docker.sock，只接受
+`issue/revoke/unrevoke/reissue` 白名单，不接受任意路径/shell；Web 容器通过
+`/run/neca/web-helper.sock`（0660，root:neca-web）调用它。
+
+关闭写能力：
+
+```bash
+neca web readonly on
+docker compose -f docker-compose.neca.yml --profile web restart web
+```
+
+### 5.6 反向代理 mTLS（可选）
 
 配置了 `web.adminCNs` 时，必须同时设置 `NECA_WEB_PROXY_SECRET`（写入
 `/opt/ipsec/neca.env`，0600），代理转发：
@@ -175,7 +200,7 @@ necad 只接受来自回环代理的请求；客户端伪造这两个头不会�
 在 `/opt/ipsec/neca.env` 设置 `NECA_WEB_SECURE_COOKIES=1` 并重启 web 容器；
 OpenSSH 本地转发 HTTP 时保持未设置/0。
 
-### 5.6 状态、只读与重启
+### 5.7 状态、只读与重启
 
 ```bash
 neca web status
@@ -183,13 +208,13 @@ neca web readonly status
 neca web idle-timeout status
 ```
 
-M6a 修改 `web.readOnly` / `web.idleTimeout` 后需要重启 web 容器：
+修改 `web.readOnly` / `web.idleTimeout` 后需要重启 web 容器：
 
 ```bash
 docker compose -f docker-compose.neca.yml --profile web restart web
 ```
 
-M6a 未实现 SIGHUP 热重载；这是已知限制，发布说明会注明。
+当前未实现 SIGHUP 热重载；这是已知限制，发布说明会注明。
 
 ## 6. 备份与回滚
 

@@ -410,7 +410,7 @@ type PasskeyAuthenticator interface {
 ## 20. 正式部署记录（2026-11-15）
 
 - 服务器：Debian 12，Docker Compose，已有 strongSwan 容器；部署前已做快照与
-  `/root/neca-m6b-backup-*` 配置/PKI 备份；正式版 v0.3.0 已发布并部署；
+  配置/PKI 备份；正式版 v0.3.0 已发布并部署；
 - 镜像：正式版 `ghcr.io/hyhdsl/neca:v0.3.0`、`ghcr.io/hyhdsl/neca-web:v0.3.0`
   （commit `824d642`）；服务器已切换到正式版；
 - 端口：`18080` 已被 other service 占用，Web 改用 `127.0.0.1:18080`；host network，

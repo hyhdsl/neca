@@ -2,7 +2,9 @@
 # 运行镜像只 COPY dist/ 下的二进制，其余文件无需进入上下文。
 .git
 .github
-dist
+dist/*
+!dist/neca-linux-amd64
+!dist/neca-linux-arm64
 legacy
 templates
 testdata/golden

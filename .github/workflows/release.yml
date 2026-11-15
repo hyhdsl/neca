@@ -1,0 +1,43 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: build-and-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build linux binaries
+        run: make build
+
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum neca-linux-amd64 neca-linux-arm64 > checksums.txt
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/neca-linux-amd64 \
+            dist/neca-linux-arm64 \
+            dist/checksums.txt \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes

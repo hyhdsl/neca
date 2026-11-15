@@ -1,0 +1,29 @@
+# neca CLI 容器（服务器部署用，开发文档 §15）。
+#
+# 使用前：
+#   1. /opt/ipsec/neca.env 写入真实环境变量（0600，root）；
+#   2. 把本文件放到 /opt/ipsec/docker-compose.neca.yml；
+#   3. docker compose -f /opt/ipsec/docker-compose.neca.yml run --rm neca list
+#
+# 安全提示：挂载 docker.sock 等价于把宿主 root 权限交给该容器；
+# 只允许 root 读取本文件、neca.env 与镜像。
+name: neca-cli
+
+services:
+  neca:
+    image: ${NECA_IMAGE:-neca:0.1.0}
+    container_name: neca-cli
+    restart: "no"
+    working_dir: /opt/ipsec
+    env_file:
+      - /opt/ipsec/neca.env
+    environment:
+      CONTAINER: ipsec-vpn
+      DOCKER_BIN: docker
+      NECA_RELOAD_MODE: creds
+    volumes:
+      - /opt/ipsec:/opt/ipsec
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: "none"
+    entrypoint: ["/usr/local/bin/neca"]
+    command: ["list"]

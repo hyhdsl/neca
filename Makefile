@@ -77,8 +77,9 @@ fmt-check: ## 校验 gofmt 无差异（CI 门禁）
 check-ascii: ## 校验平台脚本模板为纯 ASCII（文档 §9 硬规则 1）
 	bash scripts/check-ascii.sh templates/win templates/linux templates/macos
 
-check-locales: ## 校验内置语言包 key 集合一致（文档 §8.11）
+check-locales: ## 校验 CLI/Web 内置语言包 key 集合一致（文档 §8.11）
 	$(GO) test ./internal/i18n -run TestLocaleKeysAligned -count=1
+	$(GO) test ./internal/web -run TestWebLocaleKeysAligned -count=1
 
 dev: ## 构建并进入开发容器（docker compose 解析挂载路径，Windows 同样可用）
 	docker compose run --rm dev bash

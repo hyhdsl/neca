@@ -52,6 +52,7 @@ type Server struct {
 	limiter          *loginLimiter
 	audit            *auditLogger
 	helperClient     *helper.Client
+	translator       *webTranslator
 	now              func() time.Time
 	templates        map[string]*template.Template
 	static           http.Handler
@@ -95,6 +96,10 @@ func New(opts Options) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	translator, err := newWebTranslator(opts.Config.Language)
+	if err != nil {
+		return nil, err
+	}
 	var helperClient *helper.Client
 	if strings.TrimSpace(opts.HelperSocket) != "" {
 		helperClient = helper.NewClient(opts.HelperSocket)
@@ -104,6 +109,7 @@ func New(opts Options) (*Server, error) {
 		passwordHash: opts.PasswordHash, proxySecret: []byte(opts.ProxySecret),
 		secureCookies: opts.SecureCookies, allowNonLoopback: opts.AllowNonLoopback,
 		helperClient: helperClient,
+		translator:   translator,
 		sessions:     newSessionManager(opts.SessionKey, idle, now),
 		limiter:      newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
 		templates: templates, static: http.FileServer(http.FS(staticFS)),
@@ -291,6 +297,8 @@ type pageData struct {
 	Error           string
 	Login           bool
 	Next            string
+	Lang            string
+	T               func(string, ...any) string
 	Stats           dashboardStats
 	Certs           []core.WebCert
 	Query           string
@@ -322,6 +330,8 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 func (s *Server) renderStatus(w http.ResponseWriter, r *http.Request, status int, name string, data pageData) {
 	data.ReadOnly = s.cfg.Web.ReadOnly
 	data.Version = version.Get().Version
+	data.Lang = s.translator.Language()
+	data.T = s.translator.T
 	data.Now = s.now()
 	data.CSRF = s.ensureCSRF(w, r)
 	if claims, ok := sessionClaimsFrom(r.Context()); ok {

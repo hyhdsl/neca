@@ -426,4 +426,16 @@ type PasskeyAuthenticator interface {
 - GitHub 预览包：`v0.3.0-preview.2`（commit `9ec1b06`，prerelease），包含
   CLI/necad/helper 的 amd64/arm64 二进制与 checksums；GHCR 预览镜像为
   `neca:v0.3.0-preview.2` 与 `neca-web:v0.3.0-preview.2`。`neca:latest` 保持
-  v0.2.0；`neca-web:latest` 在首个正式 Web 版本前指向该预览。
+  v0.2.0；`neca-web:latest` 在首个正式 Web 版本前指向该预览；
+- 旧预览包策略：新预览发布后，旧预览只保留 GitHub 自动源代码归档，删除
+  二进制/容器资产；`v0.3.0-preview.1` 已恢复为 source-only prerelease。
+  后续使用 `scripts/archive-preview-release.sh <tag>` 处理。
+
+## 21. Web 多语言预留（2026-11-15）
+
+- 新增 `internal/web/locales/zh-CN.json`、`en-US.json`，按页面/组件命名 key；
+- 新增 `webTranslator`，默认 zh-CN，按配置 `language` 选择；模板数据已带
+  `.T` 与 `.Lang`，后续可逐项把模板文案迁移到 key；
+- 当前页面文案仍以中文为主，尚未加入语言切换控件；翻译文件、key 一致性与
+  回退测试已准备；
+- 后续可增加每用户语言 Cookie/设置，不需要改 Web 配置 schema。

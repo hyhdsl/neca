@@ -204,6 +204,11 @@ dist/               构建产物（不入库）
 | M6a | 只读 Web 面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite + neca-web 双镜像 | ✅ 2026-11-15 已部署并发布预览包 |
 | M6b | root helper、issue/revoke/unrevoke/reissue 写能力、Web 写 API/UI | ✅ 2026-11-15 已部署并发布预览包 |
 
+> **预览包策略**：最新预览可附二进制/checksums；旧预览只保留 GitHub 自动源代码归档，
+> 使用 [scripts/archive-preview-release.sh](scripts/archive-preview-release.sh) 删除旧资产。
+> **Web 多语言**：`internal/web/locales/` 已准备 zh-CN/en-US 翻译文件与 `.T` 接口，
+> 当前 UI 仍以中文为主，后续逐项迁移。
+
 ## 许可与二次开发
 
 - **许可**：**AGPL-3.0-only**（OSI 认可的开源协议；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码），全文见 [LICENSE](LICENSE)。

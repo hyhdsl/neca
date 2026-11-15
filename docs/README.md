@@ -5,7 +5,7 @@
 | 文档 | 内容 |
 |---|---|
 | [开发文档](neca-development.md) | 架构、CLI 契约、CI/CD、路线图、验收记录 |
-| [Web 面板设计评估](web-panel.md) | M6 只读开关、权限、VPN/mTLS、UI 与 SQLite 迁移评估 |
+| [Web 面板设计评估](web-panel.md) | M6 只读开关、权限、VPN/mTLS、UI、SQLite 迁移与 lite/full 双镜像发布评估 |
 | [技术选型评估](vpn-cert-manager-rewrite-assessment.md) | Python vs Go 的历史评估（Go 已选型） |
 | [服务器部署](deploy.md) | Docker 部署、配置、备份/回滚与安全说明 |
 | [二次开发与许可](SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策 |

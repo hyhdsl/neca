@@ -12,6 +12,7 @@
 | Q3 仅 VPN/指定证书访问 | 仅“连上 VPN”不足以限制到某一张证书。推荐 SSH 隧道/Tailscale 直连回环；如必须浏览器访问，使用反向代理 mTLS + 专用管理员证书 + VPN 网段防火墙。 |
 | Q4 鉴权调整 | mTLS（可选）+ 管理员密码哈希 + 签名 Cookie + CSRF + 限流；只读开关只允许 root CLI 修改，不能从 Web 自己解锁。 |
 | Q5 UI/SQLite | Go 模板 + CSS 变量，深浅色蓝白/蓝黑主题；不以截图作为像素级验收依据，使用 data-testid/DOM/Playwright。M6 不引入 SQLite，但预留 Store 接口与迁移路径。 |
+| Docker 发布 | lite 默认、full 可选；同一 Dockerfile 两个 target；lite 可增量拉取 full；full 可停用 Web 或切回 lite；完整评估见第 11 节。 |
 
 ## 2. 总体架构
 
@@ -264,10 +265,135 @@ M6 不引入 SQLite：
 - 移动端与桌面端关键页面通过 Playwright 截图与 DOM 断言；
 - go test -race、httptest、容器灰度验收通过。
 
-## 11. 待确认
+## 11. Docker 发布形态：lite 与 full
+
+### 11.1 结论
+
+可以发布，而且建议采用**同一 Dockerfile 的两个构建目标**，而不是维护两套代码：
+
+- **lite**：只包含 neca CLI；默认版本，最小攻击面；
+- **full**：在 lite 的镜像层之上增加 necad、Web 模板/静态资源和可选 helper；
+- 两个版本共享同一个 core、版本号、配置 schema 和 /opt/ipsec 数据卷；
+- lite → full 是“换镜像 + 启动 web profile”，不需要迁移 PKI；
+- full → lite 可以“停用 web”（保留 full 镜像），也可以“切换 lite 镜像”（真正移除 web 层）。
+
+不建议把完整 Web 功能塞进唯一镜像再用开关伪装 lite：这样 lite 仍然包含 Web 代码，无法获得真正的攻击面收缩。
+
+### 11.2 镜像与标签
+
+| 标签 | 内容 | 默认 |
+|---|---|---|
+| ghcr.io/hyhdsl/neca:v0.3.0 | lite（CLI） | 是 |
+| ghcr.io/hyhdsl/neca:v0.3.0-full | full（CLI + Web + helper） | 否 |
+| ghcr.io/hyhdsl/neca:latest | 最新 lite | — |
+| ghcr.io/hyhdsl/neca:latest-full | 最新 full | — |
+
+Dockerfile 规划：
+
+~~~dockerfile
+FROM debian:bookworm-slim AS base
+# openssl、ca-certificates、docker CLI、neca CLI
+COPY neca-linux-amd64 /usr/local/bin/neca
+
+FROM base AS lite
+ENTRYPOINT ["neca"]
+
+FROM lite AS full
+COPY necad-linux-amd64 /usr/local/bin/necad
+COPY neca-web-helper-linux-amd64 /usr/local/bin/neca-web-helper
+ENTRYPOINT ["neca"]
+~~~
+
+- full 直接 FROM lite，因此基础层共享；拉取 full 只增加 Web/helper 层；
+- 两个目标使用同一版本号、同一 commit、同一 labels；
+- 两个镜像都保留完整 LICENSE/NOTICE 与版本命令；
+- full 的 CLI 行为必须与 lite 完全一致。
+
+### 11.3 Compose 形态
+
+同一套 compose 文件，用 profile 控制 Web：
+
+~~~yaml
+services:
+  neca:
+    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}
+  web:
+    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}
+    profiles: ["web"]
+    command: ["necad"]
+  web-helper:
+    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}
+    profiles: ["web"]
+    command: ["neca-web-helper"]
+~~~
+
+- lite：只启动 neca 服务；
+- full 只读：NECA_IMAGE 指向 full，启动 web profile，不启动 helper；
+- full 可写：增加 web-helper profile（helper 才挂载 CA 私钥与 docker.sock）；
+- web/helper 不加入默认 profile，避免“装了 full 就自动暴露 Web”；
+- full 部署的 CLI 服务也必须使用 full 镜像，否则没有 neca web readonly 子命令；不建议 lite CLI + full Web 混搭；
+- 启动 web profile 时 necad 检查自身版本/edition，lite 镜像必须快速失败，不能以“端口没起来”作为唯一报错。
+
+### 11.4 迁移路径
+
+| 方向 | 操作 | 数据影响 |
+|---|---|---|
+| lite → full | 拉取 full 镜像；切换 NECA_IMAGE；初始化 web secrets；启动 web profile | 无 PKI 迁移；配置仍读 neca.json |
+| full → lite（停用） | docker compose --profile web stop web web-helper；保留 full 镜像 | 数据保留；Web 不可用 |
+| full → lite（真正移除） | 停用 Web；切换 NECA_IMAGE 到 lite；删除 web/helper 容器与 web secrets | 保留 PKI/下载数据；web 专属数据可归档后删除 |
+| full → full 升级 | 拉新 full 镜像；滚动重启；必要时执行 web 数据迁移 | PKI 不变 |
+| 回滚 | 切回旧 full/lite 标签；恢复 web secrets | 版本兼容期内无需数据迁移 |
+
+关键点：
+
+- lite 不认识 web 配置段时应**忽略而不是报错**；
+- full 启动时发现 web.enabled=false 应只运行 CLI 服务；
+- 从 full 切 lite 时不清空 /opt/ipsec，也不自动删除下载/证书；
+- web secrets 与 PKI 分开存放（如 /opt/ipsec/web-secrets，0600），lite 不挂载；
+- 未来 SQLite 的 web.db 放在 web 专属路径，lite 不读取、不删除。
+
+### 11.5 发布流水线调整
+
+当前 docker.yml 只构建一个镜像，M6 需要：
+
+1. 同一个 buildx 调用分别构建 target lite/full；
+2. 同时推送 amd64/arm64；
+3. 生成两套 tags、digest 与 SBOM；
+4. release notes 明确 lite 为默认、full 为可选；
+5. CI 增加 lite/full 双镜像冒烟测试；
+6. 发布资产加入 necad/helper 的 linux 二进制（如选择直接分发二进制）。
+
+建议默认拉取 lite；只有需要 Web 的用户显式使用 -full 标签。
+
+### 11.6 测试矩阵
+
+| 场景 | 必须验证 |
+|---|---|
+| lite CLI | 与当前 v0.2.0 全量测试一致；无 web/helper 二进制 |
+| full CLI | CLI 行为与 lite 一致 |
+| full 只读 Web | 登录、列表、下载、readonly；无 ca.key/docker.sock |
+| full 可写 Web | helper 白名单、CSRF、审计；只读开关拒绝写 |
+| lite→full | 镜像切换、web secrets 初始化、无 PKI 迁移 |
+| full→lite | 停用与切镜像两种路径；数据保留、无残留端口 |
+| 回滚 | 旧镜像、旧配置、旧 secret 可用 |
+| 安全 | lite 无 Web 端口；full 默认不暴露；helper 最小权限 |
+
+### 11.7 结论与限制
+
+- “lite 增量更新成 full”在 Docker 层是可行的：full 基于 lite，只需拉新增层；但运行中的容器不是原地升级，仍需换镜像/重启；
+- “full 移除 Web 成为 lite”若只停 profile，只是**功能上的 lite**；要得到真正的 lite 镜像，必须切换到 lite 标签；
+- 不建议用环境变量在单一镜像内“关闭 Web”来宣称 lite，因为镜像仍包含 Web 代码与依赖；
+- 两镜像方案会增加发布矩阵和测试成本，但安全边界清晰，长期维护成本低于两套代码。
+
+## 12. 待确认
 
 1. Q1：接受只读开关 + helper 写能力分期（M6a/M6b），还是要求 M6 一次完成写操作？
 2. Q2：接受 root helper 作为唯一写边界？
 3. Q3：访问方式选 SSH 隧道/Tailscale，还是反向代理 mTLS？若选 mTLS，管理员证书的 CN 与签发流程需定。
 4. Q4：密码哈希注入与会话密钥文件的具体路径/权限。
 5. Q5：先做只读页面与深浅色，SQLite 保持延后；确认是否接受 Go 模板而非 SPA。
+6. Q6：是否采用 lite 默认、full 显式标签（ghcr.io/hyhdsl/neca 与 -full）？
+7. Q7：full → lite 选择“停用 Web”还是“切换 lite 镜像”？建议两者都提供，默认停用。
+8. Q8：full 镜像是否同时包含 CLI 与 Web（推荐），还是只发布独立的 web 镜像？
+
+M6a 只读 + lite/full 发布约 5 人日；M6b helper 写能力再加约 3 人日。

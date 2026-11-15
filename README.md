@@ -3,7 +3,7 @@
 > [!WARNING]
 > **重要声明（使用前必读）**
 >
-> 1. **AI 披露**：本项目的代码、测试与文档由 AI 编程助手（DeepSeek Harness / DeepSeek 模型）辅助生成与修改。AI 输出可能存在错误、遗漏或不适用，使用前请自行审查、测试并自行承担风险。
+> 1. **AI 披露（重要）**：本项目的**代码编写、调试、测试、CI/构建脚本、部署脚本、文档和帮助站内容均由 AI 编程助手（DeepSeek Harness / DeepSeek 模型）完成**；人类维护者主要负责需求、审查、功能验收与生产操作。完整范围、边界与限制见 [AI-DISCLOSURE.md](AI-DISCLOSURE.md)。AI 输出可能存在错误、遗漏或不适用，使用前请自行审查、测试并自行承担风险。
 > 2. **责任限制**：在适用法律允许的最大范围内，原作者、AI 模型/工具提供方及其所属公司不对因使用、无法使用或误用本软件造成的任何直接、间接、偶然、特殊或后果性损失（包括但不限于数据丢失、业务中断、证书/密钥泄露、VPN 不可用）承担责任。本软件按“现状”提供，不提供任何明示或默示担保。
 > 3. **开发期暂不接受外部 PR**：项目尚未完全开发完毕，暂不接受外部 Pull Request，仅维护者内部合并；开发完成后会重新评估并开放 PR。如需修改请先 fork，并遵守 AGPL 与 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
 >
@@ -247,6 +247,7 @@ dist/               构建产物（不入库）
 | [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策（开发期暂不接受外部 PR） |
 | [LICENSE](LICENSE) | GNU AGPL-3.0-only 许可全文 |
 | [NOTICE](NOTICE) | 版权、AI 披露与署名 |
+| [AI-DISCLOSURE.md](AI-DISCLOSURE.md) | AI 参与范围、人类职责、验收边界与工具说明 |
 
 ## 现状
 

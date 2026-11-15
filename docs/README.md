@@ -14,6 +14,7 @@
 | [用户帮助中心](help/README.md) | 中文全量 + 英文核心页；含实验性 Web API、部署、安全与 FAQ |
 | [LICENSE](../LICENSE) | GNU AGPL-3.0-only 全文 |
 | [NOTICE](../NOTICE) | 版权、AI 披露与署名 |
+| [AI 披露](../AI-DISCLOSURE.md) | AI 参与范围、人类职责、验收边界与工具说明 |
 
 ## 帮助文档
 

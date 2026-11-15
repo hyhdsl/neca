@@ -8,9 +8,13 @@ See LICENSE for the full terms. AGPL is an OSI-approved open source license;
 it permits commercial use subject to its source-disclosure and network-use
 obligations.
 
-AI disclosure: this project's code, tests and documentation were produced with
-the assistance of an AI coding agent (DeepSeek Harness / DeepSeek model).
-AI output may contain errors; review and test before use.
+AI disclosure: all code authoring, debugging, testing, CI/build/deploy scripting,
+documentation and help-site content in this project were produced by an AI coding
+agent (DeepSeek Harness / DeepSeek model). The human maintainer defines
+requirements, reviews changes, performs functional acceptance, handles production
+credentials and makes release decisions. Functional acceptance is not a line-by-line
+or security audit. AI output may contain errors; review and test before use. See
+AI-DISCLOSURE.md for details.
 
 PR policy: external pull requests are paused during development and will be
 reconsidered when development is complete. The project is maintained by the

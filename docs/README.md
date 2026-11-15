@@ -11,7 +11,7 @@
 | [服务器部署](deploy.md) | Docker 部署、配置、备份/回滚与安全说明 |
 | [二次开发与许可](SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策 |
 | [旧 bash 使用说明](legacy-vpn-cert-manager.md) | 上一代脚本归档说明与回退参考 |
-| [用户帮助中心](help/README.md) | 面向使用者的快速开始、证书管理、Web、部署、安全、排障与 FAQ |
+| [用户帮助中心](help/README.md) | 中文全量 + 英文核心页；含实验性 Web API、部署、安全与 FAQ |
 | [LICENSE](../LICENSE) | GNU AGPL-3.0-only 全文 |
 | [NOTICE](../NOTICE) | 版权、AI 披露与署名 |
 

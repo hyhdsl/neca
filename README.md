@@ -14,7 +14,7 @@
 前身是 [legacy/vpn-cert-manager.sh](legacy/vpn-cert-manager.sh)（506 行 bash），
 负责 `/opt/ipsec` 下的证书签发、吊销、重签发、平台包生成与 CRL 维护。
 
-- 仓库：https://github.com/hyhdsl/neca （public；v0.3.0 正式版）
+- 仓库：https://github.com/hyhdsl/neca （public；v0.4.0 正式版）
 - 技术路线：Go 1.25，单静态二进制，`CGO_ENABLED=0`
 - 运行形态：服务器上以 root 执行，`ca.key` 保持 `0600 root:root`
 - 开发环境：本地 Docker（开发机不需要安装 Go，见文档 §14）
@@ -109,9 +109,9 @@ root 执行 `neca web readonly off` 且 helper 健康后才开放写操作。
 ```bash
 make build
 # 默认 lite 镜像
-docker build --target lite -t ghcr.io/hyhdsl/neca:v0.3.0 .
+docker build --target lite -t ghcr.io/hyhdsl/neca:v0.4.0 .
 # 可选 Web 面板包（默认只读）
-docker build --target web -t ghcr.io/hyhdsl/neca-web:v0.3.0 .
+docker build --target web -t ghcr.io/hyhdsl/neca-web:v0.4.0 .
 install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
 neca list
 ```
@@ -222,7 +222,7 @@ dist/               构建产物（不入库）
 
 - **许可**：**AGPL-3.0-only**（OSI 认可的开源协议；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码），全文见 [LICENSE](LICENSE)。
 - **二次开发**：必须保留原作者与仓库链接、保留 AGPL 许可与源码公开义务；详见 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
-- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；正式 Release 为 [v0.3.0](https://github.com/hyhdsl/neca/releases/tag/v0.3.0)。M6 历史预览包（preview.1–preview.3）仅保留源代码归档。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
+- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；正式 Release 为 [v0.4.0](https://github.com/hyhdsl/neca/releases/tag/v0.4.0)。M6 历史预览包（preview.1–preview.3）仅保留源代码归档。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
 
 ## 帮助文档
 
@@ -252,6 +252,7 @@ dist/               构建产物（不入库）
 
 ## 现状
 
+- **v0.4.0（M8）已完成**：v0.4.0 正式发布；SIGHUP 热重载 readOnly/idleTimeout；helper 幂等缓存持久化；继续 OpenSSH 访问。
 - **v0.3.0（M6）已完成**：[v0.3.0](https://github.com/hyhdsl/neca/releases/tag/v0.3.0) 正式发布；lite + neca-web + root helper 已部署，Web 默认只读；Playwright/axe、zh-CN/en-US、深浅色与移动端验收通过；用户帮助见 [帮助中心](https://neca.nekobiglazyer.work)。
 - M5 已完成：[v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 已发布并转 public；[v0.1.1](https://github.com/hyhdsl/neca/releases/tag/v0.1.1) 修复 `--lang`；[v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0) 引入 JSON 配置。Docker CLI 镜像已部署到服务器；全功能测试通过；生产索引与 CRL 已恢复到测试前状态。
 - M3 已完成：`--json` / `--dry-run` / `--lang`、交互向导、审计日志、旧 flag 兼容、zh-CN/en-US 语言文件与 `make check-locales`。

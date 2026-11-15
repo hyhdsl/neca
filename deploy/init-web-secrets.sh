@@ -20,7 +20,7 @@ ROOT="${NECA_ROOT:-/opt/ipsec}"
 SECRETS="${ROOT}/web-secrets"
 GROUP="neca-web"
 GID="10001"
-IMAGE="${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}"
+IMAGE="${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.4.0}"
 
 if getent group "${GROUP}" >/dev/null 2>&1; then
   actual="$(getent group "${GROUP}" | cut -d: -f3)"

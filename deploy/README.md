@@ -12,13 +12,13 @@
 make build
 docker build --build-arg TARGETARCH=amd64 -t neca:v0.1.0 .
 docker save neca:v0.1.0 | gzip > /tmp/neca-v0.1.0.tar.gz
-scp /tmp/neca-0.1.0.tar.gz root@<SERVER>:/tmp/
+scp /tmp/neca-v0.1.0.tar.gz root@<SERVER>:/tmp/
 ```
 
 服务器：
 
 ```bash
-docker load < /tmp/neca-0.1.0.tar.gz
+docker load < /tmp/neca-v0.1.0.tar.gz
 ```
 
 ## 2. 部署文件

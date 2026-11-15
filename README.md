@@ -99,7 +99,7 @@ internal/i18n/      内置 zh-CN/en-US 语言文件与翻译
 templates/          平台包模板（Windows/Linux/macOS 脚本必须纯 ASCII）
 testdata/           黄金文件与 fixture 生成器（gen-fixture.sh）
 scripts/            辅助脚本（check-ascii、shadow）
-.github/workflows/  CI（M0 落 ci.yml；release/docker 随 M5 落地）
+.github/workflows/  CI、release 与 GHCR 镜像工作流
 legacy/             上一代 bash 实现（只读归档，影子测试基准）
 dist/               构建产物（不入库）
 ```
@@ -121,10 +121,10 @@ dist/               构建产物（不入库）
 | `make all` | gofmt 检查 + vet + ASCII 校验 + 测试 + 交叉编译 |
 | `make build` | 交叉编译 linux/amd64、linux/arm64 到 `dist/` |
 | `make test` | 容器内 `go test -race ./...` |
-| `make check-ascii` | 校验 Windows 模板为纯 ASCII |
+| `make check-ascii` | 校验 Windows/Linux/macOS 脚本模板为纯 ASCII |
 | `make shadow` | 新旧实现影子对比（只读 + M2 写命令 + issue，diff 必须为 0） |
 | `make check-locales` | 校验 zh-CN/en-US 语言包 key 一致 |
-| `make docker` | 构建运行镜像（M5 完善 buildx / 多架构） |
+| `make docker` | 构建运行镜像（本地 `ghcr.io/hyhdsl/neca:dev`） |
 
 ## 里程碑
 

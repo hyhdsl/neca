@@ -9,7 +9,7 @@
 >
 > 完整授权与二次开发要求见 [LICENSE](LICENSE)、[NOTICE](NOTICE) 与 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
 
-基于 Go 的 strongSwan IKEv2 用户证书管理工具（CLI，后续含 Web 面板）。
+基于 Go 的 strongSwan IKEv2 用户证书管理工具（CLI + 可选只读 Web 面板）。
 
 前身是 [legacy/vpn-cert-manager.sh](legacy/vpn-cert-manager.sh)（506 行 bash），
 负责 `/opt/ipsec` 下的证书签发、吊销、重签发、平台包生成与 CRL 维护。
@@ -40,7 +40,7 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 进入交互式开发容器（宿主机需有 make 与 docker）——`make dev`。
 
-## 命令（M1–M3）
+## 命令（M1–M6a）
 
 | 命令 | 作用 |
 |---|---|
@@ -56,6 +56,10 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 | `neca package <CN> [--platforms ...] [--zip]` | 从现有证书重建平台包 |
 | `neca downloads list` / `clean [--expired\|--all]` | 管理下载 zip（默认 30 分钟过期） |
 | `neca config init\|show\|validate\|export-env` | 管理 `/opt/ipsec/neca.json` 设置 |
+| `neca web status` | 查看 Web 配置、只读模式、空闲超时与 helper 状态 |
+| `neca web readonly status\|on\|off` | 只读开关；M6a 的 `off` 会拒绝（helper 尚未实现） |
+| `neca web idle-timeout status\|<duration>` | 查看/设置空闲超时（5m–24h，绝对上限 24h） |
+| `neca web hash-password` | 从 stdin 生成 bcrypt 哈希（用于 `web-secrets/password.hash`） |
 | `neca`（无参数）/ `neca wizard` | 进入交互向导（菜单 0–10） |
 | `neca <命令> --json` | 结构化 JSON 输出 |
 | `neca <写命令> --dry-run` | 只打印将执行的动作，不落盘 |
@@ -64,11 +68,26 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 所有命令都遵循 `[OK]/[INFO]/[WARN]/[ERR]` 前缀与 0/1/2/3 退出码契约（开发文档 §6.3）。
 
-## 规划中的能力（M4+）
+## Web 面板（M6a）
 
-| 能力 | 里程碑 | 说明 |
-|---|---|---|
-| Web 下载有效期与多语言 | M6 | 与 CLI 共用 downloads 目录（默认 30 分钟 TTL） |
+M6a 提供可选只读 Web 面板：登录、证书列表/详情、p12 检查、受保护下载与
+深浅色 UI。Web 以独立 `neca-web` 镜像发布，默认 **lite** 镜像不含 Web 服务端。
+
+```bash
+# 默认只跑 CLI
+neca list
+
+# 可选只读 Web（服务端）
+docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web up -d web
+```
+
+Web 只监听 `127.0.0.1:18080`，通过系统原生 OpenSSH 本地转发或反向代理访问；
+不引入 Tailscale/WireGuard 等第三方 VPN。登录、会话与权限细节见
+[docs/web-panel-development.md](docs/web-panel-development.md)，部署步骤见
+[docs/deploy.md](docs/deploy.md)。
+
+M6b 才会增加 root helper 与 issue/revoke/reissue 写能力；M6a 的
+`neca web readonly off` 会拒绝，避免出现“配置可写但没有写边界”的半状态。
 
 平台包支持 Windows / Linux / macOS / Android / iOS；Linux/macOS 安装/卸载脚本已实现，但仍默认关闭，需 `--installers` 显式开启。
 
@@ -79,16 +98,18 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 
 ```bash
 make build
-docker build --build-arg TARGETARCH=amd64 -t neca:v0.2.0 .
-docker save neca:v0.2.0 -o /tmp/neca-v0.2.0.tar
-docker load < /tmp/neca-v0.2.0.tar
+# 默认 lite 镜像
+docker build --target lite -t ghcr.io/hyhdsl/neca:v0.3.0 .
+# 可选只读 Web 面板包
+docker build --target web -t ghcr.io/hyhdsl/neca-web:v0.3.0 .
 install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
 neca list
 ```
 
-M6 起 Web 面板作为可选的 **neca-web** 面板包提供；默认 **lite** 只含 CLI，不发布 full 镜像。lite + neca-web 共享同一 core 与数据卷，按 compose profile 选择组件；评估见 [docs/web-panel.md](docs/web-panel.md) 第 11 节，尚未实现。
+Web 面板作为可选的 **neca-web** 面板包提供；默认 **lite** 只含 CLI，不发布 full 镜像。lite + neca-web 共享同一 core 与数据卷，按 compose profile 选择组件；设计见 [docs/web-panel.md](docs/web-panel.md) 第 11 节，实施规格见 [docs/web-panel-development.md](docs/web-panel-development.md)。
 
-业务设置放在服务器 `/opt/ipsec/neca.json`（0600），`neca.env` 只保留
+业务设置放在服务器 `/opt/ipsec/neca.json`。默认 lite 使用 0600；启用 Web 时改为
+`root:neca-web 0640`，否则非 root 的 necad 无法读取。`neca.env` 只保留
 `NECA_CONFIG=/opt/ipsec/neca.json` 作为 bootstrap；真实 `SERVER_ID` / `ORG` /
 `CA_CN` 不提交仓库。优先级：**CLI flag > 环境变量 > neca.json > 默认值**。
 完整步骤、备份/回滚和 docker.sock 安全说明见 [docs/deploy.md](docs/deploy.md)。
@@ -125,8 +146,11 @@ neca list
 
 ```text
 cmd/neca/           CLI 入口（薄壳，仅转发给 internal/cli）
+cmd/necad/          Web 服务端入口（仅 neca-web 镜像）
+cmd/neca-web-helper/ M6b root helper 占位（M6a 不开放写能力）
 internal/cli/       参数解析、子命令注册表、输出渲染
 internal/core/      业务核心（M1 只读 + M2 写命令 + M3 audit；不依赖展示层）
+internal/web/       Go 模板、会话、只读 API、静态资源与 Web 配置
 internal/core/ports/ 扩展点接口（IndexStore / 配置来源）
 internal/i18n/      内置 zh-CN/en-US 语言文件与翻译
 templates/          平台包模板（Windows/Linux/macOS 脚本必须纯 ASCII）
@@ -154,12 +178,12 @@ dist/               构建产物（不入库）
 |---|---|
 | `make dev` | 构建并进入开发容器 |
 | `make all` | gofmt 检查 + vet + ASCII 校验 + 测试 + 交叉编译 |
-| `make build` | 交叉编译 linux/amd64、linux/arm64 到 `dist/` |
+| `make build` | 交叉编译 CLI + necad/helper（linux/amd64、linux/arm64）到 `dist/` |
 | `make test` | 容器内 `go test -race ./...` |
 | `make check-ascii` | 校验 Windows/Linux/macOS 脚本模板为纯 ASCII |
 | `make shadow` | 新旧实现影子对比（只读 + M2 写命令 + issue，diff 必须为 0） |
 | `make check-locales` | 校验 zh-CN/en-US 语言包 key 一致 |
-| `make docker` | 构建运行镜像（本地 `ghcr.io/hyhdsl/neca:dev`） |
+| `make docker` | 构建 lite 与 neca-web 运行镜像（本地 `:dev`） |
 
 ## 里程碑
 
@@ -171,7 +195,8 @@ dist/               构建产物（不入库）
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
 | M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
-| M6 | Web 面板（只读 + 可选写能力；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权与多语言） | 设计已确认，待开发；规格见 [docs/web-panel-development.md](docs/web-panel-development.md) |
+| M6a | 只读 Web 面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite + neca-web 双镜像 | 🟡 已实现，待发布；见 [docs/web-panel-development.md](docs/web-panel-development.md) |
+| M6b | root helper、issue/revoke/reissue 写能力 | ⏳ 待开发 |
 
 ## 许可与二次开发
 
@@ -215,6 +240,7 @@ neca 的实现和运行依赖以下开源项目/发行版组件，感谢维护�
 |---|---|---|
 | [Go 标准库](https://go.dev/) | CLI、HTTP、加密、归档与模板 | BSD-3-Clause |
 | [golang.org/x/text](https://pkg.go.dev/golang.org/x/text) | 中文表格显示宽度计算 | BSD-3-Clause |
+| [golang.org/x/crypto](https://pkg.go.dev/golang.org/x/crypto) | Web 管理员密码 bcrypt 哈希 | BSD-3-Clause |
 | [OpenSSL](https://www.openssl.org/) | CA/证书/p12/CRL 操作（子进程调用） | Apache-2.0 |
 | [Debian bookworm-slim](https://www.debian.org/) | 运行镜像基础系统 | Debian 各组件许可 |
 | [Docker CLI](https://www.docker.com/) | 容器内通过 docker.sock 触发 CRL 热加载 | Apache-2.0 |

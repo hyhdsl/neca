@@ -1,25 +1,71 @@
-# neca CLI 容器（服务器部署用，开发文档 §15）。
+# neca 部署 compose（开发文档 §12）。
 #
-# 使用前：
-#   1. /opt/ipsec/neca.env 写入真实环境变量（0600，root）；
-#   2. 把本文件放到 /opt/ipsec/docker-compose.neca.yml；
-#   3. docker compose -f /opt/ipsec/docker-compose.neca.yml run --rm neca list
+# 默认只启动 lite CLI：
+#   docker compose -f /opt/ipsec/docker-compose.neca.yml run --rm neca list
 #
-# 安全提示：挂载 docker.sock 等价于把宿主 root 权限交给该容器；
-# 只允许 root 读取本文件、neca.env 与镜像。
+# 可选只读 Web（neca-web 镜像）：
+#   docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web up -d web
+#
+# 安全提示：neca CLI 挂载 docker.sock，等价于宿主 root；Web 容器不挂载
+# docker.sock、ca.key 或客户端私钥，并以 10001:10001 非 root 运行。
 name: neca-cli
 
 services:
   neca:
-    image: ${NECA_IMAGE:-neca:v0.2.0}
+    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}
     container_name: neca-cli
     restart: "no"
     working_dir: /opt/ipsec
     env_file:
-      - /opt/ipsec/neca.env
+      - ${NECA_ENV_FILE:-/opt/ipsec/neca.env}
+    environment:
+      NECA_CONFIG: /opt/ipsec/neca.json
     volumes:
       - /opt/ipsec:/opt/ipsec
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: "none"
     entrypoint: ["/usr/local/bin/neca"]
     command: ["list"]
+
+  web:
+    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v0.3.0}
+    container_name: neca-web
+    profiles: ["web"]
+    restart: unless-stopped
+    # 只为让 127.0.0.1:18080 与宿主反向代理/OpenSSH 转发互通；不发布端口。
+    network_mode: host
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    env_file:
+      - ${NECA_ENV_FILE:-/opt/ipsec/neca.env}
+    environment:
+      NECA_CONFIG: /opt/ipsec/neca.json
+      NECA_WEB_SESSION_KEY_FILE: /opt/ipsec/web-secrets/session.key
+      NECA_WEB_PASSWORD_HASH_FILE: /opt/ipsec/web-secrets/password.hash
+      NECA_WEB_AUDIT_LOG: /opt/ipsec/web-secrets/web-audit.log
+      # 反向代理 TLS 终止后在 neca.env 设置 NECA_WEB_SECURE_COOKIES=1；
+      # OpenSSH 本地转发 HTTP 时保持未设置/0。
+    volumes:
+      - /opt/ipsec/neca.json:/opt/ipsec/neca.json:ro
+      # 只挂载 Web 需要的公钥/索引/客户端包，绝不挂载 pki 根目录或 ca.key。
+      - /opt/ipsec/pki/ca.crt:/opt/ipsec/pki/ca.crt:ro
+      - /opt/ipsec/pki/ca/index.txt:/opt/ipsec/pki/ca/index.txt:ro
+      - /opt/ipsec/pki/meta:/opt/ipsec/pki/meta:ro
+      - /opt/ipsec/clients:/opt/ipsec/clients:ro
+      - /opt/ipsec/downloads:/opt/ipsec/downloads:ro
+      - /opt/ipsec/swanctl/x509crl/ca.crl.pem:/opt/ipsec/swanctl/x509crl/ca.crl.pem:ro
+      - /opt/ipsec/web-secrets/session.key:/opt/ipsec/web-secrets/session.key:ro
+      - /opt/ipsec/web-secrets/password.hash:/opt/ipsec/web-secrets/password.hash:ro
+      - /opt/ipsec/web-secrets/web-audit.log:/opt/ipsec/web-secrets/web-audit.log:rw
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/necad", "-healthcheck"]
+      interval: 30s
+      timeout: 4s
+      start_period: 5s
+      retries: 3

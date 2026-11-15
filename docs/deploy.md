@@ -1,8 +1,14 @@
 # 服务器部署（Docker）
 
-仓库 `deploy/` 目录提供 neca CLI 容器的生产部署文件。镜像内包含 openssl 与静态 docker CLI；
-容器通过 `/var/run/docker.sock` 调用宿主机 docker，对 strongSwan 容器执行
-`swanctl --load-creds`。
+仓库 `deploy/` 目录提供 neca 的 Docker 部署文件。发布两个镜像：
+
+| 镜像 | 内容 | 默认 |
+|---|---|---|
+| `neca:vX.Y.Z` | CLI + Web 配置管理；不含 `necad` | 是（lite） |
+| `neca-web:vX.Y.Z` | `necad` + helper 占位；不含 lite CLI | 否（可选 Web 面板包） |
+
+lite 容器通过 `/var/run/docker.sock` 调用宿主机 docker，对 strongSwan 执行
+`swanctl --load-creds`。Web 容器不挂载 docker.sock、`ca.key` 或客户端私钥。
 
 ## 1. 构建与传输
 
@@ -10,22 +16,27 @@
 
 ```bash
 make build
-docker build --build-arg TARGETARCH=amd64 -t neca:v0.2.0 .
-docker save neca:v0.2.0 | gzip > /tmp/neca-v0.2.0.tar.gz
-scp /tmp/neca-v0.2.0.tar.gz root@<SERVER>:/tmp/
+docker build --target lite -t neca:v0.3.0 .
+docker build --target web -t neca-web:v0.3.0 .
+docker save neca:v0.3.0 neca-web:v0.3.0 | gzip > /tmp/neca-v0.3.0.tar.gz
+scp /tmp/neca-v0.3.0.tar.gz root@<SERVER>:/tmp/
 ```
 
 服务器：
 
 ```bash
-docker load < /tmp/neca-v0.2.0.tar.gz
+docker load < /tmp/neca-v0.3.0.tar.gz
 ```
+
+只装 lite 时只需加载/传输 `neca:v0.3.0`；启用 Web 时两个镜像必须使用同一
+版本标签。
 
 ## 2. 部署文件
 
 ```bash
 install -m 0600 deploy/neca.env.example /opt/ipsec/neca.env
 install -m 0644 deploy/docker-compose.neca.yml /opt/ipsec/docker-compose.neca.yml
+install -m 0755 deploy/init-web-secrets.sh /opt/ipsec/init-web-secrets.sh
 chmod 0600 /opt/ipsec/neca.env
 ```
 
@@ -54,7 +65,7 @@ neca list
 包装命令会在非交互环境自动加 `docker compose run -T`，并把当前 shell 的
 `NECA_LANG` 传入容器。
 
-## 4. 直接运行
+## 4. 直接运行 lite
 
 ```bash
 cd /opt/ipsec
@@ -66,24 +77,145 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 写操作建议先 `--dry-run`，再在维护窗口执行。审计日志在
 `NECA_AUDIT_LOG`（默认 `/opt/ipsec/pki/audit.log`）。
 
-## 5. 备份与回滚
+## 5. 可选只读 Web（M6a）
+
+### 5.1 启用配置
+
+编辑 `/opt/ipsec/neca.json`：
+
+```json
+{
+  "web": {
+    "enabled": true,
+    "listen": "127.0.0.1:18080",
+    "readOnly": true,
+    "idleTimeout": "30m",
+    "adminCNs": [],
+    "passkey": { "enabled": false, "rpId": "", "rpName": "neca Admin" }
+  }
+}
+```
+
+允许的空闲超时为 5m–24h，绝对会话上限固定 24h。默认只读；M6a 不提供
+Web 写操作，`neca web readonly off` 会拒绝。
+
+### 5.2 初始化 web-secrets
+
+在服务器以 root 执行：
+
+```bash
+NECA_IMAGE=neca:v0.3.0 /opt/ipsec/init-web-secrets.sh
+```
+
+脚本创建：
+
+```text
+/opt/ipsec/web-secrets/             root:neca-web 0710
+  session.key                       root:neca-web 0640
+  password.hash                     root:neca-web 0640
+  web-audit.log                     root:neca-web 0660
+```
+
+镜像内 necad 固定使用 UID/GID 10001；脚本会创建/校验宿主机 `neca-web`
+组 GID=10001。密码只从终端读取，不写入 shell 历史或 `neca.env`。
+
+### 5.3 文件权限
+
+Web 进程是非 root，必须能读取配置、客户端包和下载 zip：
+
+```bash
+chgrp neca-web /opt/ipsec/neca.json
+chmod 0640 /opt/ipsec/neca.json
+
+chgrp -R neca-web /opt/ipsec/clients /opt/ipsec/downloads
+chmod -R g+rX /opt/ipsec/clients /opt/ipsec/downloads
+find /opt/ipsec/clients /opt/ipsec/downloads -type f -exec chmod g+r {} +
+
+chmod 0644 /opt/ipsec/pki/ca/index.txt
+chmod -R a+rX /opt/ipsec/pki/meta
+```
+
+只要 `clients/`、`downloads/` 的组为 `neca-web`，CLI 后续生成的 p12、zip
+与 sidecar 会自动继承该组并设置 0640；不需要每次签发后手工重跑。
+
+不要把 `/opt/ipsec/pki` 整体挂载给 Web；compose 只挂载
+`pki/ca.crt`、`pki/ca/index.txt`、`pki/meta`、`clients`、`downloads`、
+`swanctl/x509crl/ca.crl.pem`（公开 CRL，用于计数）和 `web-secrets` 中的单个文件。
+
+### 5.4 启动与访问
+
+```bash
+cd /opt/ipsec
+docker compose -f docker-compose.neca.yml --profile web up -d web
+docker compose -f docker-compose.neca.yml --profile web logs -f web
+```
+
+Web 监听 `127.0.0.1:18080`，compose 使用 host network 但不发布端口。推荐通过
+系统原生 OpenSSH 本地转发访问：
+
+```bash
+ssh -L 18080:127.0.0.1:18080 root@<SERVER>
+# 然后浏览器打开 http://127.0.0.1:18080
+```
+
+如果必须在浏览器直接访问，使用系统原生 IKEv2 连接 VPN，由反向代理终止
+TLS 并校验证书；不要使用 Tailscale/WireGuard 等第三方 VPN 客户端。
+
+### 5.5 反向代理 mTLS（可选）
+
+配置了 `web.adminCNs` 时，必须同时设置 `NECA_WEB_PROXY_SECRET`（写入
+`/opt/ipsec/neca.env`，0600），代理转发：
+
+```text
+X-Neca-Proxy-Secret: <共享密钥>
+X-Neca-Client-CN:   <已验证的管理员证书 CN>
+```
+
+necad 只接受来自回环代理的请求；客户端伪造这两个头不会生效。TLS 终止后
+在 `/opt/ipsec/neca.env` 设置 `NECA_WEB_SECURE_COOKIES=1` 并重启 web 容器；
+OpenSSH 本地转发 HTTP 时保持未设置/0。
+
+### 5.6 状态、只读与重启
+
+```bash
+neca web status
+neca web readonly status
+neca web idle-timeout status
+```
+
+M6a 修改 `web.readOnly` / `web.idleTimeout` 后需要重启 web 容器：
+
+```bash
+docker compose -f docker-compose.neca.yml --profile web restart web
+```
+
+M6a 未实现 SIGHUP 热重载；这是已知限制，发布说明会注明。
+
+## 6. 备份与回滚
 
 升级前至少备份：
 
 ```bash
-tar -C /opt/ipsec -czf /root/ipsec-backup-$(date +%Y%m%d-%H%M%S).tar.gz pki clients swanctl
+tar -C /opt/ipsec -czf /root/ipsec-backup-$(date +%Y%m%d-%H%M%S).tar.gz \
+  pki clients swanctl neca.json web-secrets
 ```
 
-回滚：恢复备份，并 `docker run --rm -v /opt/ipsec:/opt/ipsec ...` 使用旧镜像
-版本；strongSwan 容器本身不需要重建。
+回滚：恢复备份，并切回旧镜像标签。停止 Web 不影响 lite：
 
-## 6. 安全
+```bash
+docker compose -f docker-compose.neca.yml --profile web stop web
+```
 
-- 挂载 `docker.sock` 等价于宿主 root 权限，仅 root 可执行/读取配置；
-- `/opt/ipsec/pki`、`clients`、`neca.env`、`neca.json` 含敏感路径或 p12，权限保持 0600/0700；
+lite 与 neca-web 使用同一版本；升级时同时更新两个镜像标签。
+
+## 7. 安全
+
+- 挂载 `docker.sock` 等价于宿主 root 权限，仅 root 可执行/读取 lite 配置；
+- Web 容器以 UID/GID 10001 非 root 运行，只读根文件系统、`no-new-privileges`、
+  `cap_drop: ALL`，不挂载 `ca.key`、客户端私钥或 docker.sock；
+- `web-secrets` 目录 0710，session key/password hash 0640，audit log 0660；
+- 不要让 Web 容器拥有整个 `web-secrets` 目录；compose 使用单文件挂载；
+- 默认不发布 Web 端口；优先 OpenSSH 本地转发；
 - 不要把镜像、env 文件或 `/opt/ipsec` 目录整体上传到公共 registry；
-- 容器默认 `network_mode: none`，只通过 docker socket 工作。
-- neca CLI 容器只挂载 `/opt/ipsec` 与 `/var/run/docker.sock`，**不修改宿主 `/etc/ssl`、
-  `/etc/hosts`、iptables 或 Docker daemon 配置**；Linux 安装脚本只会在用户手动执行
-  的目标客户端上安装指定 CA。其它容器出现 TLS unknown authority 时，应检查该容器
-  自身的 CA bundle，而不是 neca 容器。
+- neca 容器不修改宿主 `/etc/ssl`、`/etc/hosts`、iptables 或 Docker daemon 配置；
+  其它容器出现 TLS unknown authority 时，应检查该容器自身的 CA bundle。

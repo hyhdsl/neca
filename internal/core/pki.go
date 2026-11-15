@@ -525,9 +525,13 @@ func exportP12Locked(ctx context.Context, cfg *Config, oss *OpenSSL, cn string, 
 	if err := oss.ExportPKCS12(ctx, filepath.Join(cfg.PKIDir, cn+".key"), filepath.Join(cfg.PKIDir, cn+".crt"), p12Path, passPath, cn, profile); err != nil {
 		return err
 	}
+	mode := groupReadMode(cfg.ClientsDir, 0o600)
 	for _, path := range []string{p12Path, passPath} {
-		if err := os.Chmod(path, 0o600); err != nil {
+		if err := os.Chmod(path, mode); err != nil {
 			return runtimef("设置 p12 权限", "%s: %v", path, err)
+		}
+		if err := inheritGroupFromDir(path, cfg.ClientsDir); err != nil {
+			return runtimef("设置 p12 属组", "%s: %v", path, err)
 		}
 	}
 	if err := copyFileMode(cfg.CACert, filepath.Join(dir, "ca.crt"), 0o644); err != nil {

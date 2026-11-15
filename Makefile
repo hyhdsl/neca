@@ -30,22 +30,33 @@ LDFLAGS := -s -w \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build build-native test vet fmt fmt-check check-ascii check-locales dev docker shadow clean
+.PHONY: help all build build-lite build-web build-native test vet fmt fmt-check check-ascii check-locales dev docker shadow clean
 
 help: ## 显示可用目标
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
 all: fmt-check vet check-ascii check-locales test build ## 完整本地校验（等价 CI）
 
-build: ## 交叉编译 linux/amd64 与 linux/arm64 到 dist/
+build: build-lite build-web ## 交叉编译 lite + neca-web 的全部二进制到 dist/
+
+build-lite: ## 交叉编译 lite CLI（linux/amd64、linux/arm64）
 	@mkdir -p $(DIST)
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/neca-linux-amd64 ./cmd/neca
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/neca-linux-arm64 ./cmd/neca
 	@echo "[OK]   构建完成：$(DIST)/neca-linux-amd64，$(DIST)/neca-linux-arm64"
 
-build-native: ## 构建当前平台的调试二进制到 dist/neca
+build-web: ## 交叉编译 neca-web 的 necad/helper（linux/amd64、linux/arm64）
+	@mkdir -p $(DIST)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/necad-linux-amd64 ./cmd/necad
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/necad-linux-arm64 ./cmd/necad
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/neca-web-helper-linux-amd64 ./cmd/neca-web-helper
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/neca-web-helper-linux-arm64 ./cmd/neca-web-helper
+	@echo "[OK]   构建完成：necad 与 neca-web-helper（amd64/arm64）"
+
+build-native: ## 构建当前平台的 CLI/necad 调试二进制到 dist/
 	@mkdir -p $(DIST)
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/neca ./cmd/neca
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/necad ./cmd/necad
 
 test: ## 运行全部 Go 测试（-race 竞态检测）
 	$(GO) test -race ./...
@@ -72,8 +83,9 @@ check-locales: ## 校验内置语言包 key 集合一致（文档 §8.11）
 dev: ## 构建并进入开发容器（docker compose 解析挂载路径，Windows 同样可用）
 	docker compose run --rm dev bash
 
-docker: build ## 构建运行镜像 ghcr.io/hyhdsl/neca:dev（先交叉编译）
-	docker build -f Dockerfile -t ghcr.io/hyhdsl/neca:dev .
+docker: build ## 构建 lite 与 neca-web 运行镜像（先交叉编译）
+	docker build --target lite -f Dockerfile -t ghcr.io/hyhdsl/neca:dev .
+	docker build --target web -f Dockerfile -t ghcr.io/hyhdsl/neca-web:dev .
 
 shadow: build ## 新旧实现影子对比（需 bash + openssl + python3）
 	NECA_BIN=$(DIST)/neca-linux-amd64 bash scripts/shadow.sh

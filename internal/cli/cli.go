@@ -192,6 +192,7 @@ func newBuiltinRegistry() *Registry {
 	registry.MustRegister(newPackageCommand())
 	registry.MustRegister(newDownloadsCommand())
 	registry.MustRegister(newConfigCommand())
+	registry.MustRegister(newWebCommand())
 
 	// M3 交互向导。
 	registry.MustRegister(newWizardCommand(registry))

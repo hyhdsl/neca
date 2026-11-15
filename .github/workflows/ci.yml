@@ -74,12 +74,18 @@ jobs:
         run: make shadow
 
       - name: 冒烟测试（version 子命令）
-        run: ./dist/neca-linux-amd64 version
+        run: |
+          ./dist/neca-linux-amd64 version
+          ./dist/necad-linux-amd64 --version
+          ./dist/neca-web-helper-linux-amd64 --version
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: neca-linux
-          path: dist/neca-linux-*
+          path: |
+            dist/neca-linux-*
+            dist/necad-linux-*
+            dist/neca-web-helper-linux-*
           retention-days: 7
           if-no-files-found: error

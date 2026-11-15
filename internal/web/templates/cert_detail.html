@@ -1,0 +1,28 @@
+{{define "content"}}
+{{with .Cert}}
+<section class="detail-grid">
+  <article class="panel">
+    <div class="panel-head"><h2>{{.CN}}</h2><span class="status {{statusClass .Status}}">{{.StatusText}}</span></div>
+    <dl class="detail-list">
+      <dt>序列号</dt><dd class="mono">{{.Serial}}</dd>
+      <dt>Subject</dt><dd>{{.Subject}}</dd>
+      <dt>到期</dt><dd>{{.Expires}}</dd>
+      <dt>平台</dt><dd>{{if .Platforms}}{{join .Platforms ", "}}{{else}}-{{end}}</dd>
+      <dt>指纹</dt><dd class="mono wrap">{{.Fingerprint}}</dd>
+      <dt>SAN</dt><dd>{{if .SAN}}{{.SAN}}{{else}}-{{end}}</dd>
+    </dl>
+  </article>
+  <article class="panel">
+    <div class="panel-head"><h2>p12 检查</h2></div>
+    {{with $.Verify}}
+      {{if .Warnings}}<ul class="warnings" data-testid="verify-warnings">{{range .Warnings}}<li>{{.}}</li>{{end}}</ul>{{end}}
+      {{if .OKMessage}}<p class="ok-text" data-testid="verify-ok">{{.OKMessage}}</p>{{else}}<p class="muted">没有可显示的检查结果。</p>{{end}}
+    {{else}}
+      <p class="muted">没有可显示的检查结果。</p>
+    {{end}}
+    <p class="muted small">Web 面板在 M6a 只读；签发、吊销、重签请使用 CLI。</p>
+    <a href="/certs" class="link">返回证书列表</a>
+  </article>
+</section>
+{{end}}
+{{end}}

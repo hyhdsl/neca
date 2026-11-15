@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{{.Title}} · neca</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  {{if .Login}}
+  <main id="main" class="login-shell">
+    {{template "content" .}}
+  </main>
+  {{else}}
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="主导航">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">N</span>
+        <div>
+          <strong>neca</strong>
+          <small>证书管理</small>
+        </div>
+      </div>
+      <nav class="nav" aria-label="页面">
+        <a href="/" data-testid="nav-dashboard" {{if eq .Nav "dashboard"}}aria-current="page"{{end}}>概览</a>
+        <a href="/certs" data-testid="nav-certs" {{if eq .Nav "certs"}}aria-current="page"{{end}}>证书</a>
+        <a href="/downloads" data-testid="nav-downloads" {{if eq .Nav "downloads"}}aria-current="page"{{end}}>下载</a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="mode-badge {{if .ReadOnly}}is-readonly{{else}}is-writable{{end}}" data-testid="readonly-badge">
+          {{if .ReadOnly}}只读{{else}}可写{{end}}
+        </span>
+        {{if .UserCN}}<span class="muted small" data-testid="session-cn">{{.UserCN}}</span>{{end}}
+        <button type="button" class="icon-button" id="theme-toggle" data-testid="theme-toggle" aria-label="切换深浅色">主题</button>
+        <form method="post" action="/logout" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+          <button type="submit" class="link-button" data-testid="logout">退出</button>
+        </form>
+        <span class="muted small">v{{.Version}}</span>
+      </div>
+    </aside>
+    <main id="main" class="content">
+      <header class="topbar">
+        <div>
+          <h1>{{.Title}}</h1>
+          <p class="muted">strongSwan IKEv2 客户端证书</p>
+        </div>
+        <a class="button secondary" href="/downloads" data-testid="top-downloads">下载中心</a>
+      </header>
+      {{if .Error}}<div class="alert danger" role="alert" data-testid="page-error">{{.Error}}</div>{{end}}
+      {{template "content" .}}
+      <footer class="footer muted small">neca {{.Version}} · Web 面板只读模式 · {{formatTime .Now}}</footer>
+    </main>
+  </div>
+  {{end}}
+</body>
+</html>

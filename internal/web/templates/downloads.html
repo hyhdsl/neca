@@ -1,0 +1,25 @@
+{{define "content"}}
+<section class="panel">
+  {{if .Downloads}}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>CN</th><th>大小</th><th>创建</th><th>过期</th><th>SHA-256</th><th>操作</th></tr></thead>
+      <tbody>
+      {{range .Downloads}}
+        <tr>
+          <td>{{.CN}}</td>
+          <td>{{formatBytes .Size}}</td>
+          <td>{{formatTime .CreatedAt}}</td>
+          <td>{{formatTime .ExpiresAt}}</td>
+          <td class="mono wrap">{{.SHA256}}</td>
+          <td><a class="button secondary" href="/api/v1/downloads/{{.ID}}" data-testid="download-link">下载</a></td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <div class="empty" data-testid="empty-downloads">下载目录为空。CLI 生成 zip 后会出现在这里；默认 30 分钟过期。</div>
+  {{end}}
+</section>
+{{end}}

@@ -226,7 +226,8 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 | 类别 | 选择 | 理由 |
 |---|---|---|
 | CLI 解析 | **标准库 `flag` + 子命令 switch** | 10 个子命令，不值得引入 cobra；零依赖、帮助文本可控 |
-| 中文宽度 | `golang.org/x/text/width` | 唯一的第三方依赖；`--list` 对齐需要 East Asian Width |
+| 中文宽度 | `golang.org/x/text/width` | `--list` 对齐需要 East Asian Width |
+| 密码哈希 | `golang.org/x/crypto/bcrypt` | Web 管理员密码只存 bcrypt 哈希；M6a 引入 |
 | plist | 手写 XML 生成（`encoding/xml` + `encoding/base64`） | mobileconfig 结构固定，约 100 行；用测试解析回来校验 |
 | CSV | `encoding/csv` | 标准库 |
 | 文件锁 | `syscall.Flock`（Linux） | 标准库，无依赖 |
@@ -237,7 +238,7 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 | zip | `archive/zip` | 标准库；不依赖外部 `zip` 命令 |
 | 多语言 | `encoding/json` + `embed` | 标准库；语言包随二进制内置 |
 
-**总共 1 个第三方模块**（`x/text`），交叉编译无 cgo，`CGO_ENABLED=0`。
+**总共 2 个第三方模块**（`x/text`、`x/crypto`），交叉编译无 cgo，`CGO_ENABLED=0`。
 
 ---
 ## 6. CLI 设计
@@ -259,6 +260,11 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 | `neca index sync` | `--sync` | 补索引与元数据 |
 | `neca package <CN> [--platforms …] [--installers …] [--p12-profile …] [--zip]` | — | 从现有证书重建平台包，可选 zip |
 | `neca downloads list\|clean [--expired\|--all]` | — | 管理下载目录中的 zip 与有效期 |
+| `neca config init\|show\|validate\|export-env` | — | 管理 `neca.json` 设置 |
+| `neca web status` | — | Web 配置/只读/空闲超时/helper 状态 |
+| `neca web readonly status\|on\|off` | — | 只读开关；M6a 的 `off` 拒绝（helper 未实现） |
+| `neca web idle-timeout status\|<duration>` | — | 查看/设置空闲超时（5m–24h） |
+| `neca web hash-password` | — | 从 stdin 生成 bcrypt 管理员密码哈希 |
 | `neca`（无参数） | 无参数 | 进入交互向导 |
 | `neca version` | `-V` | 版本与构建信息 |
 
@@ -309,7 +315,7 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 
 错误时 `ok=false`，附 `error: {code, message}`；退出码不变。
 
-M3 已实现：`list/verify/version/issue/reissue/revoke/unrevoke/delete/platform/package/downloads/export/index sync` 原生结构化输出；其余命令以 `data.output` 兜底，stdout 始终是单个合法 JSON 对象。
+M3 已实现：`list/verify/version/issue/reissue/revoke/unrevoke/delete/platform/package/downloads/export/index sync` 原生结构化输出；M6a 增加 `web status/readonly/idle-timeout` 的 JSON 输出。其余命令以 `data.output` 兜底，stdout 始终是单个合法 JSON 对象。
 
 ### 6.5 交互向导
 
@@ -766,7 +772,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
-| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | 设计已确认，待开发；规格见 [web-panel-development.md](web-panel-development.md) | 5–8 人日 |
+| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a 只读面板已实现（代码/测试/镜像验证），待发布；M6b 待开发。规格与实施记录见 [web-panel-development.md](web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
 
@@ -844,10 +850,13 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | v0.1.1 | 修复 `--lang en-US` 仅翻译帮助、不翻译命令输出的问题；新增 `deploy/neca-wrapper.sh`，转发 `NECA_LANG` 并处理非交互 TTY；服务器镜像升级 |
 | 2026-11-15 | v0.2.0 | 新增 JSON 配置文件（`neca.json`）与 `--config`/`NECA_CONFIG`；优先级 CLI > env > JSON > 默认值；`config init/show/validate/export-env`；保持 index/meta/CRL 格式不变 |
 | 2026-11-15 | v0.2.0 验收 | 服务器快照后全量测试 **96 通过 / 0 失败**：config/language、五平台 issue/installers、p12、zip、downloads、verify、platform/package、revoke/unrevoke/reload、reissue/delete、JSON/错误/向导/wrapper；测试后索引/CRL/meta/clients 恢复基线，strongSwan 未重启 |
+| 2026-11-15 | M6a | 只读 Web 面板、签名会话/空闲超时、CSRF/限流、Web 配置 CLI、Passkey 接口占位、lite/neca-web 双镜像与 compose `web` profile；`go test -race`、镜像内容与 necad 容器健康检查通过；待 v0.3.0 发布与浏览器验收 |
 
-## 20. M6 开发准备（待确认）
+## 20. M6 开发准备（M6a 已实现）
 
-> Web 面板的评估见 [web-panel.md](web-panel.md)，开发规格见 [web-panel-development.md](web-panel-development.md)。Q1–Q11 已确认，本节只保留里程碑入口。
+> Web 面板的评估见 [web-panel.md](web-panel.md)，开发规格与 M6a 实施记录见 [web-panel-development.md](web-panel-development.md)。Q1–Q11 已确认；本节以下保留筹备期记录，若与开发文档 §18 不一致，以开发文档为准。
+>
+> **状态（2026-11-15）**：M6a 只读面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite/neca-web 双镜像与 compose `web` profile 已实现；M6b helper 未开始。
 
 ### 20.1 已验证的输入
 

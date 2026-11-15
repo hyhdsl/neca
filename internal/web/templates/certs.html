@@ -1,0 +1,40 @@
+{{define "content"}}
+<section class="panel">
+  <form method="get" action="/certs" class="filters" role="search">
+    <label for="q">搜索</label>
+    <input id="q" name="q" type="search" value="{{.Query}}" placeholder="CN、序列号或平台" data-testid="cert-search">
+    <label for="status">状态</label>
+    <select id="status" name="status" data-testid="cert-status">
+      <option value="" {{if eq .Status ""}}selected{{end}}>全部</option>
+      <option value="valid" {{if eq .Status "valid"}}selected{{end}}>有效</option>
+      <option value="revoked" {{if eq .Status "revoked"}}selected{{end}}>已吊销</option>
+      <option value="expired" {{if eq .Status "expired"}}selected{{end}}>已过期</option>
+      <option value="unindexed" {{if eq .Status "unindexed"}}selected{{end}}>未索引</option>
+    </select>
+    <button type="submit" class="button secondary" data-testid="cert-filter">筛选</button>
+    <a href="/certs" class="link">清除</a>
+  </form>
+  {{if .Certs}}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>CN</th><th>状态</th><th>序列号</th><th>平台</th><th>到期</th><th>操作</th></tr></thead>
+      <tbody>
+      {{range .Certs}}
+        <tr>
+          <td><a href="/certs/{{.CN}}" data-testid="cert-link">{{.CN}}</a></td>
+          <td><span class="status {{statusClass .Status}}">{{.StatusText}}</span></td>
+          <td class="mono">{{.Serial}}</td>
+          <td>{{if .Platforms}}{{join .Platforms ", "}}{{else}}-{{end}}</td>
+          <td>{{.Expires}}</td>
+          <td><a href="/certs/{{.CN}}" class="link">详情</a></td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <div class="empty" data-testid="empty-certs">没有匹配的证书。</div>
+  {{end}}
+  <p class="muted small">CRL 吊销条目：{{.CRLRevoked}}</p>
+</section>
+{{end}}

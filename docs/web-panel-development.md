@@ -1,6 +1,6 @@
 # neca Web 面板开发文档（M6）
 
-> 状态：**开发规格，代码未实现**。日期：2026-11-15。
+> 状态：**M6a 已实现（代码/测试/镜像验证），待发布；M6b 未开始**。日期：2026-11-15。
 > 设计依据：[web-panel.md](web-panel.md)。本文把已确认的 Q1–Q11 落成可执行的开发任务。
 > 目标：M6a 只读面板 + M6b helper 写能力；默认 lite，Web 作为可选 neca-web 面板包。
 
@@ -107,7 +107,7 @@ lite 镜像只包含 cmd/neca；neca-web 镜像包含 cmd/necad 与 cmd/neca-web
 - readOnly 默认 true；
 - passkey.enabled 默认 false；M6a 不注册 Passkey 路由；
 - 密码哈希、会话密钥、mTLS 私钥、数据库密码不写入 JSON；
-- 配置写入使用现有原子写 + flock；文件 0600；
+- 配置写入使用现有原子写 + flock；新文件 0600，覆盖已有文件时保留 mode/属主/组；
 - lite 镜像忽略 web 配置，不因 web 字段报错。
 
 ## 5. CLI
@@ -353,4 +353,33 @@ type PasskeyAuthenticator interface {
 - 空闲超时、Passkey 接口、Go 模板、SQLite 延后；
 - 保持 monorepo。
 
-未发现与已确认决策冲突的项。开发从 M6a 开始。
+未发现与已确认决策冲突的项。M6a 已按本文实施，M6b 待开始。
+
+## 18. M6a 实施记录（2026-11-15）
+
+已落地：
+
+- core：`WebConfig`、idleTimeout 5m–24h 校验、只读配置加载 `LoadConfigReadOnly`、原子 `UpdateWebConfig/UpdateWebReadOnly/UpdateWebIdleTimeout`；
+- CLI：`neca web status|readonly|idle-timeout|hash-password`；`readonly off` 在 M6a 明确拒绝；
+- Web：`cmd/necad` + `internal/web`，bcrypt 登录、HMAC 签名 Cookie、空闲/绝对超时、CSRF、登录限流、代理共享密钥 + 管理员 CN 校验、只读中间件、证书/详情/verify/下载 API 与 Go 模板页面；
+- Web 只从 `clients/<CN>/<CN>.crt` 读取证书副本，不挂载 `pki` 根目录、`ca.key`、客户端私钥或 docker.sock；
+- Docker：`Dockerfile` 拆为 `base`/`web`/`lite`，`make build` 同时产出 necad/helper；`deploy/docker-compose.neca.yml` 增加 `web` profile；
+- 部署：`deploy/init-web-secrets.sh` 初始化 web-secrets；M6a 不启动 helper；
+- 验证：`go vet ./...`、`go test -race ./...`、lite/neca-web 镜像内容检查、necad 容器 `/healthz` 健康检查通过。
+
+尚未完成：
+
+- Playwright DOM/计算样式/axe 浏览器验收；
+- 生产服务器灰度与反向代理/mTLS 实机验证；
+- SIGHUP 热重载（当前修改配置后需重启 necad）；
+- M6b helper、写 API 与写页面；
+- Passkey 实际注册/登录（仅接口与配置开关）。
+
+部署权限要点：
+
+- `/opt/ipsec/neca.json` 在启用 Web 时为 `root:neca-web 0640`；
+- `clients/` 与 `downloads/` 需要对 `neca-web` 组可读（`g+rX`）；目录组为 `neca-web` 时，CLI 新生成的 p12/zip/sidecar 会自动设为 0640；
+- `web-secrets/` 为 `root:neca-web 0710`，session key/password hash 0640，audit log 0660；
+- Web 容器使用固定 UID/GID 10001、只读根文件系统、`no-new-privileges`、无 docker.sock。
+
+未发现与 Q1–Q11 的冲突。

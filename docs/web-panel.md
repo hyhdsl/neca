@@ -1,6 +1,6 @@
 # neca Web 面板设计评估（M6）
 
-> 状态：**设计已确认，未实现**。日期：2026-11-15。
+> 状态：**设计已确认；M6a 只读面板已实现，尚未发布**。日期：2026-11-15。
 > 本文回答 Web 面板的访问控制、只读开关、证书访问、鉴权、UI 与后续 SQLite 迁移问题。实现以本文确认后的版本为准。
 > 实施规格见 [web-panel-development.md](web-panel-development.md)。
 
@@ -88,7 +88,7 @@ neca web idle-timeout 30m      # 空闲超时；默认 30m，最大 24h
 - lite 只带 status/readonly 管理命令，不带 necad/helper；Web 服务端由 neca-web 包的 necad 进程启动，不通过 lite CLI 的 serve 子命令；
 - lite 中 readonly off 返回“Web 组件未安装”，避免在无 helper 时产生错误的可写配置；
 - full 中 lite CLI 通过挂载的 helper 控制 socket 检查能力；socket 缺失或版本不匹配时同样拒绝；
-- on/off 由 root CLI 执行，原子写 neca.json，文件保持 0600；
+- on/off 由 root CLI 执行，原子写 neca.json；新文件 0600，启用 Web 时为 `root:neca-web 0640`；
 - 运行中的 necad 通过 SIGHUP 或配置文件监视重新加载；无法热加载时提示重启；
 - off 前检查 helper 可用、socket 权限正确、CA 私钥存在；
 - off 失败时保持 readOnly=true，不能出现“配置已关闭但写能力未就绪”的半状态；

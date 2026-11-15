@@ -109,6 +109,18 @@ func isWriteCommand(name string, args []string) bool {
 		return len(args) > 0 && args[0] == "sync"
 	case "downloads":
 		return len(args) > 0 && args[0] == "clean"
+	case "web":
+		if len(args) == 0 {
+			return false
+		}
+		switch args[0] {
+		case "readonly":
+			return len(args) > 1 && (args[1] == "on" || args[1] == "off")
+		case "idle-timeout":
+			return len(args) > 1 && args[1] != "status"
+		default:
+			return false
+		}
 	default:
 		return false
 	}

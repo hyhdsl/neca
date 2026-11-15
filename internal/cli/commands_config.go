@@ -69,7 +69,7 @@ func runConfigInit(env Env) int {
 	if err := core.WriteConfigFile(path, data); err != nil {
 		return fail(env, err)
 	}
-	fmt.Fprintf(env.Stdout, "[OK]   配置已写入: %s（0600）\n", path)
+	fmt.Fprintf(env.Stdout, "[OK]   配置已写入: %s（新文件 0600；覆盖保留原权限）\n", path)
 	return ExitOK
 }
 

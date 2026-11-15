@@ -43,6 +43,9 @@ var configEnvKeys = []string{
 	"DEFAULT_DAYS", "KEY_BITS", "NECA_RELOAD_MODE", "NECA_LOCK_FILE",
 	"NECA_DOWNLOAD_DIR", "NECA_DOWNLOAD_TTL", "NECA_DOWNLOAD_MAX_FILES",
 	"NECA_P12_PROFILE", "NECA_INSTALLERS", "NECA_AUDIT_LOG", "NECA_LANG",
+	"NECA_WEB_ENABLED", "NECA_WEB_LISTEN", "NECA_WEB_READONLY",
+	"NECA_WEB_IDLE_TIMEOUT", "NECA_WEB_ADMIN_CNS",
+	"NECA_WEB_PASSKEY_ENABLED", "NECA_WEB_PASSKEY_RPID", "NECA_WEB_PASSKEY_RPNAME",
 }
 
 // Config 是 neca 的全部运行时路径与开关。
@@ -81,6 +84,7 @@ type Config struct {
 	AuditFile        string        // 追加式审计日志
 	Language         string        // 控制台语言偏好
 	ConfigFile       string        // 实际读取的 JSON 配置路径
+	Web              WebConfig     // Web 面板配置；lite 只读取不使用
 }
 
 // EnvSource 从环境变量读取配置层。
@@ -155,12 +159,25 @@ func (s FileSource) Load(ctx context.Context) (map[string]string, error) {
 //
 // 优先级：环境变量 > JSON 文件 > 默认值；--config 由 CLI 写入 NECA_CONFIG。
 func LoadConfig() (*Config, error) {
+	return loadConfig(true)
+}
+
+// LoadConfigReadOnly 与 LoadConfig 使用同一优先级，但不创建/修改任何目录或文件。
+//
+// necad 以非 root 身份运行，且 PKI/配置通常以只读方式挂载；它只需要读取
+// 配置和 CA 公钥，不能调用 ensureLayout 的 chmod/MkdirAll。CLI 仍使用
+// LoadConfig 保持 M1–M5 的初始化行为。
+func LoadConfigReadOnly() (*Config, error) {
+	return loadConfig(false)
+}
+
+func loadConfig(initLayout bool) (*Config, error) {
 	path := ConfigFilePath()
 	sources := []ports.Source{EnvSource{}}
 	if path != "" {
 		sources = append(sources, JSONSource{Path: path})
 	}
-	cfg, err := LoadConfigFrom(sources...)
+	cfg, err := loadConfigFrom(sources, initLayout)
 	if cfg != nil {
 		cfg.ConfigFile = path
 	}
@@ -172,6 +189,10 @@ func LoadConfig() (*Config, error) {
 // 加载后依次补默认值、创建目录骨架、校验 CA 证书；任何一步失败都返回
 // 带类别的 core.Error，由 CLI 映射为退出码。
 func LoadConfigFrom(sources ...ports.Source) (*Config, error) {
+	return loadConfigFrom(sources, true)
+}
+
+func loadConfigFrom(sources []ports.Source, initLayout bool) (*Config, error) {
 	resolver := ports.NewResolver(sources...)
 	values, err := resolver.Resolve(context.Background())
 	if err != nil {
@@ -204,12 +225,17 @@ func LoadConfigFrom(sources ...ports.Source) (*Config, error) {
 		Installers:   values["NECA_INSTALLERS"],
 		AuditFile:    values["NECA_AUDIT_LOG"],
 		Language:     values["NECA_LANG"],
+		Web:          parseWebConfigValues(values),
 	}
 	cfg.applyDefaults()
 	if err := cfg.parseNumbers(values); err != nil {
 		return nil, err
 	}
-	if err := cfg.ensureLayout(); err != nil {
+	if initLayout {
+		if err := cfg.ensureLayout(); err != nil {
+			return nil, err
+		}
+	} else if err := cfg.checkCACert(); err != nil {
 		return nil, err
 	}
 	return cfg, nil
@@ -295,6 +321,11 @@ func (c *Config) applyDefaults() {
 	if c.Language == "" {
 		c.Language = "zh-CN"
 	}
+	// 零值 Config（例如 config init 的 ExampleConfigJSON）也必须带安全
+	// Web 默认值：关闭、只读、仅回环监听。
+	if strings.TrimSpace(c.Web.Listen) == "" {
+		c.Web = defaultWebConfig()
+	}
 }
 
 // parseNumbers 解析整数开关；非法值属于用法错误。
@@ -372,7 +403,11 @@ func (c *Config) ensureLayout() error {
 	if err := ensureFile(c.CAConf, c.defaultCAConf()); err != nil {
 		return err
 	}
+	return c.checkCACert()
+}
 
+// checkCACert 只校验 CA 公钥存在且可读；不做任何写入。
+func (c *Config) checkCACert() error {
 	if _, err := os.Stat(c.CACert); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return preconditionf("加载配置", "找不到 CA 证书: %s", c.CACert)

@@ -29,7 +29,9 @@ jobs:
       - name: Checksums
         run: |
           cd dist
-          sha256sum neca-linux-amd64 neca-linux-arm64 > checksums.txt
+          sha256sum neca-linux-amd64 neca-linux-arm64 \
+            necad-linux-amd64 necad-linux-arm64 \
+            neca-web-helper-linux-amd64 neca-web-helper-linux-arm64 > checksums.txt
 
       - name: Create GitHub Release
         env:
@@ -38,6 +40,10 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             dist/neca-linux-amd64 \
             dist/neca-linux-arm64 \
+            dist/necad-linux-amd64 \
+            dist/necad-linux-arm64 \
+            dist/neca-web-helper-linux-amd64 \
+            dist/neca-web-helper-linux-arm64 \
             dist/checksums.txt \
             --title "$GITHUB_REF_NAME" \
             --generate-notes

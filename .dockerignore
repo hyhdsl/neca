@@ -5,6 +5,10 @@
 dist/*
 !dist/neca-linux-amd64
 !dist/neca-linux-arm64
+!dist/necad-linux-amd64
+!dist/necad-linux-arm64
+!dist/neca-web-helper-linux-amd64
+!dist/neca-web-helper-linux-arm64
 legacy
 templates
 testdata/golden

@@ -94,6 +94,10 @@ func CreateDownloadZip(cfg *Config, cn string, platforms []string) (*DownloadEnt
 	if err := os.Rename(tmpPath, finalPath); err != nil {
 		return nil, runtimef("打包 zip", "rename: %v", err)
 	}
+	if err := applyDownloadPermissions(cfg, finalPath); err != nil {
+		_ = os.Remove(finalPath)
+		return nil, err
+	}
 
 	entry, err := buildDownloadEntry(cfg, cn, finalPath, now, expires, platforms)
 	if err != nil {
@@ -102,6 +106,11 @@ func CreateDownloadZip(cfg *Config, cn string, platforms []string) (*DownloadEnt
 	}
 	if err := writeDownloadMeta(entry); err != nil {
 		_ = os.Remove(finalPath)
+		return nil, err
+	}
+	if err := applyDownloadPermissions(cfg, entry.Path+".json"); err != nil {
+		_ = os.Remove(finalPath)
+		_ = os.Remove(entry.Path + ".json")
 		return nil, err
 	}
 	return entry, nil
@@ -247,7 +256,21 @@ func buildDownloadEntry(cfg *Config, cn, path string, created, expires time.Time
 	}, nil
 }
 
-// writeDownloadMeta 写 sidecar JSON（0600）。
+// applyDownloadPermissions 按 downloads 目录的组决定 zip/sidecar 权限。
+// 目录组为 root 时保持 0600；启用 Web 时把目录设为 neca-web 组即可让
+// 非 root 的 necad 读取新生成的下载。
+func applyDownloadPermissions(cfg *Config, path string) error {
+	mode := groupReadMode(cfg.DownloadsDir, 0o600)
+	if err := os.Chmod(path, mode); err != nil {
+		return runtimef("设置下载权限", "%s: %v", path, err)
+	}
+	if err := inheritGroupFromDir(path, cfg.DownloadsDir); err != nil {
+		return runtimef("设置下载属组", "%s: %v", path, err)
+	}
+	return nil
+}
+
+// writeDownloadMeta 写 sidecar JSON（默认 0600；组权限由调用方补齐）。
 func writeDownloadMeta(entry *DownloadEntry) error {
 	data, err := json.MarshalIndent(entry, "", "  ")
 	if err != nil {

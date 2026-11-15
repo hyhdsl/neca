@@ -55,6 +55,7 @@ type fileConfig struct {
 		TTL      string `json:"ttl,omitempty"`
 		MaxFiles int    `json:"maxFiles,omitempty"`
 	} `json:"download"`
+	Web webFileConfig `json:"web,omitempty"`
 }
 
 // ConfigFilePath 返回当前配置路径：NECA_CONFIG 优先，否则默认路径。
@@ -114,6 +115,22 @@ func (s JSONSource) Load(ctx context.Context) (map[string]string, error) {
 	set("NECA_DOWNLOAD_TTL", cfg.Download.TTL)
 	set("NECA_P12_PROFILE", cfg.Defaults.P12Profile)
 	set("NECA_INSTALLERS", cfg.Defaults.Installers)
+	if cfg.Web.Enabled != nil {
+		set("NECA_WEB_ENABLED", strconv.FormatBool(*cfg.Web.Enabled))
+	}
+	set("NECA_WEB_LISTEN", cfg.Web.Listen)
+	if cfg.Web.ReadOnly != nil {
+		set("NECA_WEB_READONLY", strconv.FormatBool(*cfg.Web.ReadOnly))
+	}
+	set("NECA_WEB_IDLE_TIMEOUT", cfg.Web.IdleTimeout)
+	if len(cfg.Web.AdminCNs) > 0 {
+		set("NECA_WEB_ADMIN_CNS", strings.Join(cfg.Web.AdminCNs, ","))
+	}
+	if cfg.Web.Passkey.Enabled != nil {
+		set("NECA_WEB_PASSKEY_ENABLED", strconv.FormatBool(*cfg.Web.Passkey.Enabled))
+	}
+	set("NECA_WEB_PASSKEY_RPID", cfg.Web.Passkey.RPID)
+	set("NECA_WEB_PASSKEY_RPNAME", cfg.Web.Passkey.RPName)
 	if cfg.Defaults.Days > 0 {
 		set("DEFAULT_DAYS", strconv.Itoa(cfg.Defaults.Days))
 	}
@@ -192,6 +209,18 @@ func ConfigSnapshot(cfg *Config) map[string]any {
 		"installers":       cfg.Installers,
 		"auditFile":        cfg.AuditFile,
 		"language":         cfg.Language,
+		"web": map[string]any{
+			"enabled":     cfg.Web.Enabled,
+			"listen":      cfg.Web.Listen,
+			"readOnly":    cfg.Web.ReadOnly,
+			"idleTimeout": cfg.Web.IdleTimeoutRaw,
+			"adminCNs":    cfg.Web.AdminCNs,
+			"passkey": map[string]any{
+				"enabled": cfg.Web.Passkey.Enabled,
+				"rpId":    cfg.Web.Passkey.RPID,
+				"rpName":  cfg.Web.Passkey.RPName,
+			},
+		},
 	}
 }
 
@@ -221,6 +250,12 @@ func ConfigEnvMap(cfg *Config) map[string]string {
 		"NECA_DOWNLOAD_MAX_FILES": strconv.Itoa(cfg.DownloadMaxFiles),
 		"NECA_P12_PROFILE":        string(cfg.P12Profile), "NECA_INSTALLERS": cfg.Installers,
 		"NECA_AUDIT_LOG": cfg.AuditFile, "NECA_LANG": cfg.Language,
+		"NECA_WEB_ENABLED": strconv.FormatBool(cfg.Web.Enabled),
+		"NECA_WEB_LISTEN":  cfg.Web.Listen, "NECA_WEB_READONLY": strconv.FormatBool(cfg.Web.ReadOnly),
+		"NECA_WEB_IDLE_TIMEOUT":    cfg.Web.IdleTimeoutRaw,
+		"NECA_WEB_ADMIN_CNS":       strings.Join(cfg.Web.AdminCNs, ","),
+		"NECA_WEB_PASSKEY_ENABLED": strconv.FormatBool(cfg.Web.Passkey.Enabled),
+		"NECA_WEB_PASSKEY_RPID":    cfg.Web.Passkey.RPID, "NECA_WEB_PASSKEY_RPNAME": cfg.Web.Passkey.RPName,
 	}
 }
 
@@ -257,6 +292,7 @@ func ConfigFileJSON(cfg *Config) ([]byte, error) {
 		fc.Download.Dir = cfg.DownloadsDir
 		fc.Download.TTL = cfg.DownloadTTL.String()
 		fc.Download.MaxFiles = cfg.DownloadMaxFiles
+		fc.Web = webFileFromConfig(cfg.Web)
 	}
 	data, err := json.MarshalIndent(fc, "", "  ")
 	if err != nil {
@@ -265,11 +301,20 @@ func ConfigFileJSON(cfg *Config) ([]byte, error) {
 	return append(data, '\n'), nil
 }
 
-// WriteConfigFile 原子写入 JSON 配置；目录 0700，文件 0600。
+// WriteConfigFile 原子写入 JSON 配置；目录 0700，新文件 0600。
+//
+// 覆盖已有文件时保留其 mode 与属主/组：启用 Web 后配置通常是
+// root:neca-web 0640，CLI 重写后不能退化成 root:root 0600。
 func WriteConfigFile(path string, data []byte) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return runtimef("写入配置", "创建目录 %s: %v", dir, err)
+	}
+	var existing fs.FileInfo
+	if info, err := os.Stat(path); err == nil {
+		existing = info
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return runtimef("写入配置", "读取 %s: %v", path, err)
 	}
 	tmp, err := os.CreateTemp(dir, ".neca-*.json")
 	if err != nil {
@@ -281,9 +326,17 @@ func WriteConfigFile(path string, data []byte) error {
 		tmp.Close()
 		return runtimef("写入配置", "%v", err)
 	}
-	if err := tmp.Chmod(0o600); err != nil {
+	mode := fs.FileMode(0o600)
+	if existing != nil {
+		mode = existing.Mode().Perm()
+	}
+	if err := tmp.Chmod(mode); err != nil {
 		tmp.Close()
 		return runtimef("写入配置", "%v", err)
+	}
+	if err := preserveOwnership(tmp, existing); err != nil {
+		tmp.Close()
+		return runtimef("写入配置", "恢复属主: %v", err)
 	}
 	if err := tmp.Close(); err != nil {
 		return runtimef("写入配置", "%v", err)

@@ -36,5 +36,17 @@
     "dir": "/opt/ipsec/downloads",
     "ttl": "30m",
     "maxFiles": 50
+  },
+  "web": {
+    "enabled": false,
+    "listen": "127.0.0.1:18080",
+    "readOnly": true,
+    "idleTimeout": "30m",
+    "adminCNs": [],
+    "passkey": {
+      "enabled": false,
+      "rpId": "",
+      "rpName": "neca Admin"
+    }
   }
 }

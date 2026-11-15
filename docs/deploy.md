@@ -1,6 +1,6 @@
 # 服务器部署（Docker）
 
-本目录提供 neca CLI 容器的生产部署文件。镜像内包含 openssl 与静态 docker CLI；
+仓库 `deploy/` 目录提供 neca CLI 容器的生产部署文件。镜像内包含 openssl 与静态 docker CLI；
 容器通过 `/var/run/docker.sock` 调用宿主机 docker，对 strongSwan 容器执行
 `swanctl --load-creds`。
 

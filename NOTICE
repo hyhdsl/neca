@@ -15,4 +15,4 @@ AI output may contain errors; review and test before use.
 PR policy: external pull requests are paused during development and will be
 reconsidered when development is complete. The project is maintained by the
 repository owner; issues and forks are welcome under AGPL. See
-SECONDARY-DEVELOPMENT.md for attribution and contribution policy.
+docs/SECONDARY-DEVELOPMENT.md for attribution and contribution policy.

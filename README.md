@@ -5,9 +5,9 @@
 >
 > 1. **AI 披露**：本项目的代码、测试与文档由 AI 编程助手（DeepSeek Harness / DeepSeek 模型）辅助生成与修改。AI 输出可能存在错误、遗漏或不适用，使用前请自行审查、测试并自行承担风险。
 > 2. **责任限制**：在适用法律允许的最大范围内，原作者、AI 模型/工具提供方及其所属公司不对因使用、无法使用或误用本软件造成的任何直接、间接、偶然、特殊或后果性损失（包括但不限于数据丢失、业务中断、证书/密钥泄露、VPN 不可用）承担责任。本软件按“现状”提供，不提供任何明示或默示担保。
-> 3. **开发期暂不接受外部 PR**：项目尚未完全开发完毕，暂不接受外部 Pull Request，仅维护者内部合并；开发完成后会重新评估并开放 PR。如需修改请先 fork，并遵守 AGPL 与 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
+> 3. **开发期暂不接受外部 PR**：项目尚未完全开发完毕，暂不接受外部 Pull Request，仅维护者内部合并；开发完成后会重新评估并开放 PR。如需修改请先 fork，并遵守 AGPL 与 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
 >
-> 完整授权与二次开发要求见 [LICENSE](LICENSE)、[NOTICE](NOTICE) 与 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
+> 完整授权与二次开发要求见 [LICENSE](LICENSE)、[NOTICE](NOTICE) 与 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
 
 基于 Go 的 strongSwan IKEv2 用户证书管理工具（CLI，后续含 Web 面板）。
 
@@ -89,7 +89,7 @@ neca list
 业务设置放在服务器 `/opt/ipsec/neca.json`（0600），`neca.env` 只保留
 `NECA_CONFIG=/opt/ipsec/neca.json` 作为 bootstrap；真实 `SERVER_ID` / `ORG` /
 `CA_CN` 不提交仓库。优先级：**CLI flag > 环境变量 > neca.json > 默认值**。
-完整步骤、备份/回滚和 docker.sock 安全说明见 [deploy/README.md](deploy/README.md)。
+完整步骤、备份/回滚和 docker.sock 安全说明见 [docs/deploy.md](docs/deploy.md)。
 
 ```bash
 neca config show           # 查看有效设置
@@ -131,6 +131,8 @@ templates/          平台包模板（Windows/Linux/macOS 脚本必须纯 ASCII�
 testdata/           黄金文件与 fixture 生成器（gen-fixture.sh）
 scripts/            辅助脚本（check-ascii、shadow）
 .github/workflows/  CI、release 与 GHCR 镜像工作流
+docs/              项目文档、Web 面板评估与部署说明
+deploy/            服务器 Docker 部署文件
 legacy/             上一代 bash 实现（只读归档，影子测试基准）
 dist/               构建产物（不入库）
 ```
@@ -167,25 +169,28 @@ dist/               构建产物（不入库）
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
 | M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
-| M6 | Web 面板（只读 MVP，含 30 分钟下载 TTL、鉴权与多语言） | 规划中；待确认 `neca-development.md` §20 的 Q1–Q5 |
+| M6 | Web 面板（只读 + 可选写能力，含 30 分钟下载 TTL、鉴权与多语言） | 评估中；见 [docs/web-panel.md](docs/web-panel.md) 的 Q1–Q5 |
 
 ## 许可与二次开发
 
 - **许可**：**AGPL-3.0-only**（OSI 认可的开源协议；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码），全文见 [LICENSE](LICENSE)。
-- **二次开发**：必须保留原作者与仓库链接、保留 AGPL 许可与源码公开义务；详见 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
+- **二次开发**：必须保留原作者与仓库链接、保留 AGPL 许可与源码公开义务；详见 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
 - **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；当前版本为 [v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0)（JSON 配置）。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
 
-## 文档
+## 文档索引
+
+完整索引见 [docs/README.md](docs/README.md)。
 
 | 文档 | 内容 |
 |---|---|
-| [neca-development.md](neca-development.md) | 开发文档：架构、CLI 契约、CI/CD、路线图、实验记录 |
-| [vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md) | 技术选型评估（Python vs Go） |
-| [legacy/vpn-cert-manager.md](legacy/vpn-cert-manager.md) | 旧 bash 脚本的使用与二次开发说明（归档） |
+| [docs/neca-development.md](docs/neca-development.md) | 开发文档：架构、CLI 契约、CI/CD、路线图、验收记录 |
+| [docs/web-panel.md](docs/web-panel.md) | Web 面板设计评估：只读开关、权限、VPN/mTLS、UI、SQLite 迁移 |
+| [docs/vpn-cert-manager-rewrite-assessment.md](docs/vpn-cert-manager-rewrite-assessment.md) | 技术选型评估（Python vs Go） |
+| [docs/legacy-vpn-cert-manager.md](docs/legacy-vpn-cert-manager.md) | 旧 bash 脚本的使用与二次开发说明（归档） |
+| [docs/deploy.md](docs/deploy.md) | Docker 服务器部署、备份/回滚与安全说明 |
+| [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策（开发期暂不接受外部 PR） |
 | [LICENSE](LICENSE) | GNU AGPL-3.0-only 许可全文 |
 | [NOTICE](NOTICE) | 版权、AI 披露与署名 |
-| [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策（开发期暂不接受外部 PR） |
-| [deploy/README.md](deploy/README.md) | Docker 服务器部署、备份/回滚与安全说明 |
 
 ## 现状
 

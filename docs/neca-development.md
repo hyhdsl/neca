@@ -711,7 +711,7 @@ feature 分支 → 维护者内部合并（CI 全绿；开发期暂不接受外�
 Docker CLI 部署：镜像包含 openssl + 静态 docker CLI，挂载 `/opt/ipsec` 与
 `/var/run/docker.sock`；`deploy/docker-compose.neca.yml` 与服务器侧
 `/opt/ipsec/neca.env`（0600）配合使用，真实 `SERVER_ID`/`ORG`/`CA_CN` 不进入仓库。
-详见 `deploy/README.md`。
+详见 `deploy.md`。
 
 发布已完成（2026-11-15）：v0.1.0 的二进制、checksums 与 GHCR 镜像已发布，仓库已转 public；README 警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已就位。外部 PR 在开发期暂不接收，完成后重新评估。
 
@@ -766,7 +766,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
-| M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`，含 30 分钟下载 TTL、鉴权与清理、Web 多语言） | 只读面板上线，与 CLI 共用 core；下载有效期与清理测试通过 | 4–5 人日 |
+| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`，含 30 分钟下载 TTL、鉴权与清理、Web 多语言） | 评估中；方案与 Q1–Q5 见 [web-panel.md](web-panel.md) | 5–8 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
 
@@ -846,6 +846,8 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | v0.2.0 验收 | 服务器快照后全量测试 **96 通过 / 0 失败**：config/language、五平台 issue/installers、p12、zip、downloads、verify、platform/package、revoke/unrevoke/reload、reissue/delete、JSON/错误/向导/wrapper；测试后索引/CRL/meta/clients 恢复基线，strongSwan 未重启 |
 
 ## 20. M6 开发准备（待确认）
+
+> Web 面板的完整评估、权限边界、mTLS/只读开关与 UI 方案已拆分为独立文档：[web-panel.md](web-panel.md)。本节只保留初始草案，Q1–Q5 以独立文档为准。
 
 ### 20.1 已验证的输入
 
@@ -963,5 +965,5 @@ docker exec ipsec-vpn swanctl --list-crls 2>&1 | head   # 若支持，查看CRL�
 
 - strongSwan swanctl：`https://www.strongswan.org/testing/testresults/`（本机为 5.9.8）
 - OpenSSL 3.0 `ca`、`pkcs12` 手册
-- 现有脚本与说明（已归档）：[legacy/vpn-cert-manager.sh](legacy/vpn-cert-manager.sh)、[legacy/vpn-cert-manager.md](legacy/vpn-cert-manager.md)
+- 现有脚本与说明（已归档）：[legacy/vpn-cert-manager.sh](../legacy/vpn-cert-manager.sh)、[legacy-vpn-cert-manager.md](legacy-vpn-cert-manager.md)
 - 技术选型评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)

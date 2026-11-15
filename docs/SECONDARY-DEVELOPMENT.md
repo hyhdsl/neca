@@ -1,7 +1,7 @@
 # 二次开发与再分发要求
 
 本项目采用 **GNU Affero General Public License v3.0 only（AGPL-3.0-only）**，
-全文见 [LICENSE](LICENSE)。AGPL 是 OSI 认可的开源协议，允许商业使用，但分发、
+全文见 [LICENSE](../LICENSE)。AGPL 是 OSI 认可的开源协议，允许商业使用，但分发、
 修改以及通过网络提供服务时须遵守其源码公开与许可保留要求。
 
 本文件用于说明项目附加的署名与贡献政策；它不是对 AGPL 的替代或限制。若本文件与

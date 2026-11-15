@@ -41,15 +41,18 @@ if ! git -C "$ROOT" diff --quiet -- docs/help \
 fi
 
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+trap 'cd "$ROOT" && rm -rf "$tmp"' EXIT
 
 echo "[INFO] target: $TARGET ($BRANCH)"
 git clone --quiet --branch "$BRANCH" "$TARGET" "$tmp/help"
 
 # Mirror HEAD:docs/help into the target worktree. Remove tracked target files
-# first so files deleted from the source cannot linger on the published site.
-git -C "$tmp/help" ls-files -z | xargs -0 rm -f
-git -C "$ROOT" archive --format=tar HEAD:docs/help | tar -x -C "$tmp/help"
+# from inside the target checkout so paths cannot accidentally resolve to the
+# source repository.
+cd "$tmp/help"
+git ls-files -z | xargs -0 rm -f
+cd "$ROOT"
+git archive --format=tar HEAD:docs/help | tar -x -C "$tmp/help"
 
 cd "$tmp/help"
 git add -A

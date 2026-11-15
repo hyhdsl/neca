@@ -9,8 +9,9 @@
 |---|---|
 | Q1 后台只读开关 | **可以**。在 neca.json 增加 web.readOnly，并新增 neca web readonly status/on/off 子命令；服务端强制拦截写请求。只读关闭后需要独立 root helper，Web 进程本身始终非 root。 |
 | Q2 权限调整 | Web 进程只读挂载、无 ca.key、无 docker.sock；写操作交给 Unix socket 的 root helper。 |
-| Q3 仅 VPN/指定证书访问 | 仅“连上 VPN”不足以限制到某一张证书。推荐 SSH 隧道/Tailscale 直连回环；如必须浏览器访问，使用反向代理 mTLS + 专用管理员证书 + VPN 网段防火墙。 |
-| Q4 鉴权调整 | mTLS（可选）+ 管理员密码哈希 + 签名 Cookie + CSRF + 限流；只读开关只允许 root CLI 修改，不能从 Web 自己解锁。 |
+| Q3 仅 VPN/指定证书访问 | 不引入第三方 VPN 客户端。单管理员用 OpenSSH 本地转发直连回环；浏览器场景使用系统原生 IKEv2 + 反向代理 mTLS 专用管理员证书 + VPN 网段防火墙。 |
+| Q4 鉴权调整 | mTLS（可选）+ 管理员密码哈希 + 签名 Cookie + CSRF + 限流；空闲超时默认 30m、可配至 24h、绝对会话上限 24h；只读开关只允许 root CLI 修改；Passkey 先保留接口。 |
+| Passkey | 可行但依赖 HTTPS + 稳定域名/RP ID；M6 仅保留接口、默认关闭，先作为第二因素。 |
 | Q5 UI/SQLite | Go 模板 + CSS 变量，深浅色蓝白/蓝黑主题；不以截图作为像素级验收依据，使用 data-testid/DOM/Playwright。M6 不引入 SQLite，但预留 Store 接口与迁移路径。 |
 | Docker 发布 | 只发布 lite 默认镜像 + 可选 neca-web 面板包；lite 不替换即可增量安装 Web；停止/移除 Web 组件即回到 lite。 |
 | 仓库边界 | 建议保持 monorepo：共享 core、同版本、同 Docker base；独立仓库收益不足以抵消成本。 |
@@ -61,7 +62,7 @@ necad（非 root，只读）
     "enabled": true,
     "listen": "127.0.0.1:18080",
     "readOnly": true,
-    "sessionTtl": "8h",
+    "idleTimeout": "30m",
     "adminCn": "webadmin-01"
   }
 }
@@ -78,6 +79,7 @@ neca web status                # lite 可用：配置状态；已装 Web 时含�
 neca web readonly status       # readonly | readwrite
 neca web readonly on           # 强制只读
 neca web readonly off          # 需要 Web 包 + helper；lite 内拒绝
+neca web idle-timeout 30m      # 空闲超时；默认 30m，最大 24h
 ~~~
 
 行为：
@@ -130,8 +132,8 @@ Web 进程始终非 root，因此 readOnly=false 不意味 Web 直接获得 CA �
 |---|---|---|---|
 | 只限制 Web 到 VPN 网段 + 登录 | 中 | 高 | 任何 VPN 用户都能访问登录页，不满足“指定证书” |
 | 按证书固定 VPN 客户端 IP，只放行该 IP | 中高 | 低 | 依赖地址池/静态映射，易漂移，不建议作为唯一措施 |
-| 反向代理 mTLS + 专用管理员证书 + CN 白名单 | 高 | 中 | 满足“只有该证书能访问 Web”；推荐浏览器场景 |
-| SSH 隧道 / Tailscale / WireGuard 管理网 | 很高 | 中高 | 单管理员最简、暴露面最小；优先推荐 |
+| 系统原生 IKEv2 + 反向代理 mTLS + 专用管理员证书 + CN 白名单 | 高 | 中 | 满足“只有该证书能访问 Web”；推荐浏览器场景，不引入第三方 VPN |
+| OpenSSH 本地端口转发 | 很高 | 中高 | 单管理员最简、暴露面最小；系统原生，优先推荐 |
 | 用同一张 VPN 客户端证书兼做浏览器 mTLS | 中高 | 低 | 技术上可行，但浏览器导入、移动端、私钥暴露和角色混淆问题多，不推荐 |
 
 ### 5.2 推荐
@@ -139,13 +141,13 @@ Web 进程始终非 root，因此 readOnly=false 不意味 Web 直接获得 CA �
 **单管理员、日常运维：**
 
 - Web 绑定 127.0.0.1:18080；
-- 通过 SSH 本地端口转发访问：ssh -L 18080:127.0.0.1:18080 ...；
-- 或使用 Tailscale/WireGuard 管理网；
+- 通过系统原生 OpenSSH 本地端口转发访问：ssh -L 18080:127.0.0.1:18080 ...；
+- 不使用 Tailscale/WireGuard 等第三方 VPN 客户端；
 - 不向公网或 VPN 业务网段开放 Web 端口。
 
 **必须从浏览器直接访问：**
 
-1. 反向代理只绑定 VPN 接口，防火墙只允许 VPN 网段；
+1. 使用系统原生 IKEv2 客户端连接；反向代理只绑定 VPN 接口，防火墙只允许 VPN 网段；
 2. 反向代理启用 mTLS，校验证书链和 CN；
 3. 单独签发管理员客户端证书（不要复用普通 VPN 用户证书），CN 写入白名单；
 4. 代理把已验证的 CN 通过受信任方式传给 necad（或由 necad 自己验证客户端证书）；
@@ -157,7 +159,7 @@ Web 进程始终非 root，因此 readOnly=false 不意味 Web 直接获得 CA �
 - “只让这张证书连 VPN”本身需要 VPN 侧的用户/证书授权与地址分配；当前 strongSwan 配置不能仅凭 Web 侧实现。
 - “只让这张证书访问 Web”更适合用 **mTLS CN 白名单** 实现，而不是依赖 VPN 连接状态。
 - 最佳组合：**VPN 网段限制 + 反向代理 mTLS 专用管理员证书 + 登录密码**。
-- 单管理员更推荐 **SSH 隧道/Tailscale**，比浏览器证书更容易维护。
+- 单管理员更推荐 **OpenSSH 本地转发**（系统原生），比浏览器证书更容易维护；不引入第三方 VPN 客户端。
 
 ## 6. Q4：鉴权与会话调整
 
@@ -168,6 +170,7 @@ TLS/mTLS（反向代理，可选）
   → 来源 IP/网段检查
   → 管理员登录（密码哈希）
   → 签名会话 Cookie（HttpOnly + Secure + SameSite=Lax）
+  → 空闲超时 / 绝对会话上限
   → CSRF token（写操作强制）
   → 限流 / 登录失败审计
 ~~~
@@ -179,7 +182,67 @@ TLS/mTLS（反向代理，可选）
 - 只读/读写切换只能由 root CLI 完成，Web 不提供“关闭只读”的 API；
 - 下载必须登录，下载 ID 不透明，TTL 30 分钟，过期 410/404。
 
-### 6.2 审计
+### 6.2 空闲超时与会话上限
+
+- neca.json 增加 web.idleTimeout，默认 30m，允许 5m–24h；超过 24h 拒绝；
+- 另设绝对会话上限 24h（从登录时刻起），空闲超时和绝对上限任一到达即失效；
+- CLI：neca web idle-timeout 30m / status；只允许 root CLI 修改，Web 不提供自行修改入口；
+- 服务端按认证请求更新 lastSeen；静态资源请求不单独续期，避免后台轮询延长会话；
+- 过期后页面跳转登录，API 返回 401；会话 Cookie 的 Max-Age 不超过绝对上限；
+- 修改后通过 SIGHUP/配置监视生效；无法热加载时提示重启。
+
+### 6.3 Passkey/WebAuthn（先评估，保留接口）
+
+**可行，但有前置条件，M6 先不实现登录，只保留接口和配置开关。**
+
+前置条件：
+
+- WebAuthn 需要 HTTPS 安全上下文；
+- 需要稳定的 RP ID（通常是管理面板域名）；仅用 IP 地址访问通常不可用；
+- 如果只通过 OpenSSH 本地转发访问 http://127.0.0.1:18080，localhost 可能被视为安全上下文，但 passkey 绑定 localhost，不适合多设备/远程管理员；生产仍建议域名 + 反向代理 TLS；
+- 浏览器/设备需支持 WebAuthn；硬件密钥、平台 passkey 和同步 passkey 的可用性不同；
+- 必须设计凭据丢失、恢复、撤销和审计流程。
+
+建议策略：
+
+- 默认 web.passkey.enabled=false；
+- 第一版只作为**第二因素**：密码 + passkey，密码仍是恢复路径；不建议一开始做无密码登录；
+- 注册必须在已登录会话中进行，要求 user verification；挑战短时有效；
+- 凭据存储先走 PasskeyStore 接口，M6 可用 0600 JSON 文件实现，后续可迁移到 SQLite；
+- 记录 credential ID、public key、sign count、created/last used、label；不记录私钥；
+- 只允许已注册凭据；克隆检测、RP ID/Origin 校验、挑战一次性；
+- 审计登录成功/失败、注册、删除、恢复。
+
+接口草案：
+
+~~~go
+type PasskeyCredential struct {
+    ID          []byte
+    PublicKey   []byte
+    SignCount   uint32
+    Label       string
+    CreatedAt   time.Time
+    LastUsedAt  time.Time
+}
+
+type PasskeyStore interface {
+    Put(ctx context.Context, c PasskeyCredential) error
+    Get(ctx context.Context, id []byte) (PasskeyCredential, error)
+    List(ctx context.Context) ([]PasskeyCredential, error)
+    Delete(ctx context.Context, id []byte) error
+}
+
+type PasskeyAuthenticator interface {
+    BeginRegistration(ctx context.Context, adminID string) (any, error)
+    FinishRegistration(ctx context.Context, adminID string, response []byte) error
+    BeginLogin(ctx context.Context) (any, error)
+    FinishLogin(ctx context.Context, response []byte) (string, error)
+}
+~~~
+
+M6a 只定义接口与 feature flag，不引入 WebAuthn 依赖；M6b/后续版本再决定是否实现。候选库需单独做许可证与安全评审，不提前锁定。
+
+### 6.4 审计
 
 记录：
 
@@ -264,6 +327,8 @@ M6 不引入 SQLite：
 - 未登录不能访问证书详情/下载；下载过期返回 410/404；
 - 路径遍历、伪造 CN 头、CSRF、暴力登录测试通过；
 - mTLS/反向代理/TLS 配置文档可复现；
+- 空闲 30m 后会话失效，配置上限 24h 生效；API 返回 401；
+- Passkey feature flag 默认关闭，未实现前不注册登录路由；只验证接口/配置可编译；
 - 深浅色主题对比度通过自动化检查；
 - 移动端与桌面端关键页面通过 Playwright 截图与 DOM 断言；
 - go test -race、httptest、容器灰度验收通过。
@@ -473,16 +538,18 @@ Web 面板不是独立产品，而是 neca core 的一个可选展示层：
 
 ## 13. 决策状态
 
-包装决策（Q6–Q8）已于 2026-11-15 确认；Q1–Q5 与 Q9 仍需最终确认。
+Q6–Q9 已于 2026-11-15 确认；Q1–Q5 与 Q10–Q11 仍需最终确认。
 
 1. Q1：接受只读开关 + helper 写能力分期（M6a/M6b），还是要求 M6 一次完成写操作？
 2. Q2：接受 root helper 作为唯一写边界？
-3. Q3：访问方式选 SSH 隧道/Tailscale，还是反向代理 mTLS？若选 mTLS，管理员证书的 CN 与签发流程需定。
+3. Q3：访问方式选 OpenSSH 本地转发，还是系统原生 IKEv2 + 反向代理 mTLS？若选 mTLS，管理员证书的 CN 与签发流程需定；不使用第三方 VPN 客户端。
 4. Q4：密码哈希注入与会话密钥文件的具体路径/权限。
 5. Q5：先做只读页面与深浅色，SQLite 保持延后；确认是否接受 Go 模板而非 SPA。
 6. ✅ Q6：采用 neca（lite，默认）+ neca-web（可选面板包）两个镜像标签（2026-11-15 已确认）。
 7. ✅ Q7：Web 包采用独立 Docker 镜像，不采用运行时二进制 tar（2026-11-15 已确认）。
 8. ✅ Q8：写模式 helper 使用独立 web-write profile/容器（2026-11-15 已确认）。
-9. Q9：Web 是否独立仓库？建议保持 monorepo（见第 12 节）。
+9. ✅ Q9：保持 monorepo（2026-11-15 已确认）。
+10. Q10：空闲超时默认 30m、最大 24h 是否接受？
+11. Q11：Passkey 首版作为第二因素、仅在 HTTPS + 稳定域名/RP ID 可用时启用，是否接受？
 
-M6a 只读 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。
+M6a 只读 + 会话超时 + Passkey 接口占位 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。

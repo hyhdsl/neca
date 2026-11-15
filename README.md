@@ -171,7 +171,7 @@ dist/               构建产物（不入库）
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
 | M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
-| M6 | Web 面板（只读 + 可选写能力；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权与多语言） | 评估中；见 [docs/web-panel.md](docs/web-panel.md) 的 Q1–Q8 |
+| M6 | Web 面板（只读 + 可选写能力；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权与多语言） | 评估中；见 [docs/web-panel.md](docs/web-panel.md) 的 Q1–Q11 |
 
 ## 许可与二次开发
 

@@ -222,7 +222,7 @@ func (s *Server) renderWriteError(w http.ResponseWriter, r *http.Request, err er
 
 func (s *Server) writable(ctx context.Context) bool {
 	state := s.helperState(ctx)
-	return !s.cfg.Web.ReadOnly && state.Available && !state.ReadOnly
+	return !s.readOnly() && state.Available && !state.ReadOnly
 }
 
 func (s *Server) helperAvailable(r *http.Request) bool {

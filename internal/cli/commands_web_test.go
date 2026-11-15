@@ -82,7 +82,7 @@ func TestWebReadOnlyOffWithHelper(t *testing.T) {
 	socket := startCLIHelper(t, true)
 	t.Setenv("NECA_WEB_HELPER_SOCKET", socket)
 	code, out, errOut := runCLI("web", "readonly", "off")
-	if code != ExitOK || !strings.Contains(out, "可写") || !strings.Contains(errOut, "需重启") {
+	if code != ExitOK || !strings.Contains(out, "可写") || !strings.Contains(errOut, "SIGHUP") || !strings.Contains(errOut, "neca-web") {
 		t.Fatalf("readonly off: code=%d out=%q err=%q", code, out, errOut)
 	}
 	data, err := os.ReadFile(configPath)

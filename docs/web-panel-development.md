@@ -384,7 +384,7 @@ type PasskeyAuthenticator interface {
 - Playwright DOM/计算样式/axe 浏览器验收已完成（Edge，无 serious/critical）；
 - 生产服务器部署已完成，访问通过 OpenSSH 本地转发；反向代理/mTLS 仍是后续可选项；
 - M6b helper、写 API 与写页面已完成；
-- SIGHUP 热重载仍未实现，修改配置后需重启 necad；
+- SIGHUP 已实现（readOnly/idleTimeout）；listen/adminCNs/passkey 变更仍需重启 necad；
 - Passkey 仍仅保留接口，未注册登录路由。
 
 部署权限要点：
@@ -413,7 +413,7 @@ type PasskeyAuthenticator interface {
 
 - Playwright/axe 浏览器验收已完成（Edge，无 serious/critical）；
 - Web UI 已接入 zh-CN/en-US（`neca_lang` Cookie），深浅色/移动端通过；
-- 仍有：SIGHUP 热重载未实现；helper 幂等缓存为进程内（重启后丢失）；
+- 仍有：helper 幂等缓存为进程内（重启后丢失）；listen/adminCNs/passkey 变更需重启；
 - 仍有：delete 不开放；Passkey 仅接口。
 
 ## 20. 正式部署记录（2026-11-15）

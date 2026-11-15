@@ -328,7 +328,7 @@ func appendWebAudit(cfg *core.Config, action, oldValue, newValue string) {
 
 func writeWebReloadHint(env Env, path string) {
 	if !env.Quiet {
-		fmt.Fprintf(env.Stderr, "[INFO] 配置已写入 %s；运行中的 necad 需重启后生效（SIGHUP 热重载尚未实现）\n", path)
+		fmt.Fprintf(env.Stderr, "[INFO] 配置已写入 %s；发送 SIGHUP 使运行中的 necad 重载（docker kill --signal=HUP neca-web）\n", path)
 	}
 }
 

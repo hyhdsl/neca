@@ -174,7 +174,7 @@ cd /opt/ipsec
 docker compose -f docker-compose.neca.yml --profile web --profile web-write up -d web web-helper
 neca web status                 # helper 应显示“可用”
 neca web readonly off           # 检查 socket/CA key 后原子写配置
-docker compose -f docker-compose.neca.yml --profile web restart web
+docker kill --signal=HUP neca-web
 ```
 
 `web-helper` 是 M6b 的**唯一 root 写边界**：挂载 PKI 与 docker.sock，只接受
@@ -185,7 +185,7 @@ docker compose -f docker-compose.neca.yml --profile web restart web
 
 ```bash
 neca web readonly on
-docker compose -f docker-compose.neca.yml --profile web restart web
+docker kill --signal=HUP neca-web
 ```
 
 ### 5.6 反向代理 mTLS（可选）
@@ -210,13 +210,13 @@ neca web readonly status
 neca web idle-timeout status
 ```
 
-修改 `web.readOnly` / `web.idleTimeout` 后需要重启 web 容器：
+修改 `web.readOnly` / `web.idleTimeout` 后发送 SIGHUP，necad 会重新读取配置并原子更新运行时值：
 
 ```bash
-docker compose -f docker-compose.neca.yml --profile web restart web
+docker kill --signal=HUP neca-web
 ```
 
-当前未实现 SIGHUP 热重载；这是已知限制，发布说明会注明。
+`web.listen`、`web.adminCNs`、`passkey` 变更仍需要重启 web 容器。
 
 ## 6. 备份与回滚
 

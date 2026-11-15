@@ -82,9 +82,38 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	hup := make(chan os.Signal, 1)
+	signal.Notify(hup, syscall.SIGHUP)
+	defer signal.Stop(hup)
+	go reloadOnSIGHUP(ctx, hup, server, cfg.Web.Listen)
 	log.Printf("necad %s listening on %s (readOnly=%t)", version.Get().Version, cfg.Web.Listen, cfg.Web.ReadOnly)
 	if err := server.ListenAndServe(ctx); err != nil {
 		log.Fatalf("Web 服务: %v", err)
+	}
+}
+
+// reloadOnSIGHUP 重新读取配置并热更新 readOnly/idleTimeout。
+// listen/adminCNs/passkey 变更不会在进程内生效，仍需重启容器。
+func reloadOnSIGHUP(ctx context.Context, hup <-chan os.Signal, server *web.Server, listen string) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-hup:
+			next, err := core.LoadConfigReadOnly()
+			if err != nil {
+				log.Printf("SIGHUP 重载失败: %v", err)
+				continue
+			}
+			if next.Web.Listen != listen {
+				log.Printf("SIGHUP: web.listen 变更需重启，保留 %s", listen)
+			}
+			if err := server.Reload(next); err != nil {
+				log.Printf("SIGHUP 重载失败: %v", err)
+				continue
+			}
+			log.Printf("SIGHUP: 已重载 readOnly=%t idleTimeout=%s", next.Web.ReadOnly, next.Web.IdleTimeoutRaw)
+		}
 	}
 }
 

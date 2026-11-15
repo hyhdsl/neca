@@ -372,7 +372,7 @@ func TestWebWriteAPIWithHelper(t *testing.T) {
 	defer h.close()
 	h.login(t)
 	socket := startFakeHelper(t)
-	h.server.cfg.Web.ReadOnly = false
+	h.server.readOnlyFlag.Store(false)
 	h.server.helperClient = helper.NewClient(socket)
 	token := csrfToken(t, h)
 
@@ -406,7 +406,7 @@ func TestWebWriteAPIWithHelper(t *testing.T) {
 		t.Fatalf("capabilities = %+v", capabilities)
 	}
 
-	h.server.cfg.Web.ReadOnly = true
+	h.server.readOnlyFlag.Store(true)
 	resp = postJSON(t, h, "/api/v1/certs", token, body)
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusForbidden {

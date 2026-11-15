@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hyhdsl/neca/internal/core"
@@ -35,7 +36,7 @@ type sessionClaims struct {
 
 type sessionManager struct {
 	secret   []byte
-	idle     time.Duration
+	idle     atomic.Int64
 	absolute time.Duration
 	now      func() time.Time
 
@@ -47,10 +48,12 @@ func newSessionManager(secret []byte, idle time.Duration, now func() time.Time) 
 	if now == nil {
 		now = time.Now
 	}
-	return &sessionManager{
-		secret: secret, idle: idle, absolute: core.AbsoluteWebSessionTimeout, now: now,
+	manager := &sessionManager{
+		secret: secret, absolute: core.AbsoluteWebSessionTimeout, now: now,
 		revoked: map[string]time.Time{},
 	}
+	manager.idle.Store(int64(idle))
+	return manager
 }
 
 func (m *sessionManager) issue(clientCN string) (string, sessionClaims, error) {
@@ -97,6 +100,11 @@ func (m *sessionManager) parse(token string) (sessionClaims, error) {
 	return claims, nil
 }
 
+// SetIdle 更新空闲超时；已有会话在下次校验时按新值判断。
+func (m *sessionManager) SetIdle(idle time.Duration) {
+	m.idle.Store(int64(idle))
+}
+
 // validate 校验签名、绝对上限、空闲超时与登出撤销表。
 func (m *sessionManager) validate(token string) (sessionClaims, error) {
 	claims, err := m.parse(token)
@@ -107,7 +115,7 @@ func (m *sessionManager) validate(token string) (sessionClaims, error) {
 	if claims.ExpiresAt <= now || claims.IssuedAt <= 0 || claims.LastSeen <= 0 {
 		return sessionClaims{}, errSessionExpired
 	}
-	if claims.LastSeen+int64(m.idle.Seconds()) <= now {
+	if claims.LastSeen+int64(time.Duration(m.idle.Load()).Seconds()) <= now {
 		return sessionClaims{}, errSessionExpired
 	}
 	m.mu.Lock()

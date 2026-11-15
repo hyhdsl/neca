@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/hyhdsl/neca/internal/core"
@@ -57,6 +58,8 @@ type Server struct {
 	now              func() time.Time
 	templates        map[string]*template.Template
 	static           http.Handler
+	readOnlyFlag     atomic.Bool
+	idleTimeoutNanos atomic.Int64
 }
 
 type sessionContextKey struct{}
@@ -113,7 +116,7 @@ func New(opts Options) (*Server, error) {
 	if strings.TrimSpace(opts.HelperSocket) != "" {
 		helperClient = helper.NewClient(opts.HelperSocket)
 	}
-	return &Server{
+	server := &Server{
 		cfg: opts.Config, store: opts.Store, oss: opts.OpenSSL,
 		passwordHash: opts.PasswordHash, proxySecret: []byte(opts.ProxySecret),
 		secureCookies: opts.SecureCookies, allowNonLoopback: opts.AllowNonLoopback,
@@ -122,7 +125,44 @@ func New(opts Options) (*Server, error) {
 		sessions: newSessionManager(opts.SessionKey, idle, now),
 		limiter:  newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
 		templates: templates, static: http.FileServer(http.FS(staticFS)),
-	}, nil
+	}
+	server.readOnlyFlag.Store(opts.Config.Web.ReadOnly)
+	server.idleTimeoutNanos.Store(int64(idle))
+	return server, nil
+}
+
+// readOnly 返回当前生效的只读状态；SIGHUP 重载会原子更新该值。
+func (s *Server) readOnly() bool { return s.readOnlyFlag.Load() }
+
+// idleTimeout 返回当前生效的空闲超时；主要用于重载测试与诊断。
+func (s *Server) idleTimeout() time.Duration {
+	return time.Duration(s.idleTimeoutNanos.Load())
+}
+
+// Reload 热更新可安全替换的运行时配置。
+//
+// 只处理 readOnly 与 idleTimeout；listen/adminCNs/passkey 仍需要重启 necad。
+// 失败时不修改当前运行时状态。
+func (s *Server) Reload(cfg *core.Config) error {
+	if cfg == nil {
+		return fmt.Errorf("web reload: 配置为空")
+	}
+	if !cfg.Web.Enabled {
+		return fmt.Errorf("web reload: web.enabled=false，进程需停止")
+	}
+	if err := cfg.Web.Validate(); err != nil {
+		return err
+	}
+	idle, err := cfg.Web.IdleTimeout()
+	if err != nil {
+		return err
+	}
+	s.readOnlyFlag.Store(cfg.Web.ReadOnly)
+	s.idleTimeoutNanos.Store(int64(idle))
+	if s.sessions != nil {
+		s.sessions.SetIdle(idle)
+	}
+	return nil
 }
 
 // Handler 返回带安全头、认证与只读保护的 HTTP 处理器。
@@ -342,7 +382,7 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 }
 
 func (s *Server) renderStatus(w http.ResponseWriter, r *http.Request, status int, name string, data pageData) {
-	data.ReadOnly = s.cfg.Web.ReadOnly
+	data.ReadOnly = s.readOnly()
 	data.Version = version.Get().Version
 	data.Path = r.URL.RequestURI()
 	tr := s.translatorFor(r)

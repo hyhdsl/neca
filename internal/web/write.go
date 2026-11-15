@@ -44,7 +44,7 @@ func (s *Server) helperState(ctx context.Context) helperState {
 }
 
 func (s *Server) canWrite(ctx context.Context) bool {
-	if s.cfg.Web.ReadOnly {
+	if s.readOnly() {
 		return false
 	}
 	state := s.helperState(ctx)
@@ -54,7 +54,7 @@ func (s *Server) canWrite(ctx context.Context) bool {
 // executeWrite 是 Web 写请求的唯一出口：readOnly、helper 可用性、CSRF
 // 都由调用方先检查；此处再做一次 readOnly/helper 双检查。
 func (s *Server) executeWrite(ctx context.Context, req helper.Request) (*helper.Response, error) {
-	if s.cfg.Web.ReadOnly {
+	if s.readOnly() {
 		return nil, &writeFailure{Status: http.StatusForbidden, Code: "read_only", Message: "Web 面板当前为只读模式"}
 	}
 	if s.helperClient == nil {

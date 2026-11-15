@@ -12,7 +12,7 @@
 | Q3 仅 VPN/指定证书访问 | 仅“连上 VPN”不足以限制到某一张证书。推荐 SSH 隧道/Tailscale 直连回环；如必须浏览器访问，使用反向代理 mTLS + 专用管理员证书 + VPN 网段防火墙。 |
 | Q4 鉴权调整 | mTLS（可选）+ 管理员密码哈希 + 签名 Cookie + CSRF + 限流；只读开关只允许 root CLI 修改，不能从 Web 自己解锁。 |
 | Q5 UI/SQLite | Go 模板 + CSS 变量，深浅色蓝白/蓝黑主题；不以截图作为像素级验收依据，使用 data-testid/DOM/Playwright。M6 不引入 SQLite，但预留 Store 接口与迁移路径。 |
-| Docker 发布 | lite 默认、full 可选；同一 Dockerfile 两个 target；lite 可增量拉取 full；full 可停用 Web 或切回 lite；完整评估见第 11 节。 |
+| Docker 发布 | 只发布 lite 默认镜像 + 可选 neca-web 面板包；lite 不替换即可增量安装 Web；停止/移除 Web 组件即回到 lite。 |
 
 ## 2. 总体架构
 
@@ -73,15 +73,17 @@ necad（非 root，只读）
 建议命令：
 
 ~~~bash
-neca web serve                 # 启动 Web 服务
-neca web status                # 运行状态与当前模式
+neca web status                # lite 可用：配置状态；已装 Web 时含运行状态
 neca web readonly status       # readonly | readwrite
 neca web readonly on           # 强制只读
-neca web readonly off          # 需要 helper 已启用
+neca web readonly off          # 需要 Web 包 + helper；lite 内拒绝
 ~~~
 
 行为：
 
+- lite 只带 status/readonly 管理命令，不带 necad/helper；Web 服务端由 neca-web 包的 necad 进程启动，不通过 lite CLI 的 serve 子命令；
+- lite 中 readonly off 返回“Web 组件未安装”，避免在无 helper 时产生错误的可写配置；
+- full 中 lite CLI 通过挂载的 helper 控制 socket 检查能力；socket 缺失或版本不匹配时同样拒绝；
 - on/off 由 root CLI 执行，原子写 neca.json，文件保持 0600；
 - 运行中的 necad 通过 SIGHUP 或配置文件监视重新加载；无法热加载时提示重启；
 - off 前检查 helper 可用、socket 权限正确、CA 私钥存在；
@@ -265,125 +267,128 @@ M6 不引入 SQLite：
 - 移动端与桌面端关键页面通过 Playwright 截图与 DOM 断言；
 - go test -race、httptest、容器灰度验收通过。
 
-## 11. Docker 发布形态：lite 与 full
+## 11. Docker 发布形态：lite + Web 面板包
 
 ### 11.1 结论
 
-可以发布，而且建议采用**同一 Dockerfile 的两个构建目标**，而不是维护两套代码：
+可以。推荐**只发布 lite CLI 镜像 + 可选的 neca-web 面板包**，不发布 full 镜像：
 
-- **lite**：只包含 neca CLI；默认版本，最小攻击面；
-- **full**：在 lite 的镜像层之上增加 necad、Web 模板/静态资源和可选 helper；
-- 两个版本共享同一个 core、版本号、配置 schema 和 /opt/ipsec 数据卷；
-- lite → full 是“换镜像 + 启动 web profile”，不需要迁移 PKI；
-- full → lite 可以“停用 web”（保留 full 镜像），也可以“切换 lite 镜像”（真正移除 web 层）。
+- **lite**：唯一默认镜像，只包含 neca CLI 与 Web 配置管理子命令，不包含 Web 服务端；
+- **neca-web**：可选面板包（独立 Docker 镜像），只增加 necad、helper 与 Web 模板/静态资源；
+- 部署 full = lite 容器 + neca-web 容器；不替换 lite 镜像；
+- lite → full：只拉取 neca-web 并启用 compose profile，不迁移 PKI；
+- full → lite：停止/移除 neca-web 容器即可，lite 容器和镜像原样保留。
 
-不建议把完整 Web 功能塞进唯一镜像再用开关伪装 lite：这样 lite 仍然包含 Web 代码，无法获得真正的攻击面收缩。
+这比“lite/full 两个完整镜像”更符合“选组件安装”：lite 始终是基础，Web 是可选附加组件。
 
 ### 11.2 镜像与标签
 
 | 标签 | 内容 | 默认 |
 |---|---|---|
-| ghcr.io/hyhdsl/neca:v0.3.0 | lite（CLI） | 是 |
-| ghcr.io/hyhdsl/neca:v0.3.0-full | full（CLI + Web + helper） | 否 |
+| ghcr.io/hyhdsl/neca:v0.3.0 | lite：CLI + web 配置管理，无 Web 服务端 | 是 |
+| ghcr.io/hyhdsl/neca-web:v0.3.0 | Web 面板包：necad + helper + Web 模板/静态资源 | 否 |
 | ghcr.io/hyhdsl/neca:latest | 最新 lite | — |
-| ghcr.io/hyhdsl/neca:latest-full | 最新 full | — |
+| ghcr.io/hyhdsl/neca-web:latest | 最新 Web 面板包 | — |
 
-Dockerfile 规划：
+- 不再发布 full 镜像；
+- neca-web 与 lite 共享 base 层（openssl、ca-certificates、docker CLI），但不包含 lite CLI；
+- neca-web 只包含 necad/helper 与 Web 资源；写 helper 使用单独 entrypoint；
+- 两个镜像必须使用相同 vX.Y.Z 版本。
+
+### 11.3 Dockerfile 规划
 
 ~~~dockerfile
 FROM debian:bookworm-slim AS base
-# openssl、ca-certificates、docker CLI、neca CLI
-COPY neca-linux-amd64 /usr/local/bin/neca
+# openssl、ca-certificates、docker CLI
 
 FROM base AS lite
+COPY neca-linux-amd64 /usr/local/bin/neca
 ENTRYPOINT ["neca"]
 
-FROM lite AS full
+FROM base AS web
 COPY necad-linux-amd64 /usr/local/bin/necad
 COPY neca-web-helper-linux-amd64 /usr/local/bin/neca-web-helper
-ENTRYPOINT ["neca"]
+ENTRYPOINT ["/usr/local/bin/necad"]
 ~~~
 
-- full 直接 FROM lite，因此基础层共享；拉取 full 只增加 Web/helper 层；
-- 两个目标使用同一版本号、同一 commit、同一 labels；
-- 两个镜像都保留完整 LICENSE/NOTICE 与版本命令；
-- full 的 CLI 行为必须与 lite 完全一致。
+- neca-web 通过 FROM base 与 lite 共享基础层，拉取时只增加 Web 层；
+- lite 镜像没有 necad/helper，Web 代码不进入默认镜像；
+- neca-web 不包含 lite CLI；Web 服务只由 necad 启动；
+- helper 与 necad 在同一镜像中使用不同 command/entrypoint，运行权限不同。
 
-### 11.3 Compose 形态
-
-同一套 compose 文件，用 profile 控制 Web：
+### 11.4 Compose 组件选择
 
 ~~~yaml
 services:
   neca:
     image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}
   web:
-    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}
+    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v0.3.0}
     profiles: ["web"]
-    command: ["necad"]
   web-helper:
-    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v0.3.0}
-    profiles: ["web"]
-    command: ["neca-web-helper"]
+    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v0.3.0}
+    profiles: ["web-write"]
 ~~~
 
-- lite：只启动 neca 服务；
-- full 只读：NECA_IMAGE 指向 full，启动 web profile，不启动 helper；
-- full 可写：增加 web-helper profile（helper 才挂载 CA 私钥与 docker.sock）；
-- web/helper 不加入默认 profile，避免“装了 full 就自动暴露 Web”；
-- full 部署的 CLI 服务也必须使用 full 镜像，否则没有 neca web readonly 子命令；不建议 lite CLI + full Web 混搭；
-- 启动 web profile 时 necad 检查自身版本/edition，lite 镜像必须快速失败，不能以“端口没起来”作为唯一报错。
+- 默认：只启动 neca（lite）；
+- full 只读：NECA_WEB_IMAGE 指向同版本 neca-web，启用 --profile web；
+- full 可写：再启用 --profile web-write；helper 是唯一挂载 CA 私钥/docker.sock 的容器；
+- Web/helper 不进入默认 profile，装了 neca-web 也不会自动暴露；
+- lite 的 CLI 包含 neca web readonly/status 管理子命令，因此即使未装 Web 也能预置配置；Web 服务由 neca-web 包的 necad 启动；
+- full compose 把 helper 控制 socket 只读挂载到 lite CLI；lite 默认没有该 socket，因此 readonly off 被拒绝；安装 Web/helper 后可校验并关闭只读；
+- necad 在 readOnly=false 但 helper 不可用时必须 fail closed（拒绝写端点或直接启动失败），不能只改配置就开放写；
+- necad 启动时检查自身版本与 lite/NECA 的版本标签，不匹配必须快速失败。
 
-### 11.4 迁移路径
+### 11.5 迁移路径
 
 | 方向 | 操作 | 数据影响 |
 |---|---|---|
-| lite → full | 拉取 full 镜像；切换 NECA_IMAGE；初始化 web secrets；启动 web profile | 无 PKI 迁移；配置仍读 neca.json |
-| full → lite（停用） | docker compose --profile web stop web web-helper；保留 full 镜像 | 数据保留；Web 不可用 |
-| full → lite（真正移除） | 停用 Web；切换 NECA_IMAGE 到 lite；删除 web/helper 容器与 web secrets | 保留 PKI/下载数据；web 专属数据可归档后删除 |
-| full → full 升级 | 拉新 full 镜像；滚动重启；必要时执行 web 数据迁移 | PKI 不变 |
-| 回滚 | 切回旧 full/lite 标签；恢复 web secrets | 版本兼容期内无需数据迁移 |
+| lite → full | 拉取 neca-web；设置 NECA_WEB_IMAGE；初始化 web secrets；启动 web profile | 不替换 lite，不迁移 PKI |
+| full → lite（停用） | docker compose --profile web --profile web-write stop web web-helper | lite 原样保留；Web 不可用 |
+| full → lite（移除） | 停用组件；删除 web/helper 容器、web secrets 与可选的 web 专属数据 | 保留 PKI、index、meta、clients、downloads |
+| full 升级 | 同时更新 neca 与 neca-web 到同一新版本；重启 web/helper | PKI 不变；必要时做 Web 数据迁移 |
+| 回滚 | 切回旧 neca-web 标签；需要时恢复 web secrets | 版本兼容期内无数据迁移 |
 
 关键点：
 
-- lite 不认识 web 配置段时应**忽略而不是报错**；
-- full 启动时发现 web.enabled=false 应只运行 CLI 服务；
-- 从 full 切 lite 时不清空 /opt/ipsec，也不自动删除下载/证书；
-- web secrets 与 PKI 分开存放（如 /opt/ipsec/web-secrets，0600），lite 不挂载；
-- 未来 SQLite 的 web.db 放在 web 专属路径，lite 不读取、不删除。
+- lite 镜像不包含 Web 运行时，移除 Web 后无需更换 lite 镜像；
+- full→lite 不会清空 /opt/ipsec，也不会自动删除证书/下载；
+- web secrets 与 PKI 分开存放（如 /opt/ipsec/web-secrets，0600），lite 不读取；
+- 未来 SQLite 的 web.db 放在 Web 专属路径，lite 不读取、不删除；
+- lite 配置中的 web 段可以被忽略；安装 Web 后复用同一配置。
 
-### 11.5 发布流水线调整
+### 11.6 发布流水线调整
 
 当前 docker.yml 只构建一个镜像，M6 需要：
 
-1. 同一个 buildx 调用分别构建 target lite/full；
-2. 同时推送 amd64/arm64；
-3. 生成两套 tags、digest 与 SBOM；
-4. release notes 明确 lite 为默认、full 为可选；
-5. CI 增加 lite/full 双镜像冒烟测试；
-6. 发布资产加入 necad/helper 的 linux 二进制（如选择直接分发二进制）。
+1. 构建并推送 lite 镜像 neca:vX；
+2. 以 lite 为基构建并推送 neca-web:vX（同一 buildx 流程）；
+3. 两个镜像都推送 amd64/arm64；
+4. 生成各自 tags、digest、SBOM 与版本标签；
+5. release notes 明确“默认 lite；Web 是可选组件”；
+6. CI 增加 lite、web 只读、web+helper 写模式三组冒烟测试；
+7. 如需要，发布 neca-web 的离线镜像 tar 作为镜像包，而不是可变的运行时 tar 安装包。
 
-建议默认拉取 lite；只有需要 Web 的用户显式使用 -full 标签。
-
-### 11.6 测试矩阵
+### 11.7 测试矩阵
 
 | 场景 | 必须验证 |
 |---|---|
-| lite CLI | 与当前 v0.2.0 全量测试一致；无 web/helper 二进制 |
-| full CLI | CLI 行为与 lite 一致 |
-| full 只读 Web | 登录、列表、下载、readonly；无 ca.key/docker.sock |
-| full 可写 Web | helper 白名单、CSRF、审计；只读开关拒绝写 |
-| lite→full | 镜像切换、web secrets 初始化、无 PKI 迁移 |
-| full→lite | 停用与切镜像两种路径；数据保留、无残留端口 |
-| 回滚 | 旧镜像、旧配置、旧 secret 可用 |
-| 安全 | lite 无 Web 端口；full 默认不暴露；helper 最小权限 |
+| lite CLI | 与 v0.2.0 全量测试一致；无 necad/helper |
+| lite + web 只读 | 登录、列表、下载、readonly；Web 非 root，无 ca.key/docker.sock |
+| lite + web + helper | helper 白名单、CSRF、审计；只读开关拒绝写 |
+| lite→full | 只拉 neca-web，lite 不重启/不换镜像；无 PKI 迁移 |
+| full→lite | 停用/移除 Web 后 lite 仍可完整管理证书 |
+| 版本不匹配 | lite 与 neca-web 版本不一致时启动快速失败 |
+| 回滚 | 旧 neca-web、旧 secrets、旧配置可用 |
+| 安全 | 默认无 Web 端口；Web 包不自动暴露；helper 最小权限 |
 
-### 11.7 结论与限制
+### 11.8 结论与限制
 
-- “lite 增量更新成 full”在 Docker 层是可行的：full 基于 lite，只需拉新增层；但运行中的容器不是原地升级，仍需换镜像/重启；
-- “full 移除 Web 成为 lite”若只停 profile，只是**功能上的 lite**；要得到真正的 lite 镜像，必须切换到 lite 标签；
-- 不建议用环境变量在单一镜像内“关闭 Web”来宣称 lite，因为镜像仍包含 Web 代码与依赖；
-- 两镜像方案会增加发布矩阵和测试成本，但安全边界清晰，长期维护成本低于两套代码。
+- 这种方案最贴合“默认 lite、按组件安装 Web”的要求；
+- lite→full 是真正的增量：只拉 neca-web 新增层，不替换 lite；
+- full→lite 也是真正的移除：停止/删除 Web 组件即可，lite 镜像仍在；
+- 代价是镜像数量仍为两个、compose 需要 profiles、Web 与 lite 必须同版本；
+- 不建议把 Web 二进制以 tar 形式复制进运行中的 lite 容器：容器重建后丢失，且不可审计；应发布 neca-web 镜像或离线镜像 tar。
 
 ## 12. 待确认
 
@@ -392,8 +397,8 @@ services:
 3. Q3：访问方式选 SSH 隧道/Tailscale，还是反向代理 mTLS？若选 mTLS，管理员证书的 CN 与签发流程需定。
 4. Q4：密码哈希注入与会话密钥文件的具体路径/权限。
 5. Q5：先做只读页面与深浅色，SQLite 保持延后；确认是否接受 Go 模板而非 SPA。
-6. Q6：是否采用 lite 默认、full 显式标签（ghcr.io/hyhdsl/neca 与 -full）？
-7. Q7：full → lite 选择“停用 Web”还是“切换 lite 镜像”？建议两者都提供，默认停用。
-8. Q8：full 镜像是否同时包含 CLI 与 Web（推荐），还是只发布独立的 web 镜像？
+6. Q6：是否采用 neca（lite，默认）+ neca-web（可选面板包）两个镜像标签？
+7. Q7：Web 包采用独立 Docker 镜像（推荐），还是离线镜像 tar？不建议运行时二进制 tar。
+8. Q8：写模式 helper 是否使用独立 profile/容器（推荐 web-write）？
 
-M6a 只读 + lite/full 发布约 5 人日；M6b helper 写能力再加约 3 人日。
+M6a 只读 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。

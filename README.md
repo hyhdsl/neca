@@ -86,7 +86,7 @@ install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
 neca list
 ```
 
-M6 起 Web 面板作为可选的 **full** 镜像提供，默认 **lite** 只含 CLI；两者共享同一 core 与数据卷。评估见 [docs/web-panel.md](docs/web-panel.md) 第 11 节，尚未实现。
+M6 起 Web 面板作为可选的 **neca-web** 面板包提供；默认 **lite** 只含 CLI，不发布 full 镜像。lite + neca-web 共享同一 core 与数据卷，按 compose profile 选择组件；评估见 [docs/web-panel.md](docs/web-panel.md) 第 11 节，尚未实现。
 
 业务设置放在服务器 `/opt/ipsec/neca.json`（0600），`neca.env` 只保留
 `NECA_CONFIG=/opt/ipsec/neca.json` 作为 bootstrap；真实 `SERVER_ID` / `ORG` /
@@ -171,7 +171,7 @@ dist/               构建产物（不入库）
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
 | M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
-| M6 | Web 面板（只读 + 可选写能力；lite/full 双镜像；30 分钟下载 TTL、鉴权与多语言） | 评估中；见 [docs/web-panel.md](docs/web-panel.md) 的 Q1–Q8 |
+| M6 | Web 面板（只读 + 可选写能力；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权与多语言） | 评估中；见 [docs/web-panel.md](docs/web-panel.md) 的 Q1–Q8 |
 
 ## 许可与二次开发
 

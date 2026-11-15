@@ -1,0 +1,16 @@
+# Example VPN ({{.CN}}) - uninstall
+[CmdletBinding()]
+param([string]$ProfileName = '{{.Profile}}', [string]$ClientCertCN = '{{.CN}}', [switch]$RemoveCA, [switch]$NoPause)
+function Test-Admin { $id = [Security.Principal.WindowsIdentity]::GetCurrent(); (New-Object Security.Principal.WindowsPrincipal($id)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) }
+if (-not (Test-Admin)) {
+    Write-Host 'Administrator privileges required - requesting elevation (UAC)...' -ForegroundColor Yellow
+    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File', ('"' + $PSCommandPath + '"'))
+    exit
+}
+try {
+    $c = Get-VpnConnection -Name $ProfileName -AllUserConnection -ErrorAction SilentlyContinue
+    if ($c) { if ($c.ConnectionStatus -eq 'Connected') { rasdial "$ProfileName" /disconnect 2>$null | Out-Null }; Remove-VpnConnection -Name $ProfileName -AllUserConnection -Force -ErrorAction SilentlyContinue; Write-Host "Removed profile: $ProfileName" }
+    $certs = @(); $certs += Get-ChildItem Cert:LocalMachineMy -ErrorAction SilentlyContinue | Where-Object { $_.Subject -like "*CN=$ClientCertCN*" }; $certs += Get-ChildItem Cert:CurrentUserMy -ErrorAction SilentlyContinue | Where-Object { $_.Subject -like "*CN=$ClientCertCN*" }
+    foreach ($x in $certs) { Remove-Item -Path $x.PSPath -Force -ErrorAction SilentlyContinue }
+    if ($RemoveCA) { Get-ChildItem Cert:LocalMachineRoot -ErrorAction SilentlyContinue | Where-Object { $_.Subject -like '*CN=ExampleOrg VPN CA*' } | ForEach-Object { Remove-Item -Path $_.PSPath -Force -ErrorAction SilentlyContinue } }
+} finally { if (-not $NoPause -and $Host.Name -eq 'ConsoleHost') { Read-Host 'Press Enter to close' | Out-Null } }

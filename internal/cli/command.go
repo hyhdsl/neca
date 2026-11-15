@@ -126,5 +126,5 @@ func (r *Registry) WriteHelp(w io.Writer) {
 	fmt.Fprintln(w, "通用开关：")
 	fmt.Fprintln(w, "  --version, -V  只输出版本号（单行）")
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "后续里程碑将提供：issue / reissue / revoke / unrevoke / delete 等写命令。")
+	fmt.Fprintln(w, "后续里程碑将提供：--json / --dry-run / 交互向导（M3）。")
 }

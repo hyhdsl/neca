@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hyhdsl/neca/internal/core/ports"
 )
@@ -17,18 +18,21 @@ import (
 // 默认值集中在这里，对应旧脚本顶部的 ${VAR:-default}（开发文档 §7）。
 // 环境变量为空字符串时按"未设置"处理，与 bash 的 :- 语义一致。
 const (
-	defaultPKIDir     = "/opt/ipsec/pki"
-	defaultCRLDir     = "/opt/ipsec/swanctl/x509crl"
-	defaultClientsDir = "/opt/ipsec/clients"
-	defaultExportDir  = "/opt/ipsec/exports"
-	defaultContainer  = "ipsec-vpn"
-	defaultDockerBin  = "docker"
-	defaultServerID   = "vpn.example.com"
-	defaultCACN       = "ExampleOrg VPN CA"
-	defaultORG        = "ExampleOrg"
-	defaultDays       = 365
-	defaultKeyBits    = 3072
-	defaultReloadMode = "creds"
+	defaultPKIDir          = "/opt/ipsec/pki"
+	defaultCRLDir          = "/opt/ipsec/swanctl/x509crl"
+	defaultClientsDir      = "/opt/ipsec/clients"
+	defaultExportDir       = "/opt/ipsec/exports"
+	defaultContainer       = "ipsec-vpn"
+	defaultDockerBin       = "docker"
+	defaultServerID        = "vpn.example.com"
+	defaultCACN            = "ExampleOrg VPN CA"
+	defaultORG             = "ExampleOrg"
+	defaultDays            = 365
+	defaultKeyBits         = 3072
+	defaultReloadMode      = "creds"
+	defaultDownloadsDir    = "/opt/ipsec/downloads"
+	defaultDownloadTTL     = 30 * time.Minute
+	defaultDownloadMaxFile = 50
 )
 
 // configEnvKeys 是允许从环境变量覆盖的键，名称与旧脚本完全一致。
@@ -37,6 +41,8 @@ var configEnvKeys = []string{
 	"CA_CONF", "CRL_DIR", "CRL_FILE", "CLIENTS_DIR", "META_DIR", "ARCHIVE_DIR",
 	"EXPORT_DIR", "CONTAINER", "DOCKER_BIN", "SERVER_ID", "ORG", "CA_CN",
 	"DEFAULT_DAYS", "KEY_BITS", "NECA_RELOAD_MODE", "NECA_LOCK_FILE",
+	"NECA_DOWNLOAD_DIR", "NECA_DOWNLOAD_TTL", "NECA_DOWNLOAD_MAX_FILES",
+	"NECA_P12_PROFILE", "NECA_INSTALLERS",
 }
 
 // Config 是 neca 的全部运行时路径与开关。
@@ -66,6 +72,12 @@ type Config struct {
 	KeyBits     int    // RSA 位数
 	ReloadMode  string // creds | restart（M2 使用）
 	LockFile    string // 全局 flock 文件
+
+	DownloadsDir     string        // zip 下载目录
+	DownloadTTL      time.Duration // zip 有效期
+	DownloadMaxFiles int           // zip 数量上限
+	P12Profile       P12Profile    // compat | modern
+	Installers       string        // none | all | 平台列表
 }
 
 // EnvSource 从环境变量读取配置层。
@@ -173,6 +185,9 @@ func LoadConfigFrom(sources ...ports.Source) (*Config, error) {
 		ORG:        values["ORG"],
 		ReloadMode: values["NECA_RELOAD_MODE"],
 		LockFile:   values["NECA_LOCK_FILE"],
+
+		DownloadsDir: values["NECA_DOWNLOAD_DIR"],
+		Installers:   values["NECA_INSTALLERS"],
 	}
 	cfg.applyDefaults()
 	if err := cfg.parseNumbers(values); err != nil {
@@ -246,6 +261,18 @@ func (c *Config) applyDefaults() {
 	if c.LockFile == "" {
 		c.LockFile = filepath.Join(c.PKIDir, ".lock")
 	}
+	if c.DownloadsDir == "" {
+		c.DownloadsDir = defaultDownloadsDir
+	}
+	if c.DownloadMaxFiles <= 0 {
+		c.DownloadMaxFiles = defaultDownloadMaxFile
+	}
+	if c.Installers == "" {
+		c.Installers = "none"
+	}
+	if c.P12Profile == "" {
+		c.P12Profile = P12Compat
+	}
 }
 
 // parseNumbers 解析整数开关；非法值属于用法错误。
@@ -266,6 +293,34 @@ func (c *Config) parseNumbers(values map[string]string) error {
 		}
 		c.KeyBits = n
 	}
+	c.DownloadTTL = defaultDownloadTTL
+	if raw := values["NECA_DOWNLOAD_TTL"]; raw != "" {
+		d, err := time.ParseDuration(raw)
+		if err != nil || d <= 0 {
+			return usagef("配置", "NECA_DOWNLOAD_TTL 非法: %q", raw)
+		}
+		c.DownloadTTL = d
+	}
+	if raw := values["NECA_DOWNLOAD_MAX_FILES"]; raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n <= 0 {
+			return usagef("配置", "NECA_DOWNLOAD_MAX_FILES 必须是正整数: %q", raw)
+		}
+		c.DownloadMaxFiles = n
+	}
+	if raw := values["NECA_P12_PROFILE"]; raw != "" {
+		profile, err := ParseP12Profile(raw)
+		if err != nil {
+			return usagef("配置", "%v", err)
+		}
+		c.P12Profile = profile
+	}
+	if raw := values["NECA_INSTALLERS"]; raw != "" {
+		if _, err := ParseInstallers(raw); err != nil {
+			return usagef("配置", "%v", err)
+		}
+		c.Installers = raw
+	}
 	return nil
 }
 
@@ -277,6 +332,13 @@ func (c *Config) ensureLayout() error {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return runtimef("创建目录", "%s: %v", dir, err)
 		}
+	}
+	// 下载目录含 p12/pass，权限收紧到 0700。
+	if err := os.MkdirAll(c.DownloadsDir, 0o700); err != nil {
+		return runtimef("创建目录", "%s: %v", c.DownloadsDir, err)
+	}
+	if err := os.Chmod(c.DownloadsDir, 0o700); err != nil {
+		return runtimef("设置目录权限", "%s: %v", c.DownloadsDir, err)
 	}
 
 	if err := ensureFile(c.IndexFile, ""); err != nil {

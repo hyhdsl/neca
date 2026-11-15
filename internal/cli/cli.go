@@ -102,5 +102,15 @@ func newBuiltinRegistry() *Registry {
 	registry.MustRegister(newExportCommand())
 	registry.MustRegister(newIndexCommand())
 
+	// M2 写命令。
+	registry.MustRegister(newIssueCommand())
+	registry.MustRegister(newReissueCommand())
+	registry.MustRegister(newRevokeCommand())
+	registry.MustRegister(newUnrevokeCommand())
+	registry.MustRegister(newDeleteCommand())
+	registry.MustRegister(newPlatformCommand())
+	registry.MustRegister(newPackageCommand())
+	registry.MustRegister(newDownloadsCommand())
+
 	return registry
 }

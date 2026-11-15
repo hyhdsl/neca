@@ -60,6 +60,7 @@ side_env() {
     META_DIR="$side/pki/meta" \
     ARCHIVE_DIR="$side/pki/archive" \
     EXPORT_DIR="$side/exports" \
+    NECA_DOWNLOAD_DIR="$side/downloads" \
     CONTAINER="neca-shadow-not-running" \
     DOCKER_BIN="false" \
     SERVER_ID="vpn.example.com" \
@@ -86,7 +87,10 @@ run_new() {
 
 # normalize 把两侧的临时路径统一成 SIDE，便于比较含路径的输出。
 normalize() {
-  sed -e "s#$OLD#SIDE#g" -e "s#$NEW#SIDE#g" -e "s#$SOLD#SIDE#g" -e "s#$SNEW#SIDE#g"
+  local args=(-e "s#$OLD#SIDE#g" -e "s#$NEW#SIDE#g" -e "s#$SOLD#SIDE#g" -e "s#$SNEW#SIDE#g")
+  if [ -n "${WOLD:-}" ]; then args+=(-e "s#$WOLD#SIDE#g"); fi
+  if [ -n "${WNEW:-}" ]; then args+=(-e "s#$WNEW#SIDE#g"); fi
+  sed "${args[@]}"
 }
 
 FAILED=0
@@ -98,6 +102,14 @@ check_same() {
     echo "[ERR]  $label 存在差异（见上方 diff）" >&2
     FAILED=1
   fi
+}
+
+# check_same_norm 先归一化临时路径再比较。
+check_same_norm() {
+  local label="$1" old_file="$2" new_file="$3"
+  normalize <"$old_file" >"$WORK/norm.old"
+  normalize <"$new_file" >"$WORK/norm.new"
+  check_same "$label" "$WORK/norm.old" "$WORK/norm.new"
 }
 
 # 1. list
@@ -148,6 +160,80 @@ fi
 run_old "$SOLD" --list >"$WORK/old.sync.list" 2>&1
 run_new "$SNEW" list >"$WORK/new.sync.list" 2>&1
 check_same "sync 后 list" "$WORK/old.sync.list" "$WORK/new.sync.list"
+
+# 6. M2 写命令影子对比：revoke/unrevoke/platform set/delete/platform add
+WOLD="$WORK/write-old"
+WNEW="$WORK/write-new"
+cp -a "$WORK/base" "$WOLD"
+cp -a "$WORK/base" "$WNEW"
+
+# 6.1 revoke TMP01
+run_old "$WOLD" --revoke TMP01 >"$WORK/old.revoke" 2>"$WORK/old.revoke.err"
+run_new "$WNEW" revoke TMP01 >"$WORK/new.revoke" 2>"$WORK/new.revoke.err"
+check_same_norm "revoke stdout" "$WORK/old.revoke" "$WORK/new.revoke"
+check_same_norm "revoke stderr" "$WORK/old.revoke.err" "$WORK/new.revoke.err"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WOLD/pki/ca/index.txt" >"$WORK/old.revoke.index"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WNEW/pki/ca/index.txt" >"$WORK/new.revoke.index"
+check_same "revoke index" "$WORK/old.revoke.index" "$WORK/new.revoke.index"
+old_crl_count=$(openssl crl -in "$WOLD/crl/ca.crl.pem" -noout -text 2>/dev/null | grep -c 'Serial Number' || true)
+new_crl_count=$(openssl crl -in "$WNEW/crl/ca.crl.pem" -noout -text 2>/dev/null | grep -c 'Serial Number' || true)
+if [ "$old_crl_count" = "$new_crl_count" ]; then echo "[OK]   revoke CRL 条目一致"; else echo "[ERR]  revoke CRL 条目: $old_crl_count vs $new_crl_count" >&2; FAILED=1; fi
+
+# 6.2 unrevoke TMP01
+run_old "$WOLD" --unrevoke TMP01 >"$WORK/old.unrevoke" 2>"$WORK/old.unrevoke.err"
+run_new "$WNEW" unrevoke TMP01 >"$WORK/new.unrevoke" 2>"$WORK/new.unrevoke.err"
+check_same_norm "unrevoke stdout" "$WORK/old.unrevoke" "$WORK/new.unrevoke"
+check_same_norm "unrevoke stderr" "$WORK/old.unrevoke.err" "$WORK/new.unrevoke.err"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WOLD/pki/ca/index.txt" >"$WORK/old.unrevoke.index"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WNEW/pki/ca/index.txt" >"$WORK/new.unrevoke.index"
+check_same "unrevoke index" "$WORK/old.unrevoke.index" "$WORK/new.unrevoke.index"
+
+# 6.3 platform set TMP02
+run_old "$WOLD" --set-platforms TMP02 --platforms windows,ios >"$WORK/old.set" 2>&1
+run_new "$WNEW" platform set TMP02 --platforms windows,ios >"$WORK/new.set" 2>&1
+check_same "platform set stdout" "$WORK/old.set" "$WORK/new.set"
+check_same "platform set meta" "$WOLD/pki/meta/TMP02.env" "$WNEW/pki/meta/TMP02.env"
+
+# 6.4 platform add TMP03 --platforms ios（只比较输出/meta，mobileconfig UUID 随机）
+run_old "$WOLD" --add-platform TMP03 --platforms ios >"$WORK/old.add" 2>&1
+run_new "$WNEW" platform add TMP03 --platforms ios >"$WORK/new.add" 2>&1
+check_same_norm "platform add stdout" "$WORK/old.add" "$WORK/new.add"
+check_same "platform add meta" "$WOLD/pki/meta/TMP03.env" "$WNEW/pki/meta/TMP03.env"
+
+# 6.5 delete TMP02（V 状态）
+run_old "$WOLD" --delete TMP02 --yes >"$WORK/old.delete" 2>&1
+run_new "$WNEW" delete TMP02 --yes >"$WORK/new.delete" 2>&1
+check_same_norm "delete stdout" "$WORK/old.delete" "$WORK/new.delete"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WOLD/pki/ca/index.txt" >"$WORK/old.delete.index"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WNEW/pki/ca/index.txt" >"$WORK/new.delete.index"
+check_same "delete index" "$WORK/old.delete.index" "$WORK/new.delete.index"
+if diff -ru "$WOLD/pki/meta" "$WNEW/pki/meta"; then echo "[OK]   delete 后 meta 一致"; else echo "[ERR]  delete 后 meta 差异" >&2; FAILED=1; fi
+
+# 7. M2 issue 流：新旧各自签发 TMP20，归一化序列号/日期/路径后比较
+IOLD="$WORK/issue-old"
+INEW="$WORK/issue-new"
+cp -a "$WORK/base" "$IOLD"
+cp -a "$WORK/base" "$INEW"
+run_old "$IOLD" --issue TMP20 --platforms windows,android --days 30 >"$WORK/old.issue" 2>"$WORK/old.issue.err"
+run_new "$INEW" issue TMP20 --platforms windows,android --days 30 --installers windows >"$WORK/new.issue" 2>"$WORK/new.issue.err"
+normalize_issue() {
+  sed -E -e 's/[0-9A-F]{16,}/SERIAL/g' \
+         -e 's/[A-Z][a-z]{2} [ 0-9][0-9] [0-9:]{8} [0-9]{4} GMT/DATE/g' \
+         -e "s#$IOLD#SIDE#g" -e "s#$INEW#SIDE#g" | sort
+}
+normalize_issue <"$WORK/old.issue" >"$WORK/old.issue.norm"
+normalize_issue <"$WORK/new.issue" >"$WORK/new.issue.norm"
+check_same "issue stdout" "$WORK/old.issue.norm" "$WORK/new.issue.norm"
+check_same "issue stderr" "$WORK/old.issue.err" "$WORK/new.issue.err"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$IOLD/pki/ca/index.txt" | sed -E 's/[0-9A-F]{16,}/SERIAL/g' >"$WORK/old.issue.index"
+awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$INEW/pki/ca/index.txt" | sed -E 's/[0-9A-F]{16,}/SERIAL/g' >"$WORK/new.issue.index"
+check_same "issue index" "$WORK/old.issue.index" "$WORK/new.issue.index"
+sed -E 's/^(EXPIRES|SERIAL)=.*/\1=NORM/' "$IOLD/pki/meta/TMP20.env" >"$WORK/old.issue.meta"
+sed -E 's/^(EXPIRES|SERIAL)=.*/\1=NORM/' "$INEW/pki/meta/TMP20.env" >"$WORK/new.issue.meta"
+check_same "issue meta" "$WORK/old.issue.meta" "$WORK/new.issue.meta"
+(cd "$IOLD/clients/TMP20" && find . -type f | sort) >"$WORK/old.issue.tree"
+(cd "$INEW/clients/TMP20" && find . -type f | sort) >"$WORK/new.issue.tree"
+check_same "issue clients tree" "$WORK/old.issue.tree" "$WORK/new.issue.tree"
 
 if [ "$FAILED" -ne 0 ]; then
   echo "[ERR]  影子对比失败：新旧实现存在差异" >&2

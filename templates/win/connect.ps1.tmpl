@@ -1,0 +1,8 @@
+# Example VPN - connect helper (disconnects other VPNs first)
+[CmdletBinding()]
+param([string]$ProfileName = '{{.Profile}}', [switch]$NoPause)
+Get-VpnConnection -AllUserConnection -ErrorAction SilentlyContinue | Where-Object { $_.ConnectionStatus -eq 'Connected' -and $_.Name -ne $ProfileName } | ForEach-Object { & rasdial.exe $_.Name /disconnect | Out-Null }
+Start-Sleep -Seconds 2
+$out = & rasdial.exe $ProfileName 2>&1 | Out-String
+Write-Output $out
+if (-not $NoPause -and $Host.Name -eq 'ConsoleHost') { Read-Host 'Press Enter to close' | Out-Null }

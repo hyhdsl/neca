@@ -25,7 +25,7 @@
 | D10 | 平台扩展与安装脚本 | 支持 Windows/Linux/macOS/Android/iOS；一键安装脚本默认关闭，`--installers` 显式开启（2026-11-15 决定） |
 | D11 | p12 算法 profile | 默认 `compat`（3DES+SHA1，MIUI 兼容）；新增 `modern`（AES-256/SHA256）可选，默认行为不变 |
 | D12 | 多语言 | 语言文件 JSON，默认 `zh-CN`，内置 `en-US`；社区可扩展；Web 多语言 M6 单独实现（2026-11-15 决定） |
-| D13 | 许可与仓库策略 | PolyForm Noncommercial 1.0.0；首个正式 Release 后转 public；暂不接受 PR；二次开发须署名、公开源码、不得商用（2026-11-15 决定） |
+| D13 | 许可与仓库策略 | 许可与 PR 策略**待仓库转 public 前决定**；当前候选草案见 `LICENSE.draft`；首个正式 Release 后转 public；当前不接受外部 PR |
 
 D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7，差距仅 1.6 分，属于"按阶段优先级取舍"而非"语言能力差距"。选 Go 的理由是**一次到位**：未来 Web 面板与多用户都复用同一份强类型 core，不再做第二次语言迁移；代价是阶段一的模板与文本处理工作量增加约 30–50%，以及需要先搭 Go 工具链。
 
@@ -444,7 +444,7 @@ p12 默认走 `compat` profile（§8.9）；`issue/reissue/package` 可用 `--p1
 | iOS | `iOS/` | `<CN>.mobileconfig`（CA + 身份 + IKEv2） | — | 与旧实现一致 |
 
 - 平台名统一为 `windows/linux/macos/android/ios`；兼容别名：`win/windows`、`mac/macos/darwin/osx`、`and/android`。
-- 共同产物：`<CN>.p12`、`<CN>.p12.pass`、`ca.crt`、`MANIFEST.txt`（CN、序列号、到期、生成时间、平台、p12 profile、文件校验和）。
+- 平台目录共同产物：`<CN>.p12`、`<CN>.p12.pass`、`ca.crt`、`使用说明.txt`；`MANIFEST.txt` 只放在 zip 根部，平台目录保持旧文件树以兼容影子测试。
 - **不进入平台包**：`<CN>.key`、`ca.key`、`index.txt`、meta 文件、审计日志。
 
 ### 9.2 一键安装脚本选项
@@ -562,7 +562,7 @@ issue TMP01 windows,android → list → verify → add-platform ios → export 
 
 M1 已落地：`scripts/shadow.sh` + `make shadow` 自动生成 fixture 的独立副本，比较 list/verify/export/index sync 的输出、CSV、index.txt 与 meta 目录；CI 将差异视为失败。
 
-M2 的 issue/reissue 影子对比使用 `--installers windows`，保证 `clients/` 树与旧脚本一致；默认 `none` 的产物作为独立用例验证。
+M2 已加入写命令影子对比：issue（归一化序列号/日期/路径）、revoke、unrevoke、platform set/add、delete；issue/reissue 使用 `--installers windows` 保证 `clients/` 树与旧脚本一致。
 
 ### 13.4 CI 门禁
 
@@ -615,7 +615,7 @@ docker run --rm -it -v "$PWD":/src -w /src \
 | `make test` | 容器内 `go test -race ./...` |
 | `make vet` / `make fmt` | 静态检查与格式化 |
 | `make check-ascii` | 校验 Windows 模板 |
-| `make shadow` | 新旧实现影子对比（bash + openssl + python3，diff 必须为 0） |
+| `make shadow` | 新旧实现影子对比（只读命令 + M2 写命令 + issue；bash + openssl + python3，diff 必须为 0） |
 | `make check-locales` | 校验内置语言包 key 一致（M3 起） |
 | `make docker` | 构建运行镜像 `ghcr.io/hyhdsl/neca:dev` |
 
@@ -648,10 +648,10 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 | 分支命名 | `feat/…`、`fix/…`、`chore/…` |
 | 提交信息 | Conventional Commits（`feat:`、`fix:`、`chore:`、`docs:`） |
 | 版本 | SemVer；tag `v0.1.0` 起 |
-| 许可证 | **PolyForm Noncommercial 1.0.0**（源码可见、禁止商业用途；不是 OSI 开源协议）；见 `LICENSE` / `NOTICE` / `SECONDARY-DEVELOPMENT.md` |
+| 许可证 | **待定**（转 public 前决定）；候选草案 PolyForm Noncommercial 1.0.0，见 `LICENSE.draft` / `NOTICE` / `SECONDARY-DEVELOPMENT.md` |
 | 公开时间 | 首个正式 Release（v0.1.0）后由私有转为 public；之前保持私有 |
-| PR 策略 | 当前**不接受 PR**；问题走 Issue，修改请 fork 并遵守二次开发要求 |
-| 二次开发 | 必须保留原作者与仓库链接、公开完整源码、沿用非商业许可、不得商用 |
+| PR 策略 | **待定**（转 public 前决定）；当前开发期不接受外部 PR；问题走 Issue，修改请 fork |
+| 二次开发 | 草案要求：保留原作者与仓库链接、公开完整源码、沿用非商业许可、不得商用；最终条款随许可确认 |
 
 ### 15.2 工作流
 
@@ -667,7 +667,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 - `docker.yml`：`permissions: packages: write` + `GITHUB_TOKEN` 登录 `ghcr.io`，**无需 PAT**；
 - 若未来需要跨仓操作，再考虑 GitHub App，不要引入长期 PAT。
 
-当前状态（2026-11-15）：`ci.yml` 已随 M0 落地，M1 增加 `make shadow` 门禁；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
+当前状态（2026-11-15）：`ci.yml` 已随 M0 落地，M1/M2 增加 `make shadow`（只读 + 写命令 + issue）门禁；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
 
 ### 15.3 发布流程
 
@@ -679,7 +679,7 @@ feature 分支 → PR（CI 全绿）→ squash merge 到 main
 
 回滚：保留上一个二进制为 `/usr/local/bin/neca.prev`，或直接从 Release 下载旧版本。
 
-发布完成后：确认 `README.md` 顶部警告、`LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已在 main 上，再将仓库从私有转为 public；首个正式 Release 之前不得转公开。
+发布完成后：先在转 public 前**最终确定许可与 PR 策略**，确认 `README.md` 顶部警告、`LICENSE`/`NOTICE`/`SECONDARY-DEVELOPMENT.md` 已定稿，再将仓库从私有转为 public；首个正式 Release 之前不得转公开。
 
 ### 15.4 DSH 的 GitHub 集成
 
@@ -734,6 +734,8 @@ gh auth login --hostname github.com --git-protocol https --web
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | 生产连续两周无回退；公开后仓库合规检查通过 | 1 人日 |
 | M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`，含 30 分钟下载 TTL、鉴权与清理、Web 多语言） | 只读面板上线，与 CLI 共用 core；下载有效期与清理测试通过 | 4–5 人日 |
 
+> M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
+
 ---
 
 ## 17. 风险
@@ -747,7 +749,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 并发写坏索引 | 中 | 中 | 全局 flock + 原子替换 |
 | `--load-creds` 实验失败 | 已排除 | — | 2026-11-15 实测通过，默认 `creds`；`restart` 保留为回退 |
 | GHCR 推送权限配置错误 | 中 | 低 | 用内置 `GITHUB_TOKEN` + `packages: write` |
-| 非商业许可被误认为 OSI 开源 | 中 | 中 | README/NOTICE 明确声明；发布前法律审阅 |
+| 非商业许可被误认为 OSI 开源 | 中 | 中 | README/NOTICE 明确候选与待定状态；转 public 前法律审阅 |
 | zip 含 p12/pass 泄露 | 中 | 高 | 0700/0600、TTL、鉴权、清理；不提供目录列表 |
 | Linux/macOS 脚本未验证 | 中 | 中 | 默认关闭，人工验证后再开放 |
 | 语言包 key 漂移 | 中 | 低 | CI `make check-locales`；缺 key 回退 |
@@ -761,12 +763,12 @@ gh auth login --hostname github.com --git-protocol https --web
 2. 运行镜像：已定 **debian-slim**（内置 openssl，约 80MB；scratch/distroless 无法运行 openssl 子进程）；
 3. ~~Go 版本锁定~~：镜像内实测 `go1.25.14`，`go.mod` 声明 `go 1.25`；
 4. ~~旧 bash 脚本归档~~：已归档到 `legacy/`（2026-11-15，M0）；
-5. **许可与二次开发条款的最终法律审阅**：目前选 PolyForm Noncommercial 1.0.0 + 额外“衍生源码公开”政策；后者可能需要自定义协议，发布前确认；
+5. **许可与 PR 策略**：**仓库转 public 前**最终确定；当前候选为 PolyForm Noncommercial 1.0.0 + 二次开发草案，需法律审阅；
 6. **Linux/macOS 一键脚本**：模板先保留、默认关闭；完成人工验证后再决定是否默认开放；
 7. **下载目录与 TTL**：CLI 与 Web 共用 `NECA_DOWNLOAD_DIR`；Web 鉴权与清理策略在 M6 前确定；
-8. **社区语言包**：“暂不接受 PR”期间的接收方式（Issue 附件或 fork）在 M3 前确定；
+8. **社区语言包**：M3 设计；PR 策略待转 public 前确定，期间通过 Issue/fork 接收；
 9. **阶段二 Web 权限方案**（§12.2 的三选一）；
-10. **首个正式 Release 后转 public 的检查清单**：README 警告、LICENSE、NOTICE、二次开发要求、分支保护/CI 门禁。
+10. **首个正式 Release 后转 public 的检查清单**：先确定最终 LICENSE 与 PR 策略，再检查 README 警告、NOTICE、二次开发要求、分支保护/CI 门禁。
 
 ---
 
@@ -777,16 +779,16 @@ gh auth login --hostname github.com --git-protocol https --web
 | 项 | 状态 |
 |---|---|
 | 仓库 | `github.com/hyhdsl/neca`（私有）已创建；`main` 已于 2026-11-15 重写历史并推送安全清理提交 |
-| 代码 | ✅ M1 已完成：只读命令 list/verify/export/index sync；core 模块 config/proc/openssl/index/meta/table/csv；影子对比 diff=0 |
+| 代码 | ✅ M2 已完成：写命令 issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、p12 profile、zip/TTL；影子对比 diff=0 |
 | 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
-| 平台与打包 | ⏳ 设计完成（§9）；M2 实现 Linux/macOS、安装脚本选项、zip/TTL |
-| p12 算法 | ⏳ 设计完成（§8.9）；M2 实现 `compat`/`modern` profile，默认兼容不变 |
+| 平台与打包 | ✅ M2 已实现：Windows/Linux/macOS/Android/iOS；安装脚本默认 none；zip/TTL/downloads |
+| p12 算法 | ✅ M2 已实现 `compat`/`modern` profile，默认兼容不变 |
 | 多语言 | ⏳ 设计完成（§8.11）；M3 实现语言文件与 `--lang` |
-| 许可/公开 | ✅ `LICENSE`/`NOTICE`/`SECONDARY-DEVELOPMENT.md` 已落地；首个正式 Release 后转 public，当前不接受 PR |
+| 许可/公开 | ⏳ 许可与 PR 策略待转 public 前决定；`LICENSE.draft`/`NOTICE`/`SECONDARY-DEVELOPMENT.md` 为草案；首个正式 Release 后转 public |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
-| CI/CD 工作流 | ✅ `ci.yml` 已落地（M0），M1 增加影子对比门禁；`release.yml` / `docker.yml` 随 M5 |
+| CI/CD 工作流 | ✅ `ci.yml` 已落地（M0），M1/M2 增加影子对比门禁；`release.yml` / `docker.yml` 随 M5 |
 | 服务器 | 生产状态已还原：索引 8 行、CRL 5 条、容器未重启 |
 
 ### 19.2 变更记录
@@ -799,7 +801,8 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | 扩展点 | 新增 §3.1：索引存储/配置来源接口契约（`internal/core/ports`）与 CLI 子命令注册表；候选扩展点登记，无行为变更 |
 | 2026-11-15 | M1 | 只读命令落地：config/proc/openssl/index/meta/table/csv；list/verify/export/index sync；新增 fixture 生成器与 `make shadow`，新旧实现 diff=0 |
 | 2026-11-15 | 安全 | 清理仓库中的服务器标识（IP、VPN 内网段、真实域名、组织/CA 名称），统一为占位值；生产值改为环境变量注入，并重写 Git 历史 |
-| 2026-11-15 | 第 3 稿 | Linux/macOS 平台包、安装脚本选项、zip/TTL 下载管理、p12 profile、多语言语言包；许可（PolyForm NC）与仓库公开/PR 策略；README 顶部警告 |
+| 2026-11-15 | 第 3 稿 | Linux/macOS 平台包、安装脚本选项、zip/TTL 下载管理、p12 profile、多语言语言包；许可与仓库公开/PR 策略草案；README 顶部警告 |
+| 2026-11-15 | M2 | 写命令落地：issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、安装脚本选项、p12 profile、zip/TTL；影子对比覆盖写命令与 issue；许可/PR 改为转 public 前决定 |
 
 ---
 

@@ -81,12 +81,14 @@ func parseIndexData(data []byte) ([]ports.Row, error) {
 // fn 返回错误时直接返回，文件保持原样；成功时写临时文件、fsync 后 rename，
 // 保证读者要么看到旧索引、要么看到新索引（开发文档 §11）。
 func (s *FileIndexStore) Update(ctx context.Context, fn func(idx *ports.Index) error) error {
-	lock, err := acquireIndexLock(s.lockPath)
-	if err != nil {
-		return err
-	}
-	defer lock.release()
+	return withPkiLock(s.lockPath, func() error {
+		return s.UpdateLocked(ctx, fn)
+	})
+}
 
+// UpdateLocked 执行读-改-写但不加锁，供已经持有 PKI 全局锁的写操作复用。
+// 调用方必须保证外层已通过 withPkiLock 持锁，否则会失去并发保护。
+func (s *FileIndexStore) UpdateLocked(ctx context.Context, fn func(idx *ports.Index) error) error {
 	rows, err := s.Load(ctx)
 	if err != nil {
 		return err

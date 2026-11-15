@@ -12,9 +12,10 @@ import (
 // 每次命令执行都重新加载配置（创建目录骨架、校验 CA），
 // 与旧脚本 init_env() 的时机一致。
 type coreDeps struct {
-	cfg   *core.Config
-	store *core.FileIndexStore
-	oss   *core.OpenSSL
+	cfg    *core.Config
+	store  *core.FileIndexStore
+	oss    *core.OpenSSL
+	engine *core.Engine
 }
 
 // newCoreDeps 构造 core 依赖。
@@ -23,10 +24,12 @@ func newCoreDeps() (*coreDeps, error) {
 	if err != nil {
 		return nil, err
 	}
+	runner := core.NewExecRunner()
 	return &coreDeps{
-		cfg:   cfg,
-		store: core.NewFileIndexStore(cfg.IndexFile, cfg.LockFile),
-		oss:   core.NewOpenSSL(core.NewExecRunner()),
+		cfg:    cfg,
+		store:  core.NewFileIndexStore(cfg.IndexFile, cfg.LockFile),
+		oss:    core.NewOpenSSL(runner),
+		engine: core.NewEngine(cfg, runner),
 	}, nil
 }
 

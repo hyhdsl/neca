@@ -1,0 +1,26 @@
+# Example VPN ({{.CN}}) - one-click install for Windows 10/11
+[CmdletBinding()]
+param([string]$ProfileName = '{{.Profile}}', [string]$ServerAddress = '{{.Server}}', [string]$ClientCertCN = '{{.CN}}', [switch]$NoPause)
+$ErrorActionPreference = 'Stop'
+$here = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$p12Path = Join-Path $here '{{.CN}}.p12'; $passPath = Join-Path $here '{{.CN}}.p12.pass'; $caPath = Join-Path $here 'ca.crt'
+function Test-Admin { $id = [Security.Principal.WindowsIdentity]::GetCurrent(); (New-Object Security.Principal.WindowsPrincipal($id)).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) }
+if (-not (Test-Admin)) {
+    Write-Host 'Administrator privileges required - requesting elevation (UAC)...' -ForegroundColor Yellow
+    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File', ('"' + $PSCommandPath + '"'))
+    exit
+}
+try {
+    foreach ($f in @($p12Path, $passPath, $caPath)) { if (-not (Test-Path $f)) { throw "Missing file: $f" } }
+    $ca = Get-ChildItem Cert:LocalMachineRoot | Where-Object { $_.Subject -like '*CN=ExampleOrg VPN CA*' } | Select-Object -First 1
+    if (-not $ca) { $ca = Import-Certificate -FilePath $caPath -CertStoreLocation Cert:LocalMachineRoot; Write-Host "Imported CA: $($ca.Thumbprint)" }
+    $pw = (Get-Content $passPath -Raw).Trim() | ConvertTo-SecureString -AsPlainText -Force
+    Import-PfxCertificate -FilePath $p12Path -CertStoreLocation Cert:LocalMachineMy -Password $pw | Out-Null
+    $cert = Get-ChildItem Cert:LocalMachineMy | Where-Object { $_.Subject -like "*CN=$ClientCertCN*" } | Sort-Object NotAfter -Descending | Select-Object -First 1
+    if (-not $cert) { throw "Client certificate not found (CN=$ClientCertCN)" }
+    $old = Get-VpnConnection -Name $ProfileName -AllUserConnection -ErrorAction SilentlyContinue
+    if ($old) { if ($old.ConnectionStatus -eq 'Connected') { rasdial "$ProfileName" /disconnect 2>$null | Out-Null }; Remove-VpnConnection -Name $ProfileName -AllUserConnection -Force }
+    Add-VpnConnection -Name $ProfileName -ServerAddress $ServerAddress -TunnelType Ikev2 -AuthenticationMethod MachineCertificate -EncryptionLevel Required -SplitTunneling -AllUserConnection -Force
+    Write-Host "Installed: $ProfileName ($($cert.Subject))" -ForegroundColor Green
+} catch { Write-Host "Install failed: $($_.Exception.Message)" -ForegroundColor Red }
+finally { if (-not $NoPause -and $Host.Name -eq 'ConsoleHost') { Read-Host 'Press Enter to close' | Out-Null } }

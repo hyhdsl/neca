@@ -220,7 +220,9 @@ type PasskeyAuthenticator interface {
 
 ## 8. HTTP 与 API
 
-只读 API：
+`/api/v1/*` 是 Web 面板的管理员 JSON API，要求登录后的会话 Cookie；写请求还要求
+`X-CSRF-Token`（值来自 `neca_csrf` Cookie）。它当前是**内部/实验性接口**，不承诺
+外部稳定兼容；如需公开 API，应先冻结 schema、认证方式、错误码与兼容策略。
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -228,16 +230,23 @@ type PasskeyAuthenticator interface {
 | GET | /login | 登录页 |
 | POST | /login | 登录 |
 | POST | /logout | 登出 |
-| GET | /api/v1/certs | 列表/搜索 |
+| GET | /api/v1/capabilities | readOnly、helper、可写操作 |
+| GET | /api/v1/certs?q=&status= | 列表/搜索 |
 | GET | /api/v1/certs/{cn} | 详情 |
 | GET | /api/v1/certs/{cn}/verify | p12 verify |
 | GET | /api/v1/downloads | 下载列表 |
-| GET | /api/v1/downloads/{id} | 下载 |
-| GET | /api/v1/capabilities | readOnly/功能开关 |
+| GET | /api/v1/downloads/{id} | 下载文件 |
+| POST | /api/v1/certs | 签发（JSON；CSRF） |
+| POST | /api/v1/certs/{cn}/revoke | 吊销（CSRF） |
+| POST | /api/v1/certs/{cn}/unrevoke | 恢复吊销（CSRF） |
+| POST | /api/v1/certs/{cn}/reissue | 重签（CSRF） |
 
-- 写 API 只在 M6b 增加；
-- 下载 ID 由 sidecar 元数据解析，禁止任意路径；
-- 过期返回 410/404；
+- 写 API 只在 `readOnly=false` 且 helper 可用时成功；否则返回 403/503。
+- 写请求可带 `requestId`（JSON body）或 `X-Request-ID`；相同 ID 的重复请求由 helper
+  幂等缓存处理（缓存仅在进程内，helper 重启后丢失）。
+- 写 API 支持 issue/revoke/unrevoke/reissue，不支持 delete/package/设置编辑。
+- 下载 ID 由 sidecar 元数据解析，禁止任意路径；过期返回 410/404。
+- 错误响应为 `{"error":{"code":"...","message":"..."}}`；常见状态码 400/401/403/409/503。
 - 所有响应设置安全头：CSP、X-Content-Type-Options、Referrer-Policy、Cache-Control；
 - 下载响应使用 Content-Disposition，文件名不含路径。
 

@@ -814,6 +814,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | M2 | 写命令落地：issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、安装脚本选项、p12 profile、zip/TTL；影子对比覆盖写命令与 issue |
 | 2026-11-15 | 第 4 稿 | 许可改为 **AGPL-3.0-only**，开发期暂不接受外部 PR（完成后重新评估）；实现 Linux/macOS 安装/卸载脚本；M3：通用 `--json`/`--dry-run`/`--lang`、交互向导、audit、兼容 flag、语言包与 `check-locales` |
 | 2026-11-15 | M5 | Docker CLI 镜像与生产 compose；服务器全流程测试通过（issue/verify/平台包/zip/revoke/unrevoke/reissue/delete/JSON/dry-run/向导/audit）；索引/CRL 已恢复基线；v0.1.0 Release + GHCR 镜像发布；仓库转 public |
+| 2026-11-15 | v0.1.1 | 修复 `--lang en-US` 仅翻译帮助、不翻译命令输出的问题；新增 `deploy/neca-wrapper.sh`，转发 `NECA_LANG` 并处理非交互 TTY；服务器镜像升级 |
 
 ---
 

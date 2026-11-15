@@ -1,6 +1,6 @@
 # neca Web 面板开发文档（M6）
 
-> 状态：**M6a/M6b 已实现并完成服务器正式部署**。日期：2026-11-15。
+> 状态：**M6a/M6b 已实现、完成服务器正式部署与浏览器验收，v0.3.0 已正式发布**。日期：2026-11-15。
 > 设计依据：[web-panel.md](web-panel.md)。本文把已确认的 Q1–Q11 落成可执行的开发任务。
 > 目标：M6a 只读面板 + M6b helper 写能力；默认 lite，Web 作为可选 neca-web 面板包。
 
@@ -408,7 +408,7 @@ type PasskeyAuthenticator interface {
 ## 20. 正式部署记录（2026-11-15）
 
 - 服务器：Debian 12，Docker Compose，已有 strongSwan 容器；部署前已做快照与
-  `/root/neca-m6b-backup-*` 配置/PKI 备份；
+  `/root/neca-m6b-backup-*` 配置/PKI 备份；正式版 v0.3.0 已发布并部署；
 - 镜像：当前服务器运行 `neca:v0.3.0-preview.3`、
   `neca-web:v0.3.0-preview.3`（commit `02001af`）；首个部署版本为 `v0.3.0`/`9ea20f9`；
 - 端口：`18080` 已被 other service 占用，Web 改用 `127.0.0.1:18080`；host network，
@@ -421,6 +421,8 @@ type PasskeyAuthenticator interface {
 - 浏览器验收（2026-11-15）：Edge + Playwright/Axe，检查登录、概览、证书列表、
   证书详情、移动端、浅色/深色、中文/英文切换和可写表单；axe 无 serious/critical
   违规；移动端无横向溢出；主题切换可持久化；
+- 正式 v0.3.0 发布后，preview.3 按策略转为 source-only；`neca:latest` 与
+  `neca-web:latest` 指向 v0.3.0；
 - 部署后 `index.txt` SHA-256 `redacted…redacted`、CRL `redacted…redacted`
   与部署前一致；strongSwan 容器仍 healthy 且未重启；
 - 已完成可写链路验证后恢复默认 `web.readOnly=true`；如启用写操作：

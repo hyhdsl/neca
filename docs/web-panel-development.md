@@ -456,3 +456,34 @@ type PasskeyAuthenticator interface {
 - 侧栏与登录页增加语言切换（Cookie `neca_lang`），不改变 `neca.json` schema；
 - key 一致性与回退测试已加入 `make check-locales`；
 - 后续可增加每用户语言设置/管理界面。
+
+## 22. M8 Web 运维加固（2026-11-15）
+
+### 22.1 SIGHUP 热重载
+
+- `necad` 捕获 SIGHUP 后重新读取 `neca.json`，原子更新 `readOnly` 与 `idleTimeout`；
+  失败时保留旧运行时值。
+- 操作命令：`docker kill --signal=HUP neca-web`。
+- `web.listen`、`web.adminCNs`、`passkey` 变更仍需重启 Web 容器。
+- 新增 `internal/web/reload_test.go`，覆盖运行时值和非法 idleTimeout。
+
+### 22.2 helper 幂等缓存持久化
+
+- `NECA_WEB_HELPER_CACHE_FILE`（compose 默认 `/run/neca/web-helper-cache.json`）
+  持久化 requestId 结果；0600、原子 rename、TTL 24h。
+- 文件损坏或不可写时记录日志并从空缓存继续；不会阻塞写操作。
+- 缓存只保存结果指纹/响应，不保存 CA 私钥或客户端私钥。
+
+### 22.3 访问加固评估
+
+- 当前继续以 **OpenSSH 本地转发** 为默认访问方式，不开放公网 Web 端口。
+- 浏览器直连场景保留反向代理 TLS + mTLS：代理必须校验管理员证书 CN、设置
+  `X-Neca-Proxy-Secret` / `X-Neca-Client-CN`，并启用 Secure Cookie；本轮未部署。
+- 结论：M8 的代码加固进入 main；服务器仍运行 v0.3.0，M8 需按 v0.4.0 发布/部署。
+
+### 22.4 验证
+
+- `go test ./internal/helper ./internal/web ./internal/cli ./cmd/...` 通过；
+- `go vet` 通过；
+- `make check-docs`：37 个 Markdown、链接/围栏/帮助站结构通过；
+- 帮助站已发布对应 SIGHUP 与持久化说明。

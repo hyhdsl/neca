@@ -1,7 +1,7 @@
-# neca 开发文档（M0–M6，v0.3.0）
+# neca 开发文档（M0–M8，v0.3.0）
 
 > 项目代号：**neca**（CA 管理工具；品牌、域名与服务器标识在仓库中一律使用占位值）
-> 文档版本：2026-11-15 第 5 稿（v0.3.0 正式版；M6a/M6b 完成；帮助文档站点）
+> 文档版本：2026-11-15 第 6 稿（v0.3.0 已发布；M7 文档自动化、M8 Web 运维加固已进入 main）
 > 本文保留从 v0.1 规划到 v0.3.0 的实施记录；当前发布状态与验收以 §19 为准。
 > 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
@@ -778,6 +778,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
 | M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a/M6b 已实现、服务器部署和 Playwright/axe 验收完成；**v0.3.0 正式发布**。规格与实施记录见 [web-panel-development.md](web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
 | M7 | 文档与发布自动化：Markdown 链接/围栏检查、帮助站发布脚本、CI 门禁 | ✅ 2026-11-15：`make check-docs`；`publish-help` 默认 dry-run，`publish-help-apply` 推送；本地脚本发布验证；Actions 自动同步未采用 | 0.5 人日 |
+| M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15 main：readOnly/idleTimeout 热重载；helper cache 落盘 `/run/neca`；继续 OpenSSH；待 v0.4.0 发布/部署 | 1 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
 
@@ -838,6 +839,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | CI/CD 工作流 | ✅ `ci.yml`、`release.yml`、`docker.yml` 均已落地；完成 v0.3.0 多架构发布与 GHCR 推送 |
 | 服务器 | ✅ v0.3.0 已部署（lite + neca-web + helper）；Web 监听 127.0.0.1:18080、默认只读；索引哈希 `redacted…redacted`、CRL `redacted…redacted` 与部署前一致，strongSwan 未重启 |
 | 文档/发布 | ✅ M7：`make check-docs` 接入 CI/`make all`；`publish-help` 默认 dry-run、`publish-help-apply` 推送；本地脚本已完成一次实际发布 |
+| Web 运维 | ✅ M8 main：SIGHUP 重载 readOnly/idleTimeout；helper 幂等缓存落盘；访问仍以 OpenSSH 为主，公网 TLS/mTLS 未启用 |
 
 ### 19.2 变更记录
 
@@ -860,6 +862,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | M6b | root helper（Unix socket、白名单、幂等、审计）、Web 写 API/UI、`neca web readonly off`、compose `web-write` profile；helper/lite 联动与只读拒绝测试通过；服务器正式部署完成，PKI 哈希未变、strongSwan 未重启；Playwright/axe 验收通过，**v0.3.0 正式发布**，历史预览转为 source-only |
 | 2026-11-15 | v0.3.0 | 正式版发布：CLI/necad/helper amd64/arm64 二进制与 checksums；GHCR `neca`/`neca-web` 的 `latest` 指向 v0.3.0；preview.1–preview.3 均转 source-only；用户帮助中心建立并发布 |
 | 2026-11-15 | M7 | 文档与发布自动化：`scripts/check-docs.py` 检查 Markdown 链接/围栏/帮助站结构并接入 CI；`scripts/publish-help-site.sh` 提供 dry-run 与 `--yes` 发布，完成实际推送验证 |
+| 2026-11-15 | M8 | Web 运维加固：SIGHUP 热重载 readOnly/idleTimeout；helper 幂等缓存持久化到 `/run/neca/web-helper-cache.json`；访问评估继续 OpenSSH，公网 mTLS 保留为可选设计。代码进入 main，待 v0.4.0 发布/部署 |
 
 ## 20. M6 开发记录（已完成）
 

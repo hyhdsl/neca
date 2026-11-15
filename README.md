@@ -211,6 +211,7 @@ dist/               构建产物（不入库）
 | M6a | 只读 Web 面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite + neca-web 双镜像 | ✅ 2026-11-15 v0.3.0 正式发布 |
 | M6b | root helper、issue/revoke/unrevoke/reissue 写能力、Web 写 API/UI | ✅ 2026-11-15 v0.3.0 正式发布；Web 默认只读 |
 | M7 | 文档与发布自动化：`check-docs`、CI 门禁、`docs/help` → `neca-help` 本地一键发布 | ✅ 2026-11-15：`make check-docs`、`make publish-help` / `publish-help-apply`；本地脚本发布验证；Actions 自动同步未采用 |
+| M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15 main：readOnly/idleTimeout 可热重载；cache 落盘 `/run/neca`；继续 OpenSSH；待 v0.4.0 发布/部署 |
 
 > **预览包策略**：正式版发布后，历史预览只保留 GitHub 自动源代码归档；使用
 > [scripts/archive-preview-release.sh](scripts/archive-preview-release.sh) 删除旧资产。

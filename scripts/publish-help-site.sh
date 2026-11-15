@@ -41,7 +41,7 @@ if ! git -C "$ROOT" diff --quiet -- docs/help \
 fi
 
 tmp="$(mktemp -d)"
-trap 'cd "$ROOT" && rm -rf "$tmp"' EXIT
+trap 'cd "$ROOT" 2>/dev/null || true; rm -rf "$tmp" 2>/dev/null || true' EXIT
 
 echo "[INFO] target: $TARGET ($BRANCH)"
 git clone --quiet --branch "$BRANCH" "$TARGET" "$tmp/help"

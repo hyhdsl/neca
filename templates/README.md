@@ -4,12 +4,14 @@
 
 | 目录 | 内容 | 编码要求 |
 |---|---|---|
-| `win/` | Windows PowerShell / cmd 脚本、使用说明 | **纯 ASCII**（硬规则，`make check-ascii` 强制） |
-| `android/` | Android 使用说明文本 | UTF-8 |
-| `ios/` | iOS mobileconfig 片段（M1 起用 plist 生成器，可能无需模板） | UTF-8 |
+| `win/` | Windows PowerShell / cmd 脚本 | **纯 ASCII**（`make check-ascii` 强制） |
+| `linux/` | Linux `install.sh` / `uninstall.sh` 模板 | **纯 ASCII** |
+| `macos/` | macOS `install.command` / `uninstall.command` 模板 | **纯 ASCII** |
 
-**为什么 Windows 模板必须是 ASCII**：PowerShell 5.1 在无 BOM 时按系统 ANSI
-代码页读取脚本，中文会乱码并报语法错误。宁可英文提示，也不要在 `win/` 下
-写中文；CI 的 `make check-ascii` 会拦截任何非 ASCII 字节。
+Android 使用说明与 iOS/macOS mobileconfig 由 Go 代码生成，不占用模板目录。
 
-模板占位符约定（M1 落地时使用）：`{{.CN}}`、`{{.Profile}}`、`{{.Server}}`。
+**为什么脚本模板必须是 ASCII**：PowerShell 5.1 在无 BOM 时按系统 ANSI
+代码页读取脚本，中文会乱码并报语法错误；Linux/macOS 也要避免不同 locale
+带来的执行差异。CI 的 `make check-ascii` 会拦截任何非 ASCII 字节。
+
+模板占位符约定：`{{.CN}}`、`{{.Profile}}`、`{{.Server}}`、`{{.CA}}`、`{{.ProfileID}}`。

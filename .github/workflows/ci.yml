@@ -7,7 +7,7 @@
 # 门禁（文档 §13.4）：
 #   1. gofmt 无差异
 #   2. go vet 通过
-#   3. Windows 模板纯 ASCII（§9 硬规则 1）
+#   3. 平台脚本模板纯 ASCII（§9 硬规则 1）
 #   4. go test -race 全绿
 #   5. 交叉编译 linux/amd64 与 linux/arm64
 #   6. 对产物做一次 version 冒烟测试
@@ -58,8 +58,11 @@ jobs:
       - name: go vet
         run: make vet
 
-      - name: Windows 模板 ASCII 校验
+      - name: 平台脚本模板 ASCII 校验
         run: make check-ascii
+
+      - name: 语言包 key 一致性
+        run: make check-locales
 
       - name: 单元测试（-race）
         run: make test

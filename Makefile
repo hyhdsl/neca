@@ -30,12 +30,12 @@ LDFLAGS := -s -w \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build build-native test vet fmt fmt-check check-ascii dev docker shadow clean
+.PHONY: help all build build-native test vet fmt fmt-check check-ascii check-locales dev docker shadow clean
 
 help: ## 显示可用目标
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
-all: fmt-check vet check-ascii test build ## 完整本地校验（等价 CI）
+all: fmt-check vet check-ascii check-locales test build ## 完整本地校验（等价 CI）
 
 build: ## 交叉编译 linux/amd64 与 linux/arm64 到 dist/
 	@mkdir -p $(DIST)
@@ -63,8 +63,11 @@ fmt-check: ## 校验 gofmt 无差异（CI 门禁）
 	fi
 	@echo "[OK]   gofmt 检查通过"
 
-check-ascii: ## 校验 Windows 平台模板为纯 ASCII（文档 §9 硬规则 1）
-	bash scripts/check-ascii.sh templates/win
+check-ascii: ## 校验平台脚本模板为纯 ASCII（文档 §9 硬规则 1）
+	bash scripts/check-ascii.sh templates/win templates/linux templates/macos
+
+check-locales: ## 校验内置语言包 key 集合一致（文档 §8.11）
+	$(GO) test ./internal/i18n -run TestLocaleKeysAligned -count=1
 
 dev: ## 构建并进入开发容器（docker compose 解析挂载路径，Windows 同样可用）
 	docker compose run --rm dev bash

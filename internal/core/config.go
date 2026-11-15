@@ -42,7 +42,7 @@ var configEnvKeys = []string{
 	"EXPORT_DIR", "CONTAINER", "DOCKER_BIN", "SERVER_ID", "ORG", "CA_CN",
 	"DEFAULT_DAYS", "KEY_BITS", "NECA_RELOAD_MODE", "NECA_LOCK_FILE",
 	"NECA_DOWNLOAD_DIR", "NECA_DOWNLOAD_TTL", "NECA_DOWNLOAD_MAX_FILES",
-	"NECA_P12_PROFILE", "NECA_INSTALLERS",
+	"NECA_P12_PROFILE", "NECA_INSTALLERS", "NECA_AUDIT_LOG",
 }
 
 // Config 是 neca 的全部运行时路径与开关。
@@ -78,6 +78,7 @@ type Config struct {
 	DownloadMaxFiles int           // zip 数量上限
 	P12Profile       P12Profile    // compat | modern
 	Installers       string        // none | all | 平台列表
+	AuditFile        string        // 追加式审计日志
 }
 
 // EnvSource 从环境变量读取配置层。
@@ -188,6 +189,7 @@ func LoadConfigFrom(sources ...ports.Source) (*Config, error) {
 
 		DownloadsDir: values["NECA_DOWNLOAD_DIR"],
 		Installers:   values["NECA_INSTALLERS"],
+		AuditFile:    values["NECA_AUDIT_LOG"],
 	}
 	cfg.applyDefaults()
 	if err := cfg.parseNumbers(values); err != nil {
@@ -272,6 +274,9 @@ func (c *Config) applyDefaults() {
 	}
 	if c.P12Profile == "" {
 		c.P12Profile = P12Compat
+	}
+	if c.AuditFile == "" {
+		c.AuditFile = filepath.Join(c.PKIDir, "audit.log")
 	}
 }
 

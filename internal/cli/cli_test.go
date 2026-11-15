@@ -10,7 +10,7 @@ import (
 // 同时返回退出码，避免测试依赖进程级全局状态。
 func runCLI(args ...string) (code int, stdout, stderr string) {
 	var out, errBuf bytes.Buffer
-	code = Run(args, &out, &errBuf)
+	code = RunWithIO(args, strings.NewReader(""), &out, &errBuf)
 	return code, out.String(), errBuf.String()
 }
 
@@ -75,18 +75,17 @@ func TestUnknownCommand(t *testing.T) {
 	}
 }
 
-// TestNoArgs 校验无参数时打印帮助并返回用法错误。
-// M0 尚未接入交互向导（M3），因此当前行为是明确报用法错误而非静默成功。
+// TestNoArgs 校验无参数时进入 M3 交互向导；空 stdin 应立即退出。
 func TestNoArgs(t *testing.T) {
 	code, out, errOut := runCLI()
-	if code != ExitUsage {
-		t.Fatalf("exit code = %d, want %d", code, ExitUsage)
+	if code != ExitOK {
+		t.Fatalf("exit code = %d, want %d", code, ExitOK)
 	}
-	if !strings.Contains(out, "用法") {
-		t.Fatalf("无参数时应打印帮助：%q", out)
+	if !strings.Contains(out, "交互向导") {
+		t.Fatalf("无参数时应进入交互向导：%q", out)
 	}
-	if !strings.Contains(errOut, "M3") {
-		t.Fatalf("stderr 应提示交互向导尚未实现：%q", errOut)
+	if errOut != "" {
+		t.Fatalf("空 stdin 不应写 stderr：%q", errOut)
 	}
 }
 

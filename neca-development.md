@@ -1,7 +1,7 @@
 # neca 开发文档（v0.1 规划稿）
 
 > 项目代号：**neca**（CA 管理工具；品牌、域名与服务器标识在仓库中一律使用占位值）
-> 文档版本：2026-11-15 第 3 稿（新增：Linux/macOS 平台包、安装脚本选项、zip 下载有效期、p12 算法 profile、多语言、许可与仓库策略）
+> 文档版本：2026-11-15 第 4 稿（AGPL-3.0-only、禁止外部 PR、Linux/macOS 安装/卸载脚本、M3：JSON/dry-run/向导/语言/审计）
 > 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
 
@@ -25,7 +25,7 @@
 | D10 | 平台扩展与安装脚本 | 支持 Windows/Linux/macOS/Android/iOS；一键安装脚本默认关闭，`--installers` 显式开启（2026-11-15 决定） |
 | D11 | p12 算法 profile | 默认 `compat`（3DES+SHA1，MIUI 兼容）；新增 `modern`（AES-256/SHA256）可选，默认行为不变 |
 | D12 | 多语言 | 语言文件 JSON，默认 `zh-CN`，内置 `en-US`；社区可扩展；Web 多语言 M6 单独实现（2026-11-15 决定） |
-| D13 | 许可与仓库策略 | 许可与 PR 策略**待仓库转 public 前决定**；当前候选草案见 `LICENSE.draft`；首个正式 Release 后转 public；当前不接受外部 PR |
+| D13 | 许可与仓库策略 | **AGPL-3.0-only**（OSI 开源，允许商业使用但须履行源码公开义务）；**禁止外部 PR**，仅维护者内部合并；首个正式 Release 后转 public |
 
 D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7，差距仅 1.6 分，属于"按阶段优先级取舍"而非"语言能力差距"。选 Go 的理由是**一次到位**：未来 Web 面板与多用户都复用同一份强类型 core，不再做第二次语言迁移；代价是阶段一的模板与文本处理工作量增加约 30–50%，以及需要先搭 Go 工具链。
 
@@ -272,10 +272,10 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 
 | 开关 | 作用 | 默认 |
 |---|---|---|
-| `--json` | 结构化输出，关闭 `[OK]` 等人类文案 | 关 |
-| `--dry-run` | 只打印将执行的动作，不落盘、不调 docker | 关 |
+| `--json` | 结构化输出，关闭 `[OK]` 等人类文案（M3 已实现） | 关 |
+| `--dry-run` | 只打印将执行的动作，不落盘、不调 docker（M3 已实现） | 关 |
 | `--no-reload` | 只生成 CRL，不重载引擎 | 关 |
-| `--reload-mode restart\|creds` | 重载方式，默认 `creds` | creds |
+| `--reload-mode restart\|creds` | 重载方式；CLI 开关待接入，当前用 `NECA_RELOAD_MODE` | creds |
 | `--config <file>` | 读取配置文件（未来用），优先级低于环境变量 | 无 |
 | `--lang zh-CN\|en-US` | 控制台语言；M3 起从语言文件加载，默认 `zh-CN` | zh-CN |
 | `-q` / `--quiet` | 仅输出错误 | 关 |
@@ -309,9 +309,11 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 
 错误时 `ok=false`，附 `error: {code, message}`；退出码不变。
 
+M3 已实现：`list/verify/version/issue/reissue/revoke/unrevoke/delete/platform/package/downloads/export/index sync` 原生结构化输出；其余命令以 `data.output` 兜底，stdout 始终是单个合法 JSON 对象。
+
 ### 6.5 交互向导
 
-菜单编号与旧版完全一致（1 签发、2 吊销、3 恢复、4 重签、5 加平台、6/7 导出、8 列表、9 同步、10 删除、0 退出）。新增：每个动作执行前显示一行等价命令，便于用户学习 CLI 用法。
+菜单编号与旧版完全一致（1 签发、2 吊销、3 恢复、4 重签、5 加平台、6/7 导出、8 列表、9 同步、10 删除、0 退出）。M3 已实现：`neca` 无参数进入向导，每个动作执行前显示等价 CLI 命令。
 
 ---
 
@@ -338,8 +340,9 @@ M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`b
 | `NECA_DOWNLOAD_MAX_FILES` | `50`（防积压上限） |
 | `NECA_P12_PROFILE` | `compat`（3DES+SHA1；可选 `modern`） |
 | `NECA_INSTALLERS` | `none`（可选 `all` 或平台列表） |
-| `NECA_LANG` | `zh-CN`（M3 起生效） |
-| `NECA_LOCALE_DIR` | 空（可选外部语言包目录，M3 起） |
+| `NECA_AUDIT_LOG` | `$PKI_DIR/audit.log`（追加式审计） |
+| `NECA_LANG` | `zh-CN`（M3 已生效） |
+| `NECA_LOCALE_DIR` | 未启用；当前仅内置语言包 |
 
 > `SERVER_ID` / `ORG` / `CA_CN` 的默认值是仓库占位值（`vpn.example.com` / `ExampleOrg` / `ExampleOrg VPN CA`）。生产部署必须用环境变量注入真实值，不要把真实服务器标识写回仓库。
 
@@ -395,7 +398,7 @@ p12 默认走 `compat` profile（§8.9）；`issue/reissue/package` 可用 `--p1
 
 ### 8.7 audit
 
-`/opt/ipsec/pki/audit.log`，每行：`RFC3339 操作者(uid:user) 动作 CN 序列号 结果`。只追加，不阻塞主流程；写失败只告警。
+`/opt/ipsec/pki/audit.log`（可用 `NECA_AUDIT_LOG` 覆盖），每行：`RFC3339 操作者(uid:user) 动作 CN 序列号 结果`。只追加，不阻塞主流程；写失败只告警。M3 已实现 `core.AppendAudit`，写入 0600 文件。
 
 ### 8.8 table：中文对齐
 
@@ -422,7 +425,7 @@ p12 默认走 `compat` profile（§8.9）；`issue/reissue/package` 可用 `--p1
 
 ### 8.11 多语言
 
-- 语言文件：`internal/i18n/locales/<lang>.json`，`embed` 进二进制；内置 `zh-CN`（默认）与 `en-US`。
+- 语言文件：`internal/i18n/locales/<lang>.json`，`embed` 进二进制；内置 `zh-CN`（默认）与 `en-US`（M3 已实现）。当前覆盖帮助、通用开关、命令摘要、向导与 M3 提示；命令业务输出后续按 key 逐步迁移。
 - 选择顺序：`--lang` > `NECA_LANG` > `LANG/LC_ALL` > `zh-CN`；缺 key 回退到 `zh-CN`，再回退到 key 本身并告警。
 - CI 校验内置 locale 的 key 集合一致；社区可通过 fork 增加语言包（当前不接受 PR）。
 - 输出前缀 `[OK]/[INFO]/[WARN]/[ERR]` 不翻译，保持下游契约；Web 多语言在 M6 单独实现。
@@ -438,8 +441,8 @@ p12 默认走 `compat` profile（§8.9）；`issue/reissue/package` 可用 `--p1
 | 平台 | 目录 | 默认产物 | 可选一键脚本（默认关闭） | 说明 |
 |---|---|---|---|---|
 | Windows | `Windows/` | `p12`、`pass`、`ca.crt`、`使用说明.txt` | `install.ps1`、`uninstall.ps1`、`connect.ps1` + 三个 `.cmd` | 脚本由旧实现验证；现在需 `--installers windows` 才生成 |
-| Linux | `Linux/` | 同上 | `install.sh`、`uninstall.sh`（模板保留、未验证） | 说明面向 strongSwan / NetworkManager；脚本验证后再考虑默认开放 |
-| macOS | `macOS/` | 同上 | `install.command`、`uninstall.command`（模板保留、未验证） | 首版以 p12 + 说明为主，`.mobileconfig` 可选后续 |
+| Linux | `Linux/` | 同上 | `install.sh`、`uninstall.sh`（`--installers linux`） | 面向 strongSwan；安装 CA/证书/私钥、写 conf.d、更新系统 CA、load-all；支持 `NECA_ROOT`/`NECA_DRY_RUN` |
+| macOS | `macOS/` | 同上 + `<CN>.mobileconfig` | `install.command`、`uninstall.command`（`--installers macos`） | 导入 CA/p12 到系统钥匙串并安装 mobileconfig；卸载删证书/描述文件 |
 | Android | `Android/` | `p12`、`pass`、`ca.crt`、`使用说明.txt` | — | 与旧实现一致 |
 | iOS | `iOS/` | `<CN>.mobileconfig`（CA + 身份 + IKEv2） | — | 与旧实现一致 |
 
@@ -452,7 +455,7 @@ p12 默认走 `compat` profile（§8.9）；`issue/reissue/package` 可用 `--p1
 - 统一开关：`--installers none|all|windows|linux|macos`（逗号分隔可多选），默认 **none**。
 - 兼容说明：旧脚本默认生成 Windows 脚本；neca 改为默认不生成，需要时显式 `--installers windows`。M2 影子测试必须带该开关才能与旧 `clients/` 树逐项对比。
 - Windows 脚本保留现有内容与文件名，模板必须纯 ASCII（§9.4）。
-- Linux/macOS 脚本只有模板占位，默认不生成；启用前必须完成人工验证与测试，避免分发未经验证的特权脚本。
+- Linux/macOS 脚本已实现，默认仍不生成；启用后需在目标发行版/版本做人工验证（脚本支持 `NECA_DRY_RUN=1` 预览、`NECA_ROOT` 沙箱测试）。
 - `issue/reissue/platform add/package` 均支持该开关；`NECA_INSTALLERS` 可作为环境级默认值。
 
 ### 9.3 zip 打包与下载有效期
@@ -472,8 +475,8 @@ p12 默认走 `compat` profile（§8.9）；`issue/reissue/package` 可用 `--p1
 
 ### 9.4 硬规则
 
-1. **Windows 模板必须是纯 ASCII**（PowerShell 5.1 无 BOM 时按 ANSI 读，中文会乱码报语法错误）。用 `make check-ascii` 在 CI 里校验 `templates/win/*` 无 >127 字节。
-2. Linux/macOS 安装脚本启用前必须完成人工验证；默认不生成。
+1. **平台脚本模板必须是纯 ASCII**（PowerShell 5.1 无 BOM 时按 ANSI 读；Linux/macOS 也避免 locale 差异）。用 `make check-ascii` 在 CI 里校验 `templates/{win,linux,macos}/*` 无 >127 字节。
+2. Linux/macOS 安装脚本默认不生成；分发前完成目标系统人工验证。
 3. iOS 的 `LocalIdentifier` 取 CN、`RemoteAddress`/`RemoteIdentifier` 取 `SERVER_ID`；plist 生成后要用解析器回读校验键值。
 4. zip 与 `MANIFEST.txt` 不得包含私钥、CA 私钥、审计或服务器敏感标识。
 
@@ -562,15 +565,15 @@ issue TMP01 windows,android → list → verify → add-platform ios → export 
 
 M1 已落地：`scripts/shadow.sh` + `make shadow` 自动生成 fixture 的独立副本，比较 list/verify/export/index sync 的输出、CSV、index.txt 与 meta 目录；CI 将差异视为失败。
 
-M2 已加入写命令影子对比：issue（归一化序列号/日期/路径）、revoke、unrevoke、platform set/add、delete；issue/reissue 使用 `--installers windows` 保证 `clients/` 树与旧脚本一致。
+M2 已加入写命令影子对比：issue（归一化序列号/日期/路径）、revoke、unrevoke、platform set/add、delete；issue/reissue 使用 `--installers windows` 保证 `clients/` 树与旧脚本一致。M3 新增 i18n key 对齐、Linux/macOS 脚本渲染与 `bash -n`、JSON/dry-run/向导测试。
 
 ### 13.4 CI 门禁
 
 - `go vet ./...`、`gofmt -l` 无输出、`go test -race ./...`；
-- `make check-ascii`（Windows 模板纯 ASCII）；
+- `make check-ascii`（Windows/Linux/macOS 脚本模板纯 ASCII）；
 - `make build` 产出 linux/amd64 与 linux/arm64 两个二进制；
 - `make shadow`（新旧实现输出与产物 diff = 0）；
-- `make check-locales`（M3 起，校验内置语言包 key 一致）；
+- `make check-locales`（M3 已接入，校验内置语言包 key 一致）；
 - 提交信息遵循 Conventional Commits。
 
 ---
@@ -616,7 +619,7 @@ docker run --rm -it -v "$PWD":/src -w /src \
 | `make vet` / `make fmt` | 静态检查与格式化 |
 | `make check-ascii` | 校验 Windows 模板 |
 | `make shadow` | 新旧实现影子对比（只读命令 + M2 写命令 + issue；bash + openssl + python3，diff 必须为 0） |
-| `make check-locales` | 校验内置语言包 key 一致（M3 起） |
+| `make check-locales` | 校验内置语言包 key 一致（M3 已实现） |
 | `make docker` | 构建运行镜像 `ghcr.io/hyhdsl/neca:dev` |
 
 ### 14.3 交叉编译
@@ -648,16 +651,16 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 | 分支命名 | `feat/…`、`fix/…`、`chore/…` |
 | 提交信息 | Conventional Commits（`feat:`、`fix:`、`chore:`、`docs:`） |
 | 版本 | SemVer；tag `v0.1.0` 起 |
-| 许可证 | **待定**（转 public 前决定）；候选草案 PolyForm Noncommercial 1.0.0，见 `LICENSE.draft` / `NOTICE` / `SECONDARY-DEVELOPMENT.md` |
+| 许可证 | **AGPL-3.0-only**（OSI 认可；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码）；见 `LICENSE` / `NOTICE` / `SECONDARY-DEVELOPMENT.md` |
 | 公开时间 | 首个正式 Release（v0.1.0）后由私有转为 public；之前保持私有 |
-| PR 策略 | **待定**（转 public 前决定）；当前开发期不接受外部 PR；问题走 Issue，修改请 fork |
-| 二次开发 | 草案要求：保留原作者与仓库链接、公开完整源码、沿用非商业许可、不得商用；最终条款随许可确认 |
+| PR 策略 | **永久禁止外部 PR**（仅维护者内部合并）；问题走 Issue，修改请 fork 并遵守 AGPL |
+| 二次开发 | 保留原作者与仓库链接、保留 AGPL 许可、履行源码公开义务；商业使用本身允许 |
 
 ### 15.2 工作流
 
 | 文件 | 触发 | 内容 |
 |---|---|---|
-| `.github/workflows/ci.yml` | push / PR | setup-go、`go vet`、`go test -race`、`make check-ascii`、`make shadow`、构建 amd64 |
+| `.github/workflows/ci.yml` | push / PR | setup-go、`go vet`、`go test -race`、`make check-ascii`、`make check-locales`、`make shadow`、构建 amd64 |
 | `.github/workflows/release.yml` | tag `v*` | 交叉编译 amd64/arm64，生成 checksum，创建 GitHub Release |
 | `.github/workflows/docker.yml` | tag `v*` / 手动 | buildx 构建，推送 `ghcr.io/hyhdsl/neca:<tag>` 与 `:latest` |
 
@@ -667,19 +670,19 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 - `docker.yml`：`permissions: packages: write` + `GITHUB_TOKEN` 登录 `ghcr.io`，**无需 PAT**；
 - 若未来需要跨仓操作，再考虑 GitHub App，不要引入长期 PAT。
 
-当前状态（2026-11-15）：`ci.yml` 已随 M0 落地，M1/M2 增加 `make shadow`（只读 + 写命令 + issue）门禁；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
+当前状态（2026-11-15）：`ci.yml` 已随 M0 落地，M1/M2 增加 `make shadow`（只读 + 写命令 + issue）门禁，M3 增加 `make check-locales`；`release.yml` 与 `docker.yml` 按计划随 M5 落地。
 
 ### 15.3 发布流程
 
 ```text
-feature 分支 → PR（CI 全绿）→ squash merge 到 main
+feature 分支 → 维护者内部合并（CI 全绿，不接受外部 PR）→ squash merge 到 main
   → 打 tag v0.1.0 → release.yml 产出二进制 + Release
   → docker.yml 推送镜像 → 服务器下载二进制替换 /usr/local/bin/neca
 ```
 
 回滚：保留上一个二进制为 `/usr/local/bin/neca.prev`，或直接从 Release 下载旧版本。
 
-发布完成后：先在转 public 前**最终确定许可与 PR 策略**，确认 `README.md` 顶部警告、`LICENSE`/`NOTICE`/`SECONDARY-DEVELOPMENT.md` 已定稿，再将仓库从私有转为 public；首个正式 Release 之前不得转公开。
+发布完成后：确认 `README.md` 顶部警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 已定稿，再将仓库从私有转为 public；首个正式 Release 之前不得转公开。外部 PR 始终不接收。
 
 ### 15.4 DSH 的 GitHub 集成
 
@@ -729,7 +732,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M0 | 仓库骨架、go.mod、Makefile、Dockerfile.dev、ci.yml、`neca version` | CI 绿，容器内 `make build` 成功 | 0.5 人日 |
 | M1 | config / proc / openssl / index(只读) / meta / table / csv；`list`、`verify`、`export`、`index sync` | 与旧脚本输出 diff 为 0 | 1.5 人日 |
 | M2 | pki / issue / reissue / revoke / unrevoke / platform / package / delete；flock；失败清理；Linux/macOS 平台包；安装脚本选项；p12 profile；zip/TTL/downloads | 临时 PKI 全流程；影子测试（`--installers windows`）通过；Linux/macOS 包与 zip TTL 测试通过 | 3 人日 |
-| M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | 人工回归清单全过；`make check-locales` 通过 | 1.5 人日 |
+| M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | 生产连续两周无回退；公开后仓库合规检查通过 | 1 人日 |
 | M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`，含 30 分钟下载 TTL、鉴权与清理、Web 多语言） | 只读面板上线，与 CLI 共用 core；下载有效期与清理测试通过 | 4–5 人日 |
@@ -749,9 +752,9 @@ gh auth login --hostname github.com --git-protocol https --web
 | 并发写坏索引 | 中 | 中 | 全局 flock + 原子替换 |
 | `--load-creds` 实验失败 | 已排除 | — | 2026-11-15 实测通过，默认 `creds`；`restart` 保留为回退 |
 | GHCR 推送权限配置错误 | 中 | 低 | 用内置 `GITHUB_TOKEN` + `packages: write` |
-| 非商业许可被误认为 OSI 开源 | 中 | 中 | README/NOTICE 明确候选与待定状态；转 public 前法律审阅 |
+| AGPL 网络服务源码义务被忽略 | 中 | 中 | README/NOTICE/AGPL 第 13 条提示；分发与 Web 服务前复核 |
 | zip 含 p12/pass 泄露 | 中 | 高 | 0700/0600、TTL、鉴权、清理；不提供目录列表 |
-| Linux/macOS 脚本未验证 | 中 | 中 | 默认关闭，人工验证后再开放 |
+| Linux/macOS 脚本未覆盖所有发行版 | 中 | 中 | 默认关闭，提供 NECA_DRY_RUN/NECA_ROOT，发布前在目标系统验证 |
 | 语言包 key 漂移 | 中 | 低 | CI `make check-locales`；缺 key 回退 |
 | Windows 脚本默认关闭导致回归 | 中 | 中 | M2 影子测试固定 `--installers windows`；默认 none 单独测试 |
 
@@ -763,12 +766,12 @@ gh auth login --hostname github.com --git-protocol https --web
 2. 运行镜像：已定 **debian-slim**（内置 openssl，约 80MB；scratch/distroless 无法运行 openssl 子进程）；
 3. ~~Go 版本锁定~~：镜像内实测 `go1.25.14`，`go.mod` 声明 `go 1.25`；
 4. ~~旧 bash 脚本归档~~：已归档到 `legacy/`（2026-11-15，M0）；
-5. **许可与 PR 策略**：**仓库转 public 前**最终确定；当前候选为 PolyForm Noncommercial 1.0.0 + 二次开发草案，需法律审阅；
-6. **Linux/macOS 一键脚本**：模板先保留、默认关闭；完成人工验证后再决定是否默认开放；
+5. ~~许可与 PR 策略~~：已定 **AGPL-3.0-only**；**禁止外部 PR**（2026-11-15 决定）；
+6. **Linux/macOS 一键脚本**：已实现，默认关闭；在 Debian/Ubuntu、RHEL 系、macOS 目标版本完成人工验证后再决定是否默认开放；
 7. **下载目录与 TTL**：CLI 与 Web 共用 `NECA_DOWNLOAD_DIR`；Web 鉴权与清理策略在 M6 前确定；
-8. **社区语言包**：M3 设计；PR 策略待转 public 前确定，期间通过 Issue/fork 接收；
+8. **社区语言包**：M3 已实现框架；外部 PR 不接收，通过 Issue/fork 提供；
 9. **阶段二 Web 权限方案**（§12.2 的三选一）；
-10. **首个正式 Release 后转 public 的检查清单**：先确定最终 LICENSE 与 PR 策略，再检查 README 警告、NOTICE、二次开发要求、分支保护/CI 门禁。
+10. **首个正式 Release 后转 public 的检查清单**：AGPL LICENSE、README 警告、NOTICE、二次开发说明、分支保护/CI 门禁。
 
 ---
 
@@ -779,16 +782,16 @@ gh auth login --hostname github.com --git-protocol https --web
 | 项 | 状态 |
 |---|---|
 | 仓库 | `github.com/hyhdsl/neca`（私有）已创建；`main` 已于 2026-11-15 重写历史并推送安全清理提交 |
-| 代码 | ✅ M2 已完成：写命令 issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、p12 profile、zip/TTL；影子对比 diff=0 |
+| 代码 | ✅ M3 已完成：M1/M2 全部命令 + JSON/dry-run/向导/audit/兼容 flag/语言文件；影子对比 diff=0 |
 | 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
-| 平台与打包 | ✅ M2 已实现：Windows/Linux/macOS/Android/iOS；安装脚本默认 none；zip/TTL/downloads |
+| 平台与打包 | ✅ Windows/Linux/macOS/Android/iOS；Linux/macOS 安装/卸载脚本已实现（默认 none）；zip/TTL/downloads |
 | p12 算法 | ✅ M2 已实现 `compat`/`modern` profile，默认兼容不变 |
-| 多语言 | ⏳ 设计完成（§8.11）；M3 实现语言文件与 `--lang` |
-| 许可/公开 | ⏳ 许可与 PR 策略待转 public 前决定；`LICENSE.draft`/`NOTICE`/`SECONDARY-DEVELOPMENT.md` 为草案；首个正式 Release 后转 public |
+| 多语言 | ✅ M3：`internal/i18n` + zh-CN/en-US 语言文件、`--lang`/`NECA_LANG`、`make check-locales` |
+| 许可/公开 | ✅ **AGPL-3.0-only**；**永久禁止外部 PR**；首个正式 Release 后转 public |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
-| CI/CD 工作流 | ✅ `ci.yml` 已落地（M0），M1/M2 增加影子对比门禁；`release.yml` / `docker.yml` 随 M5 |
+| CI/CD 工作流 | ✅ `ci.yml` 已落地，M1/M2 影子对比 + M3 `check-locales`；`release.yml` / `docker.yml` 随 M5 |
 | 服务器 | 生产状态已还原：索引 8 行、CRL 5 条、容器未重启 |
 
 ### 19.2 变更记录
@@ -802,7 +805,8 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | M1 | 只读命令落地：config/proc/openssl/index/meta/table/csv；list/verify/export/index sync；新增 fixture 生成器与 `make shadow`，新旧实现 diff=0 |
 | 2026-11-15 | 安全 | 清理仓库中的服务器标识（IP、VPN 内网段、真实域名、组织/CA 名称），统一为占位值；生产值改为环境变量注入，并重写 Git 历史 |
 | 2026-11-15 | 第 3 稿 | Linux/macOS 平台包、安装脚本选项、zip/TTL 下载管理、p12 profile、多语言语言包；许可与仓库公开/PR 策略草案；README 顶部警告 |
-| 2026-11-15 | M2 | 写命令落地：issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、安装脚本选项、p12 profile、zip/TTL；影子对比覆盖写命令与 issue；许可/PR 改为转 public 前决定 |
+| 2026-11-15 | M2 | 写命令落地：issue/reissue/revoke/unrevoke/delete/platform/package/downloads；Linux/macOS 包、安装脚本选项、p12 profile、zip/TTL；影子对比覆盖写命令与 issue |
+| 2026-11-15 | 第 4 稿 | 许可改为 **AGPL-3.0-only**，**禁止外部 PR**；实现 Linux/macOS 安装/卸载脚本；M3：通用 `--json`/`--dry-run`/`--lang`、交互向导、audit、兼容 flag、语言包与 `check-locales` |
 
 ---
 

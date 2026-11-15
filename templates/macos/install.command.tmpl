@@ -1,0 +1,48 @@
+#!/bin/bash
+# Example VPN - macOS IKEv2 installer.
+# Double-click or run with sudo. Set NECA_DRY_RUN=1 to preview.
+set -e
+
+CN="{{.CN}}"
+SERVER="{{.Server}}"
+CA_CN="{{.CA}}"
+PROFILE_ID="{{.ProfileID}}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+KEYCHAIN="$NECA_KEYCHAIN"
+[ -n "$KEYCHAIN" ] || KEYCHAIN="/Library/Keychains/System.keychain"
+DRY_RUN="$NECA_DRY_RUN"
+
+say() { printf '[INFO] %s
+' "$*"; }
+ok() { printf '[OK]   %s
+' "$*"; }
+run() { if [ "$DRY_RUN" = "1" ]; then printf '[DRY-RUN] %s
+' "$*"; else "$@"; fi; }
+
+if [ "$(id -u)" -ne 0 ] && [ "$DRY_RUN" != "1" ]; then
+  exec sudo "$0" "$@"
+fi
+for f in "$HERE/ca.crt" "$HERE/$CN.p12" "$HERE/$CN.p12.pass"; do
+  [ -f "$f" ] || { echo "[ERR]  missing $f" >&2; exit 1; }
+done
+
+say "Installing Example VPN client $CN"
+run security add-trusted-cert -d -r trustRoot -k "$KEYCHAIN" "$HERE/ca.crt"
+PASS="$(cat "$HERE/$CN.p12.pass")"
+if [ "$DRY_RUN" = "1" ]; then
+  printf '[DRY-RUN] security import %s -k %s -P <password> -T /usr/bin/security\n' "$HERE/$CN.p12" "$KEYCHAIN"
+else
+  security import "$HERE/$CN.p12" -k "$KEYCHAIN" -P "$PASS" -T /usr/bin/security
+fi
+if [ -f "$HERE/$CN.mobileconfig" ]; then
+  if command -v profiles >/dev/null 2>&1; then
+    run profiles install -path "$HERE/$CN.mobileconfig"
+  else
+    say "Opening profile; confirm installation in System Settings"
+    run open "$HERE/$CN.mobileconfig"
+  fi
+else
+  say "No mobileconfig; add the IKEv2 VPN manually in System Settings"
+fi
+ok "Installed $CN (profile $PROFILE_ID)"
+say "Uninstall with ./uninstall.command"

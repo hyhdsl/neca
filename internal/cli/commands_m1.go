@@ -47,13 +47,20 @@ func exitForError(err error) int {
 
 // fail 输出 [ERR] 并把 core 错误映射成退出码。
 func fail(env Env, err error) int {
+	if env.JSON {
+		return emitJSONError(env, err)
+	}
 	fmt.Fprintf(env.Stderr, "[ERR]  %v\n", err)
 	return exitForError(err)
 }
 
 // usageFail 输出用法错误并返回退出码 1（不走 core 错误类型）。
 func usageFail(env Env, format string, args ...any) int {
-	fmt.Fprintf(env.Stderr, "[ERR]  "+format+"\n", args...)
+	err := fmt.Errorf(format, args...)
+	if env.JSON {
+		return emitUsageJSONError(env, err)
+	}
+	fmt.Fprintf(env.Stderr, "[ERR]  %v\n", err)
 	return ExitUsage
 }
 
@@ -75,6 +82,16 @@ func newListCommand() Command {
 			result, err := core.ListCerts(context.Background(), deps.cfg, deps.store, deps.oss)
 			if err != nil {
 				return fail(env, err)
+			}
+			if env.JSON {
+				certs := make([]map[string]any, 0, len(result.Certs))
+				for _, cert := range result.Certs {
+					certs = append(certs, map[string]any{
+						"cn": cert.CN, "status": cert.Status, "serial": cert.Serial,
+						"platforms": cert.Platforms, "expires": cert.Expires, "note": cert.Note,
+					})
+				}
+				return emitJSON(env, "list", "", nil, map[string]any{"certs": certs, "crlRevoked": result.CRLRevoked})
 			}
 
 			rows := [][]string{{"CN", "状态", "序列号", "平台", "到期", "备注"}}
@@ -104,6 +121,17 @@ func newVerifyCommand() Command {
 			result, err := core.VerifyClients(context.Background(), deps.cfg, deps.oss, env.Args)
 			if err != nil {
 				return fail(env, err)
+			}
+			if env.JSON {
+				reports := make([]map[string]any, 0, len(result.Reports))
+				var warnings []string
+				for _, report := range result.Reports {
+					reports = append(reports, map[string]any{
+						"cn": report.CN, "ok": report.OKMessage, "warnings": report.Warnings,
+					})
+					warnings = append(warnings, report.Warnings...)
+				}
+				return emitJSON(env, "verify", "", warnings, map[string]any{"reports": reports})
 			}
 			for _, report := range result.Reports {
 				for _, warning := range report.Warnings {
@@ -135,6 +163,9 @@ func newExportCommand() Command {
 			result, err := core.ExportCerts(context.Background(), deps.cfg, deps.store, deps.oss, kind, outPath)
 			if err != nil {
 				return fail(env, err)
+			}
+			if env.JSON {
+				return emitJSON(env, "export", "", nil, map[string]any{"kind": string(kind), "path": result.Path})
 			}
 			label := "已签发"
 			if kind == core.ExportRevoked {
@@ -202,6 +233,9 @@ func newIndexCommand() Command {
 			result, err := core.SyncIndex(context.Background(), deps.cfg, deps.store, deps.oss)
 			if err != nil {
 				return fail(env, err)
+			}
+			if env.JSON {
+				return emitJSON(env, "index-sync", "", nil, map[string]any{"addedIndex": result.AddedIndex})
 			}
 			for _, file := range result.AddedIndex {
 				fmt.Fprintf(env.Stdout, "[OK]   索引补充: %s\n", file)

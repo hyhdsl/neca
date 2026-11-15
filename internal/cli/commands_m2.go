@@ -101,6 +101,20 @@ func renderInfos(env Env, infos []string) {
 	}
 }
 
+// auditWrite 追加审计记录；失败只告警，不影响主流程。
+func auditWrite(env Env, deps *coreDeps, action, cn, serial, result string) {
+	if err := core.AppendAudit(deps.cfg, action, cn, serial, result); err != nil {
+		fmt.Fprintf(env.Stderr, "[WARN] 审计日志: %v\n", err)
+	}
+}
+
+func auditOutcome(already bool) string {
+	if already {
+		return "already"
+	}
+	return "ok"
+}
+
 // newIssueCommand 构造 neca issue。
 func newIssueCommand() Command {
 	return Command{
@@ -165,7 +179,9 @@ func runIssue(env Env, deps *coreDeps, cn string, values map[string]string, bool
 		return usageFail(env, "%v", err)
 	}
 	req := core.IssueRequest{CN: cn, Days: days, Platforms: platforms, Installers: installers, P12Profile: profile, NoReload: bools["no-reload"]}
-	fmt.Fprintf(env.Stdout, "[INFO] 生成密钥与证书 %s（%d 天）...\n", cn, days)
+	if !env.JSON {
+		fmt.Fprintf(env.Stdout, "[INFO] 生成密钥与证书 %s（%d 天）...\n", cn, days)
+	}
 	var result *core.CertificateResult
 	if reissue {
 		result, err = core.ReissueCertificate(context.Background(), deps.cfg, deps.store, deps.oss, deps.engine, req)
@@ -174,6 +190,25 @@ func runIssue(env Env, deps *coreDeps, cn string, values map[string]string, bool
 	}
 	if err != nil {
 		return fail(env, err)
+	}
+	action := env.Action
+	if action == "" {
+		action = "issue"
+	}
+	auditWrite(env, deps, action, cn, result.Serial, "ok")
+	if env.JSON {
+		data := map[string]any{
+			"serial": result.Serial, "platforms": result.Platforms, "subject": result.Subject,
+			"summary": result.Summary, "crlPath": result.CRLPath, "archivedSerial": result.ArchivedSerial,
+		}
+		if bools["zip"] {
+			entry, err := core.CreateDownloadZip(deps.cfg, cn, result.Platforms)
+			if err != nil {
+				return fail(env, err)
+			}
+			data["zip"] = map[string]any{"path": entry.Path, "expiresAt": entry.ExpiresAt, "sha256": entry.SHA256}
+		}
+		return emitJSON(env, action, cn, result.Warnings, data)
 	}
 	renderInfos(env, result.Infos)
 	renderWarnings(env, result.Warnings)
@@ -212,6 +247,10 @@ func newRevokeCommand() Command {
 			if err != nil {
 				return fail(env, err)
 			}
+			auditWrite(env, deps, "revoke", pos[0], result.Serial, auditOutcome(result.Already))
+			if env.JSON {
+				return emitJSON(env, "revoke", pos[0], result.Warnings, map[string]any{"serial": result.Serial, "already": result.Already, "crlPath": result.CRLPath})
+			}
 			if result.Already {
 				fmt.Fprintf(env.Stdout, "[INFO] %s 已处于吊销状态\n", pos[0])
 				return ExitOK
@@ -241,6 +280,10 @@ func newUnrevokeCommand() Command {
 			result, err := core.UnrevokeCertificate(context.Background(), deps.cfg, deps.store, deps.oss, deps.engine, pos[0], bools["no-reload"])
 			if err != nil {
 				return fail(env, err)
+			}
+			auditWrite(env, deps, "unrevoke", pos[0], result.Serial, auditOutcome(result.Already))
+			if env.JSON {
+				return emitJSON(env, "unrevoke", pos[0], result.Warnings, map[string]any{"serial": result.Serial, "already": result.Already, "crlPath": result.CRLPath})
 			}
 			if result.Already {
 				fmt.Fprintf(env.Stdout, "[INFO] %s 未处于吊销状态\n", pos[0])
@@ -274,6 +317,10 @@ func newDeleteCommand() Command {
 			result, err := core.DeleteCertificate(context.Background(), deps.cfg, deps.store, deps.oss, deps.engine, pos[0], bools["purge-revoked"], bools["no-reload"])
 			if err != nil {
 				return fail(env, err)
+			}
+			auditWrite(env, deps, "delete", pos[0], "", "ok")
+			if env.JSON {
+				return emitJSON(env, "delete", pos[0], result.Warnings, map[string]any{"crlPath": result.CRLPath})
 			}
 			if result.CRLPath != "" {
 				fmt.Fprintf(env.Stdout, "[OK]   CRL 已更新: %s\n", result.CRLPath)
@@ -318,6 +365,10 @@ func newPlatformCommand() Command {
 				if err != nil {
 					return fail(env, err)
 				}
+				auditWrite(env, deps, "platform-add", pos[0], "", "ok")
+				if env.JSON {
+					return emitJSON(env, "platform-add", pos[0], result.Warnings, map[string]any{"platforms": result.Platforms, "messages": result.Messages})
+				}
 				renderMessages(env, result.Messages)
 				renderWarnings(env, result.Warnings)
 				fmt.Fprintf(env.Stdout, "[OK]   已为 %s 增加平台: %s\n", pos[0], strings.Join(result.Platforms, ","))
@@ -330,6 +381,10 @@ func newPlatformCommand() Command {
 				result, err = core.SetPlatforms(deps.cfg, pos[0], platforms)
 				if err != nil {
 					return fail(env, err)
+				}
+				auditWrite(env, deps, "platform-set", pos[0], "", "ok")
+				if env.JSON {
+					return emitJSON(env, "platform-set", pos[0], nil, map[string]any{"platforms": result.Platforms})
 				}
 				fmt.Fprintf(env.Stdout, "[OK]   平台标注已更新: %s -> %s\n", pos[0], strings.Join(result.Platforms, ","))
 			default:
@@ -368,6 +423,10 @@ func newPackageCommand() Command {
 			if err != nil {
 				return fail(env, err)
 			}
+			auditWrite(env, deps, "package", pos[0], "", "ok")
+			if env.JSON {
+				return emitJSON(env, "package", pos[0], result.Warnings, map[string]any{"platforms": result.Platforms, "messages": result.Messages})
+			}
 			renderMessages(env, result.Messages)
 			renderWarnings(env, result.Warnings)
 			fmt.Fprintf(env.Stdout, "[OK]   平台包已生成: %s\n", strings.Join(result.Platforms, ","))
@@ -405,6 +464,9 @@ func newDownloadsCommand() Command {
 				if err != nil {
 					return fail(env, err)
 				}
+				if env.JSON {
+					return emitJSON(env, "downloads-list", "", nil, map[string]any{"downloads": entries})
+				}
 				for _, entry := range entries {
 					fmt.Fprintf(env.Stdout, "[INFO] %s  %s  %d 字节  过期: %s\n", entry.CN, entry.Path, entry.Size, entry.ExpiresAt.Format(time.RFC3339))
 				}
@@ -413,6 +475,9 @@ func newDownloadsCommand() Command {
 				removed, err := core.CleanDownloads(deps.cfg, bools["all"])
 				if err != nil {
 					return fail(env, err)
+				}
+				if env.JSON {
+					return emitJSON(env, "downloads-clean", "", nil, map[string]any{"removed": removed})
 				}
 				fmt.Fprintf(env.Stdout, "[OK]   已清理 %d 个下载文件\n", removed)
 				return ExitOK

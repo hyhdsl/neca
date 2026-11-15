@@ -9,14 +9,17 @@
 // 注册，不需要修改 Run 的分发逻辑或帮助文本。这是为 M1/M2 批量增加
 // list/issue/revoke 等命令、以及未来 Web 端复用命令元数据预留的扩展点。
 //
-// 当前已实现（M1）：version、help、list、verify、export、index sync；
-// 后续按里程碑推进：M2 写命令，M3 交互向导/--json/--dry-run。
+// 当前已实现：M1 只读命令、M2 写命令、M3 通用开关/JSON/向导/语言。
 package cli
 
 import (
 	"fmt"
 	"io"
+	"os"
+	"strings"
+	"time"
 
+	"github.com/hyhdsl/neca/internal/i18n"
 	"github.com/hyhdsl/neca/internal/version"
 )
 
@@ -32,48 +35,93 @@ const (
 // progName 是面向用户的程序名，统一从这里取，避免各处硬编码。
 const progName = "neca"
 
-// Run 解析参数并执行对应子命令，返回进程退出码。
-//
-// 参数：
-//   - args：不含程序名的参数列表（即 os.Args[1:]）；
-//   - stdout / stderr：由调用方注入，测试时替换为 buffer。
-//
-// 之所以注入 writer 而不是直接用 fmt.Print 系列，是为了让测试无需重定向
-// os.Stdout，也让未来 --json 模式可以整体切换输出目标。
-//
-// M0 阶段无参数时打印帮助并返回用法错误；M3 接入交互向导后改为默认进入菜单。
+// Run 是保持旧签名的入口；测试可继续注入 stdout/stderr。
 func Run(args []string, stdout, stderr io.Writer) int {
-	registry := newBuiltinRegistry()
+	return RunWithIO(args, os.Stdin, stdout, stderr)
+}
 
-	if len(args) == 0 {
-		registry.WriteHelp(stdout)
-		fmt.Fprintf(stderr, "[INFO] 交互向导将在 M3 提供；请先使用子命令，例如：%s version\n", progName)
+// RunWithIO 解析参数并执行对应子命令，支持可注入 stdin（向导/测试）。
+func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	args = compatArgs(args)
+	rest, opts, err := parseGlobals(args)
+	if err != nil {
+		fmt.Fprintf(stderr, "[ERR]  %v\n", err)
 		return ExitUsage
 	}
+	lang, err := i18n.Resolve(opts.Lang)
+	if err != nil {
+		fmt.Fprintf(stderr, "[ERR]  %s\n", i18n.T("error.language", opts.Lang))
+		return ExitUsage
+	}
+	_ = i18n.SetLanguage(lang)
 
-	// 全局开关不是子命令：--version / -V 只输出一行版本号，
-	// 与 `neca version` 的完整摘要刻意区分（文档 §6.2）。
-	if args[0] == "--version" || args[0] == "-V" {
-		fmt.Fprintf(stdout, "%s %s\n", progName, version.Get().Version)
+	registry := newBuiltinRegistry()
+	env := Env{
+		Stdin: stdin, Stdout: stdout, Stderr: stderr,
+		JSON: opts.JSON, DryRun: opts.DryRun, Quiet: opts.Quiet,
+		Lang: lang, Started: time.Now(),
+	}
+
+	if opts.Version {
+		env.Action = "version"
+		info := version.Get()
+		if opts.JSON {
+			return emitJSON(env, "version", "", nil, map[string]any{
+				"version": info.Version, "commit": info.Commit,
+				"date": info.Date, "goos": info.OS, "goarch": info.Arch,
+			})
+		}
+		fmt.Fprintf(stdout, "%s %s\n", progName, info.Version)
 		return ExitOK
 	}
 
-	cmd, ok := registry.Lookup(args[0])
-	if !ok {
-		// 未知子命令属于用法错误，提示后返回退出码 1（文档 §6.3）。
-		fmt.Fprintf(stderr, "[ERR]  未知子命令：%s\n", args[0])
-		fmt.Fprintf(stderr, "[INFO] 运行 %s help 查看可用命令\n", progName)
-		return ExitUsage
+	if len(rest) == 0 {
+		if opts.JSON {
+			env.Action = "wizard"
+			return emitUsageJSONError(env, fmt.Errorf("wizard is not available in JSON mode"))
+		}
+		env.Action = "wizard"
+		return runWizard(env, registry)
 	}
 
-	return cmd.Run(Env{Stdout: stdout, Stderr: stderr, Args: args[1:]})
+	cmd, ok := registry.Lookup(rest[0])
+	if !ok {
+		unknown := fmt.Errorf(i18n.T("error.unknown_command"), rest[0])
+		if opts.JSON {
+			env.Action = rest[0]
+			return emitUsageJSONError(env, unknown)
+		}
+		fmt.Fprintf(stderr, "[ERR]  %v\n", unknown)
+		fmt.Fprintf(stderr, "[INFO] %s\n", i18n.T("error.help_hint", progName))
+		return ExitUsage
+	}
+	env.Action = cmd.Name
+	env.CN = guessCN(cmd.Name, rest[1:])
+	env.Args = rest[1:]
+	if opts.Quiet && !opts.JSON {
+		env.Stdout = io.Discard
+	}
+
+	if opts.DryRun && isWriteCommand(cmd.Name, rest[1:]) {
+		if opts.JSON {
+			return emitJSON(env, cmd.Name, env.CN, nil, map[string]any{
+				"dryRun":  true,
+				"command": cmd.Name,
+				"args":    rest[1:],
+			})
+		}
+		fmt.Fprintln(stdout, i18n.T("dryrun.line", cmd.Name, strings.Join(rest[1:], " ")))
+		fmt.Fprintln(stdout, i18n.T("dryrun.done"))
+		return ExitOK
+	}
+
+	if opts.JSON {
+		return runJSONCommand(env, cmd, stdout, stderr)
+	}
+	return cmd.Run(env)
 }
 
 // newBuiltinRegistry 构建内置命令表。
-//
-// 每次 Run 都新建注册表，避免共享可变全局状态；注册成本可忽略。
-// 未来新增子命令（list/issue/...）只需在这里追加注册，不要改 Run 的
-// 分发逻辑——这正是命令注册表要解决的扩展问题。
 func newBuiltinRegistry() *Registry {
 	registry := NewRegistry()
 
@@ -81,6 +129,13 @@ func newBuiltinRegistry() *Registry {
 		Name:    "version",
 		Summary: "显示版本、提交号、构建时间与目标平台",
 		Run: func(env Env) int {
+			if env.JSON {
+				info := version.Get()
+				return emitJSON(env, "version", "", nil, map[string]any{
+					"version": info.Version, "commit": info.Commit,
+					"date": info.Date, "goos": info.OS, "goarch": info.Arch,
+				})
+			}
 			fmt.Fprintln(env.Stdout, version.Get().String())
 			return ExitOK
 		},
@@ -112,5 +167,12 @@ func newBuiltinRegistry() *Registry {
 	registry.MustRegister(newPackageCommand())
 	registry.MustRegister(newDownloadsCommand())
 
+	// M3 交互向导。
+	registry.MustRegister(newWizardCommand(registry))
+
+	// 内置命令使用语言文件中的说明；第三方/测试注册的自定义命令保持 Summary。
+	for _, cmd := range registry.Commands() {
+		cmd.SummaryKey = "cmd." + cmd.Name + ".summary"
+	}
 	return registry
 }

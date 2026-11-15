@@ -3,16 +3,15 @@ neca — strongSwan IKEv2 用户证书管理工具
 Copyright (c) 2026 hyhdsl
 Original repository: https://github.com/hyhdsl/neca
 
-License: pending final decision; the project owner will choose it before the
-repository becomes public. Draft candidate: PolyForm Noncommercial License
-1.0.0 (see LICENSE.draft). It would be source-available and non-commercial,
-not an OSI-approved open source license.
+License: GNU Affero General Public License v3.0 only (AGPL-3.0-only).
+See LICENSE for the full terms. AGPL is an OSI-approved open source license;
+it permits commercial use subject to its source-disclosure and network-use
+obligations.
 
 AI disclosure: this project's code, tests and documentation were produced with
 the assistance of an AI coding agent (DeepSeek Harness / DeepSeek model).
 AI output may contain errors; review and test before use.
 
-The PR policy is also pending and will be decided before the repository becomes
-public; external pull requests are not accepted during the private development
-phase. See SECONDARY-DEVELOPMENT.md for the draft attribution, open-source and
-non-commercial requirements for derivative works.
+PR policy: external pull requests are not accepted. The project is maintained
+by the repository owner; issues and forks are welcome under AGPL. See
+SECONDARY-DEVELOPMENT.md for attribution and contribution policy.

@@ -6,8 +6,10 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hyhdsl/neca/internal/core"
+	"github.com/hyhdsl/neca/internal/i18n"
 )
 
 // Env 是执行一次子命令所需的运行时环境。
@@ -15,9 +17,18 @@ import (
 // 命令实现不得直接读写 os.Stdout / os.Args：I/O 全部从 Env 取，
 // 这样单元测试、未来的 --json 模式以及 Web 端复用都不必修改命令本身。
 type Env struct {
+	Stdin  io.Reader // 交互向导输入
 	Stdout io.Writer // 正常输出
 	Stderr io.Writer // 错误与告警
 	Args   []string  // 子命令之后的参数（不含子命令名）
+
+	JSON    bool   // --json 结构化输出
+	DryRun  bool   // --dry-run 只打印动作
+	Quiet   bool   // -q/--quiet 仅输出错误
+	Lang    string // 已解析语言
+	Action  string // 命令名，用于 JSON 信封/审计
+	CN      string // 第一个位置参数，用于 JSON 信封
+	Started time.Time
 }
 
 // Command 是一个可注册的 CLI 子命令。
@@ -25,10 +36,11 @@ type Env struct {
 // 新增子命令时只实现 Run 并注册，不需要修改 Run 函数里的分发 switch，
 // 也不需要手写帮助文本——帮助由注册表自动生成。
 type Command struct {
-	Name    string        // 子命令名，例如 "list"
-	Aliases []string      // 兼容别名，例如 {"ls"}；不得与任何命令名/别名冲突
-	Summary string        // 帮助列表里的一句话说明
-	Run     func(Env) int // 返回进程退出码（见 ExitOK 等常量）
+	Name       string        // 子命令名，例如 "list"
+	Aliases    []string      // 兼容别名，例如 {"ls"}；不得与任何命令名/别名冲突
+	Summary    string        // 帮助列表里的一句话说明（默认语言）
+	SummaryKey string        // 可选 i18n key；内置命令由注册表设置
+	Run        func(Env) int // 返回进程退出码（见 ExitOK 等常量）
 }
 
 // Registry 保存子命令表，是 CLI 的扩展点。
@@ -106,10 +118,11 @@ func (r *Registry) Commands() []*Command {
 // 命令列表由注册表生成：新增命令只需注册，帮助自动包含；
 // 全局开关（--version / -V）不属于子命令，单独列在"通用开关"里。
 func (r *Registry) WriteHelp(w io.Writer) {
-	fmt.Fprintf(w, "%s —— strongSwan IKEv2 用户证书管理工具\n\n", progName)
-	fmt.Fprintln(w, "用法：")
-	fmt.Fprintf(w, "  %s <子命令> [参数]\n\n", progName)
-	fmt.Fprintln(w, "可用子命令：")
+	fmt.Fprintf(w, "%s\n\n", i18n.T("app.title"))
+	fmt.Fprintln(w, i18n.T("app.usage"))
+	fmt.Fprintln(w, i18n.T("app.usage_line"))
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, i18n.T("app.commands"))
 	for _, cmd := range r.Commands() {
 		name := cmd.Name
 		if len(cmd.Aliases) > 0 {
@@ -120,11 +133,19 @@ func (r *Registry) WriteHelp(w io.Writer) {
 		if padding < 0 {
 			padding = 0
 		}
-		fmt.Fprintf(w, "  %s%s %s\n", name, strings.Repeat(" ", padding), cmd.Summary)
+		summary := cmd.Summary
+		if cmd.SummaryKey != "" && i18n.Has(cmd.SummaryKey) {
+			summary = i18n.T(cmd.SummaryKey)
+		}
+		fmt.Fprintf(w, "  %s%s %s\n", name, strings.Repeat(" ", padding), summary)
 	}
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "通用开关：")
-	fmt.Fprintln(w, "  --version, -V  只输出版本号（单行）")
+	fmt.Fprintln(w, i18n.T("app.global"))
+	fmt.Fprintln(w, i18n.T("app.global.version"))
+	fmt.Fprintln(w, i18n.T("app.global.json"))
+	fmt.Fprintln(w, i18n.T("app.global.dry_run"))
+	fmt.Fprintln(w, i18n.T("app.global.lang"))
+	fmt.Fprintln(w, i18n.T("app.global.quiet"))
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "后续里程碑将提供：--json / --dry-run / 交互向导（M3）。")
+	fmt.Fprintln(w, i18n.T("app.footer"))
 }

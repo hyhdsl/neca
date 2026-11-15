@@ -25,8 +25,9 @@ type BundleResult struct {
 // RenderBundles 为 CN 生成选中平台包。
 //
 // 前置条件：clients/<CN>/<CN>.p12、pass、ca.crt 已由 p12 导出步骤生成。
-// 一键安装脚本默认不生成；Windows 脚本需 InstallerSet 显式开启；Linux/macOS
-// 目前仅保留选项，开启时给出警告并跳过（模板未验证）。
+// 一键安装脚本默认不生成；Windows/Linux/macOS 脚本需 InstallerSet 显式开启。
+// Linux 生成 install.sh/uninstall.sh；macOS 生成 install.command/uninstall.command
+// 与可选的 mobileconfig，脚本本身保持 ASCII。
 func RenderBundles(ctx context.Context, cfg *Config, cn string, platforms []string, installers InstallerSet) (*BundleResult, error) {
 	base := filepath.Join(cfg.ClientsDir, cn)
 	p12Path := filepath.Join(base, cn+".p12")
@@ -76,19 +77,28 @@ func RenderBundles(ctx context.Context, cfg *Config, cn string, platforms []stri
 				}
 				result.Messages = append(result.Messages, fmt.Sprintf("Android 包: %s", dir))
 			case PlatformLinux:
-				if err := writeLinuxInstructions(dir, cn, cfg.ServerID); err != nil {
+				hasInstaller := installers.Enabled(PlatformLinux)
+				if err := writeLinuxInstructions(dir, cn, cfg.ServerID, hasInstaller); err != nil {
 					return nil, err
 				}
-				if installers.Enabled(PlatformLinux) {
-					result.Warnings = append(result.Warnings, "Linux 一键脚本暂未验证，已跳过；当前只生成 p12 与说明")
+				if hasInstaller {
+					if err := renderUnixScripts(dir, PlatformLinux, cn, cfg); err != nil {
+						return nil, err
+					}
 				}
 				result.Messages = append(result.Messages, fmt.Sprintf("Linux 包: %s", dir))
 			case PlatformMacOS:
-				if err := writeMacInstructions(dir, cn, cfg.ServerID); err != nil {
+				hasInstaller := installers.Enabled(PlatformMacOS)
+				if err := writeMacInstructions(dir, cn, cfg.ServerID, hasInstaller); err != nil {
 					return nil, err
 				}
-				if installers.Enabled(PlatformMacOS) {
-					result.Warnings = append(result.Warnings, "macOS 一键脚本暂未验证，已跳过；当前只生成 p12 与说明")
+				if hasInstaller {
+					if err := writeIOSProfile(ctx, cfg, cn, dir, p12Path, passPath, caPath); err != nil {
+						return nil, err
+					}
+					if err := renderUnixScripts(dir, PlatformMacOS, cn, cfg); err != nil {
+						return nil, err
+					}
 				}
 				result.Messages = append(result.Messages, fmt.Sprintf("macOS 包: %s", dir))
 			}
@@ -130,6 +140,41 @@ func copyFileMode(src, dst string, mode os.FileMode) error {
 	}
 	if err := os.Chmod(dst, mode); err != nil {
 		return runtimef("设置平台包权限", "%s: %v", dst, err)
+	}
+	return nil
+}
+
+// renderUnixScripts 渲染 Linux/macOS 安装/卸载脚本（纯 ASCII，0755）。
+func renderUnixScripts(dir, platform, cn string, cfg *Config) error {
+	data := map[string]string{
+		"CN":        cn,
+		"Server":    cfg.ServerID,
+		"CA":        cfg.CACN,
+		"ProfileID": "work.example.vpn." + strings.ToLower(cn),
+	}
+	files := map[string]string{}
+	switch platform {
+	case PlatformLinux:
+		files["install.sh"] = "linux/install.sh.tmpl"
+		files["uninstall.sh"] = "linux/uninstall.sh.tmpl"
+	case PlatformMacOS:
+		files["install.command"] = "macos/install.command.tmpl"
+		files["uninstall.command"] = "macos/uninstall.command.tmpl"
+	default:
+		return runtimef("生成平台脚本", "不支持平台 %s", platform)
+	}
+	for name, templatePath := range files {
+		rendered, err := renderEmbeddedTemplate(templatePath, data)
+		if err != nil {
+			return err
+		}
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(rendered), 0o755); err != nil {
+			return runtimef("写入平台脚本", "%s: %v", path, err)
+		}
+		if err := os.Chmod(path, 0o755); err != nil {
+			return runtimef("设置平台脚本权限", "%s: %v", path, err)
+		}
 	}
 	return nil
 }
@@ -208,25 +253,30 @@ func writeAndroidInstructions(dir, cn, serverID string) error {
 }
 
 // writeLinuxInstructions 写 Linux 使用说明。
-func writeLinuxInstructions(dir, cn, serverID string) error {
+func writeLinuxInstructions(dir, cn, serverID string, hasInstaller bool) error {
+	note := "注意：当前包未包含一键脚本；请按说明手工配置，或重新生成并加 --installers linux。\n"
+	if hasInstaller {
+		note = "一键安装：sudo ./install.sh（需 root）；卸载：sudo ./uninstall.sh。\n"
+	}
 	content := "Example VPN (" + cn + ") — Linux (strongSwan / NetworkManager)\n\n" +
-		"1. 信任 CA：把 ca.crt 复制到 /etc/swanctl/x509ca/（或导入系统证书库）。\n" +
-		"2. 导入客户端证书：使用 p12 与 " + cn + ".p12.pass 中的密码（默认 compat/3DES）。\n" +
-		"3. 配置 IKEv2：服务器地址与远端标识填 " + serverID + "，本地标识填 " + cn + "，\n" +
-		"   使用客户端证书认证，加载 CA 证书与客户端证书。\n" +
-		"4. 启动 strongSwan 后连接；具体 swanctl.conf 示例请参考官方文档。\n" +
-		"注意：Linux 一键脚本暂未提供；请按说明手工配置。\n"
+		"1. 信任 CA：install.sh 会把 ca.crt 放到 /etc/swanctl/x509ca/ 并更新系统 CA。\n" +
+		"2. 导入客户端证书：脚本用 " + cn + ".p12.pass 解密 p12，写入 /etc/swanctl/x509 与 private。\n" +
+		"3. 配置 IKEv2：服务器地址与远端标识填 " + serverID + "，本地标识填 " + cn + "。\n" +
+		"4. 脚本会执行 swanctl --load-all；之后用系统网络界面或 swanctl 发起连接。\n" + note
 	return writeInstructions(dir, content)
 }
 
 // writeMacInstructions 写 macOS 使用说明。
-func writeMacInstructions(dir, cn, serverID string) error {
+func writeMacInstructions(dir, cn, serverID string, hasInstaller bool) error {
+	note := "注意：当前包未包含一键脚本；请按说明手工配置，或重新生成并加 --installers macos。\n"
+	if hasInstaller {
+		note = "一键安装：双击 install.command（会请求管理员权限并安装 mobileconfig）；卸载：双击 uninstall.command。\n"
+	}
 	content := "Example VPN (" + cn + ") — macOS IKEv2\n\n" +
-		"1. 双击 ca.crt 导入“钥匙串访问”，在“系统”钥匙串中信任该 CA。\n" +
-		"2. 双击 " + cn + ".p12 导入客户端证书，密码见 " + cn + ".p12.pass。\n" +
-		"3. 系统设置 → 网络 → VPN → 添加 IKEv2：服务器地址与远端标识填 " + serverID + "，\n" +
-		"   本地标识填 " + cn + "，认证方式选择证书。\n" +
-		"4. 连接。macOS 一键脚本暂未提供；请按说明手工配置。\n"
+		"1. install.command 会把 ca.crt 加入系统钥匙串并信任，导入 p12 客户端证书。\n" +
+		"2. 再安装同目录的 " + cn + ".mobileconfig（IKEv2 配置）。\n" +
+		"3. 服务器地址与远端标识：" + serverID + "；本地标识：" + cn + "；认证方式：证书。\n" +
+		"4. 连接。\n" + note
 	return writeInstructions(dir, content)
 }
 

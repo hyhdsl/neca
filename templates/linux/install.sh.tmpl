@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Example VPN - Linux IKEv2 installer for strongSwan.
+# Run as root. Supports NECA_ROOT (test sandbox) and NECA_DRY_RUN=1.
+set -e
+
+CN="{{.CN}}"
+SERVER="{{.Server}}"
+CA_CN="{{.CA}}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$NECA_ROOT"
+DRY_RUN="$NECA_DRY_RUN"
+DEST="$ROOT/etc/swanctl"
+TRUST_DIR="$ROOT/usr/local/share/ca-certificates"
+CONF="$DEST/conf.d/neca-$CN.conf"
+
+say() { printf '[INFO] %s
+' "$*"; }
+ok() { printf '[OK]   %s
+' "$*"; }
+warn() { printf '[WARN] %s
+' "$*" >&2; }
+run() { if [ "$DRY_RUN" = "1" ]; then printf '[DRY-RUN] %s
+' "$*"; else "$@"; fi; }
+
+if [ "$(id -u)" -ne 0 ] && [ -z "$ROOT" ]; then
+  echo '[ERR]  run as root, or set NECA_ROOT for a test sandbox' >&2
+  exit 1
+fi
+for f in "$HERE/ca.crt" "$HERE/$CN.p12" "$HERE/$CN.p12.pass"; do
+  [ -f "$f" ] || { echo "[ERR]  missing $f" >&2; exit 1; }
+done
+command -v openssl >/dev/null 2>&1 || { echo '[ERR]  openssl not found' >&2; exit 1; }
+
+say "Installing Example VPN client $CN"
+run install -d -m 0755 "$DEST/x509ca" "$DEST/x509" "$DEST/private" "$DEST/conf.d"
+run install -m 0644 "$HERE/ca.crt" "$DEST/x509ca/neca-$CN-ca.crt"
+
+if [ "$DRY_RUN" = "1" ]; then
+  printf '[DRY-RUN] openssl pkcs12 -in %s -passin file:%s -nocerts -nodes -out %s
+' "$HERE/$CN.p12" "$HERE/$CN.p12.pass" "$DEST/private/neca-$CN.key"
+  printf '[DRY-RUN] openssl pkcs12 -in %s -passin file:%s -clcerts -nokeys -out %s
+' "$HERE/$CN.p12" "$HERE/$CN.p12.pass" "$DEST/x509/neca-$CN.crt"
+  printf '[DRY-RUN] write %s
+' "$CONF"
+else
+  umask 077
+  openssl pkcs12 -in "$HERE/$CN.p12" -passin "file:$HERE/$CN.p12.pass" -nocerts -nodes -out "$DEST/private/neca-$CN.key"
+  chmod 0600 "$DEST/private/neca-$CN.key"
+  openssl pkcs12 -in "$HERE/$CN.p12" -passin "file:$HERE/$CN.p12.pass" -clcerts -nokeys -out "$DEST/x509/neca-$CN.crt"
+  chmod 0644 "$DEST/x509/neca-$CN.crt"
+  cat > "$CONF" <<EOF
+connections {
+  neca-$CN {
+    version = 2
+    remote_addrs = $SERVER
+    proposals = aes256-sha256-modp2048
+    dpd_delay = 30s
+    unique = replace
+    local {
+      auth = pubkey
+      certs = neca-$CN.crt
+      id = $CN
+    }
+    remote {
+      auth = pubkey
+      id = $SERVER
+    }
+    children {
+      neca-$CN {
+        remote_ts = 0.0.0.0/0,::/0
+        esp_proposals = aes256-sha256-modp2048
+        start_action = trap
+      }
+    }
+  }
+}
+secrets {
+  private-neca-$CN {
+    file = $DEST/private/neca-$CN.key
+  }
+}
+EOF
+fi
+
+if [ -z "$ROOT" ]; then
+  if command -v update-ca-certificates >/dev/null 2>&1; then
+    run install -d -m 0755 "$TRUST_DIR"
+    run install -m 0644 "$HERE/ca.crt" "$TRUST_DIR/neca-$CN-ca.crt"
+    run update-ca-certificates
+  elif command -v update-ca-trust >/dev/null 2>&1; then
+    run install -m 0644 "$HERE/ca.crt" "$ROOT/etc/pki/ca-trust/source/anchors/neca-$CN-ca.crt"
+    run update-ca-trust
+  else
+    warn "No system CA update tool found; strongSwan will still use $DEST/x509ca"
+  fi
+  if command -v swanctl >/dev/null 2>&1; then
+    run swanctl --load-all
+  elif command -v systemctl >/dev/null 2>&1; then
+    run systemctl restart strongswan
+  else
+    warn "swanctl not found; start or reload strongSwan manually"
+  fi
+else
+  say "Test sandbox: skipped system CA store and strongSwan reload"
+fi
+
+ok "Installed $CN"
+say "Config: $CONF"
+say "Uninstall with ./uninstall.sh"

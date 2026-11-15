@@ -10,7 +10,7 @@
 | Q1 后台只读开关 | **可以**。在 neca.json 增加 web.readOnly，并新增 neca web readonly status/on/off 子命令；服务端强制拦截写请求。只读关闭后需要独立 root helper，Web 进程本身始终非 root。 |
 | Q2 权限调整 | Web 进程只读挂载、无 ca.key、无 docker.sock；写操作交给 Unix socket 的 root helper。 |
 | Q3 仅 VPN/指定证书访问 | 不引入第三方 VPN 客户端。单管理员用 OpenSSH 本地转发直连回环；浏览器场景使用系统原生 IKEv2 + 反向代理 mTLS 专用管理员证书 + VPN 网段防火墙。 |
-| Q4 鉴权调整 | mTLS（可选）+ 管理员密码哈希 + 签名 Cookie + CSRF + 限流；空闲超时默认 30m、可配至 24h、绝对会话上限 24h；只读开关只允许 root CLI 修改；Passkey 先保留接口。 |
+| Q4 鉴权调整 | mTLS（可选）+ 管理员密码哈希 + 签名 Cookie + CSRF + 限流；空闲超时默认 30m、可配至 24h、绝对会话上限 24h；web-secrets 由 root 属主、按文件授权/挂载；只读开关只允许 root CLI 修改；Passkey 先保留接口。 |
 | Passkey | 可行但依赖 HTTPS + 稳定域名/RP ID；M6 仅保留接口、默认关闭，先作为第二因素。 |
 | Q5 UI/SQLite | Go 模板 + CSS 变量，深浅色蓝白/蓝黑主题；不以截图作为像素级验收依据，使用 data-testid/DOM/Playwright。M6 不引入 SQLite，但预留 Store 接口与迁移路径。 |
 | Docker 发布 | 只发布 lite 默认镜像 + 可选 neca-web 面板包；lite 不替换即可增量安装 Web；停止/移除 Web 组件即回到 lite。 |
@@ -251,6 +251,40 @@ M6a 只定义接口与 feature flag，不引入 WebAuthn 依赖；M6b/后续版�
 - 下载创建/访问/过期；
 - 写操作（helper）：操作者、CN、序列号、结果；
 - 绝不记录密码、私钥、p12 密码、会话密钥。
+
+### 6.5 web-secrets 目录所有权
+
+**建议：Web 服务用户不是 web-secrets 目录的属主。**
+
+两种方案：
+
+| 方案 | 做法 | 风险 |
+|---|---|---|
+| 是：Web 用户为属主 | 目录 0700、文件 0600，全部由 Web 用户拥有 | 简单，但 Web 应用被攻破后，该用户可以读取目录内所有密钥、数据库密码和 passkey 凭据 |
+| 否：root 为属主，Web 用户按文件/组访问 | 目录 root:neca-web 0710；只挂载/授权 Web 真正需要的文件 | 稍复杂，但能把 Web 不需要的密钥隔离在目录外 |
+
+推荐细则：
+
+- 目录：root:neca-web，0710（Web 组可进入已知路径，但不能列出目录）；
+- 会话签名密钥：root:neca-web，0640，只读挂载给 necad；
+- Passkey 凭据文件：root:neca-web，0660（M6 默认关闭，后续再启用写权限）；
+- 未来 web.db：root:neca-web，0660；数据库账号使用最小权限；
+- mTLS 私钥：root:proxy，0600，只给反向代理，不挂载给 Web；
+- helper 控制 socket：root:neca-web，0660，由 helper 持有；
+- 密码哈希走环境变量或单独的 0640 文件，不放入可写 JSON；
+- Docker 使用**单文件 bind mount**，不要为了省事把整个 web-secrets 目录挂进 Web 容器。
+
+必须承认的固有限制：
+
+- 会话签名密钥必须能被 necad 读取，否则无法验证 Cookie；Web 被攻破时攻击者仍能读到它并伪造会话；
+- Passkey 凭据文件若需要 Web 注册/删除，Web 用户必须可读写；被攻破时可篡改凭据；
+- 因此 root 属主不是“防住 Web 被攻破”，而是**把 Web 不需要的密钥从它的可读范围移除**；
+- 会话密钥应支持轮换，Web 失效时间短（默认 30m），异常时立即轮换并重启 Web；
+- helper 是独立 root 边界，即使 Web 被攻破，也只能调用白名单操作，不能读取 CA 私钥。
+
+结论：**采用“否”方案**——root 属主、组权限、按文件挂载、最小权限；不接受 Web 用户拥有整个 web-secrets 目录。
+
+
 
 ## 7. Q5：UI、配色与可测试性
 
@@ -538,18 +572,22 @@ Web 面板不是独立产品，而是 neca core 的一个可选展示层：
 
 ## 13. 决策状态
 
-Q6–Q9 已于 2026-11-15 确认；Q1–Q5 与 Q10–Q11 仍需最终确认。
+## 13. 决策状态
 
-1. Q1：接受只读开关 + helper 写能力分期（M6a/M6b），还是要求 M6 一次完成写操作？
-2. Q2：接受 root helper 作为唯一写边界？
-3. Q3：访问方式选 OpenSSH 本地转发，还是系统原生 IKEv2 + 反向代理 mTLS？若选 mTLS，管理员证书的 CN 与签发流程需定；不使用第三方 VPN 客户端。
-4. Q4：密码哈希注入与会话密钥文件的具体路径/权限。
-5. Q5：先做只读页面与深浅色，SQLite 保持延后；确认是否接受 Go 模板而非 SPA。
-6. ✅ Q6：采用 neca（lite，默认）+ neca-web（可选面板包）两个镜像标签（2026-11-15 已确认）。
-7. ✅ Q7：Web 包采用独立 Docker 镜像，不采用运行时二进制 tar（2026-11-15 已确认）。
-8. ✅ Q8：写模式 helper 使用独立 web-write profile/容器（2026-11-15 已确认）。
-9. ✅ Q9：保持 monorepo（2026-11-15 已确认）。
-10. Q10：空闲超时默认 30m、最大 24h 是否接受？
-11. Q11：Passkey 首版作为第二因素、仅在 HTTPS + 稳定域名/RP ID 可用时启用，是否接受？
+截至 2026-11-15：
+
+1. ✅ Q1：M6a 只读 + M6b 写能力分期（已确认）。
+2. ✅ Q2：root helper 作为唯一写边界（已确认）。
+3. ✅ Q3：单管理员优先 OpenSSH 本地转发；浏览器场景系统原生 IKEv2 + mTLS；不使用第三方 VPN 客户端（已确认）。
+4. ⏳ Q4：Web 用户不拥有 web-secrets 目录；采用 root 属主 + 组权限 + 按文件挂载（本方案待最终确认）。
+5. ✅ Q5：Go 模板 + 原生 JS；深浅色、蓝白/蓝黑；SQLite 延后（已确认）。
+6. ✅ Q6：neca（lite）+ neca-web（可选面板包）两个镜像标签。
+7. ✅ Q7：Web 包使用独立 Docker 镜像。
+8. ✅ Q8：helper 使用独立 web-write profile/容器。
+9. ✅ Q9：保持 monorepo。
+10. ✅ Q10：空闲超时默认 30m、最大 24h、绝对会话上限 24h。
+11. ✅ Q11：Passkey 首版作为第二因素，仅在 HTTPS + 稳定域名/RP ID 可用时启用；仅保留接口。
+
+**除 Q4 外，其余问题均已回答；Q4 只需确认是否接受“否”方案。**
 
 M6a 只读 + 会话超时 + Passkey 接口占位 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。

@@ -151,8 +151,9 @@ docker compose -f docker-compose.neca.yml --profile web up -d web
 docker compose -f docker-compose.neca.yml --profile web logs -f web
 ```
 
-Web 监听 `127.0.0.1:18080`，compose 使用 host network 但不发布端口。推荐通过
-系统原生 OpenSSH 本地转发访问：
+Web 默认监听 `127.0.0.1:18080`，compose 使用 host network 但不发布端口。
+若 18080 已被其它服务占用，修改 `web.listen` 与 SSH 隧道端口即可（本次服务器
+使用 18080）。推荐通过系统原生 OpenSSH 本地转发访问：
 
 ```bash
 ssh -L 18080:127.0.0.1:18080 root@<SERVER>

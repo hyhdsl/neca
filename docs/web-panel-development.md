@@ -1,6 +1,6 @@
 # neca Web 面板开发文档（M6）
 
-> 状态：**M6a/M6b 代码已实现；M6a 镜像验证完成，M6b 待正式部署**。日期：2026-11-15。
+> 状态：**M6a/M6b 已实现并完成服务器正式部署**。日期：2026-11-15。
 > 设计依据：[web-panel.md](web-panel.md)。本文把已确认的 Q1–Q11 落成可执行的开发任务。
 > 目标：M6a 只读面板 + M6b helper 写能力；默认 lite，Web 作为可选 neca-web 面板包。
 
@@ -399,8 +399,27 @@ type PasskeyAuthenticator interface {
 
 尚未完成 / 限制：
 
-- 生产服务器正式部署尚未执行（下一步）；
 - Playwright/axe 浏览器验收；
 - SIGHUP 热重载；
 - helper 幂等缓存为进程内（重启后丢失），M6b 可接受；
-- delete 不开放。
+- delete 不开放；
+- Web UI 目前仅中文（en-US 页面未接入）。
+
+## 20. 正式部署记录（2026-11-15）
+
+- 服务器：Debian 12，Docker Compose，已有 strongSwan 容器；部署前已做快照与
+  `/root/neca-m6b-backup-*` 配置/PKI 备份；
+- 镜像：`neca:v0.3.0`、`neca-web:v0.3.0`，commit `9ea20f9`；
+- 端口：`18080` 已被 other service 占用，Web 改用 `127.0.0.1:18080`；host network，
+  不发布公网端口，通过 OpenSSH 本地转发访问；
+- Web：UID/GID 10001、只读根文件系统、无 docker.sock/ca.key；只挂载配置、
+  索引、meta、clients、downloads、CRL、web-secrets 单文件；
+- helper：独立 root 容器，`web-write` profile，socket `0660 root:neca-web`；
+- 验证：登录 303、未登录 API 401、capabilities readOnly/writable 切换、
+  不存在 CN 的 revoke 返回 409（证明 Web→helper→core 链路，不修改 PKI）；
+- 部署后 `index.txt` SHA-256 `redacted…redacted`、CRL `redacted…redacted`
+  与部署前一致；strongSwan 容器仍 healthy 且未重启；
+- 已完成可写链路验证后恢复默认 `web.readOnly=true`；如启用写操作：
+  `neca web readonly off` 并重启 `neca-web`；
+- 初始管理员密码在服务器 `/root/neca-web-initial-password`（0600）。首次登录后
+  建议删除该文件；需要重置时重新生成 `web-secrets/password.hash`。

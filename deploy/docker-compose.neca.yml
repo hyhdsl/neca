@@ -98,3 +98,9 @@ services:
       - /run/neca:/run/neca
     entrypoint: ["/usr/local/bin/neca-web-helper"]
     command: ["-socket", "/run/neca/web-helper.sock"]
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /run/neca/web-helper.sock"]
+      interval: 30s
+      timeout: 4s
+      start_period: 5s
+      retries: 3

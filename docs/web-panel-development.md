@@ -422,4 +422,8 @@ type PasskeyAuthenticator interface {
 - 已完成可写链路验证后恢复默认 `web.readOnly=true`；如启用写操作：
   `neca web readonly off` 并重启 `neca-web`；
 - 初始管理员密码在服务器 `/root/neca-web-initial-password`（0600）。首次登录后
-  建议删除该文件；需要重置时重新生成 `web-secrets/password.hash`。
+  建议删除该文件；需要重置时重新生成 `web-secrets/password.hash`；
+- GitHub 预览包：`v0.3.0-preview.2`（commit `9ec1b06`，prerelease），包含
+  CLI/necad/helper 的 amd64/arm64 二进制与 checksums；GHCR 预览镜像为
+  `neca:v0.3.0-preview.2` 与 `neca-web:v0.3.0-preview.2`。`neca:latest` 保持
+  v0.2.0；`neca-web:latest` 在首个正式 Web 版本前指向该预览。

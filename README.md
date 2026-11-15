@@ -201,14 +201,14 @@ dist/               构建产物（不入库）
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
 | M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
-| M6a | 只读 Web 面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite + neca-web 双镜像 | ✅ 2026-11-15 已部署（服务器 127.0.0.1 回环） |
-| M6b | root helper、issue/revoke/unrevoke/reissue 写能力、Web 写 API/UI | ✅ 2026-11-15 已部署（helper 独立 root 容器） |
+| M6a | 只读 Web 面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite + neca-web 双镜像 | ✅ 2026-11-15 已部署并发布预览包 |
+| M6b | root helper、issue/revoke/unrevoke/reissue 写能力、Web 写 API/UI | ✅ 2026-11-15 已部署并发布预览包 |
 
 ## 许可与二次开发
 
 - **许可**：**AGPL-3.0-only**（OSI 认可的开源协议；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码），全文见 [LICENSE](LICENSE)。
 - **二次开发**：必须保留原作者与仓库链接、保留 AGPL 许可与源码公开义务；详见 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
-- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；当前 Release 为 [v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0)（JSON 配置）。M6 的 v0.3.0 已构建并部署到服务器，尚未推送 GitHub Release。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
+- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；正式 Release 仍为 [v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0)（JSON 配置）。M6 预览包已发布：[v0.3.0-preview.2](https://github.com/hyhdsl/neca/releases/tag/v0.3.0-preview.2)。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
 
 ## 文档索引
 

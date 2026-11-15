@@ -825,7 +825,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
 | CI/CD 工作流 | ✅ `ci.yml` 已落地，M1/M2 影子对比 + M3 `check-locales`；`release.yml` / `docker.yml` 随 M5 |
-| 服务器 | ✅ Docker CLI 容器已部署并完成全流程测试；索引 8 行、CRL 5 条、容器未重启、IKE_SAs 0；测试前后索引哈希与 CRL 集合一致 |
+| 服务器 | ✅ Docker CLI 容器已部署；v0.2.0 全量验收 96/0（2026-11-15 快照后）：索引 8 行、CRL 5 条、容器未重启、既有 IKE SA 保留；测试后索引哈希 `redacted…redacted`、CRL/meta/clients 恢复基线，临时 CN/下载/配置/审计残留清零 |
 
 ### 19.2 变更记录
 
@@ -843,6 +843,60 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | M5 | Docker CLI 镜像与生产 compose；服务器全流程测试通过（issue/verify/平台包/zip/revoke/unrevoke/reissue/delete/JSON/dry-run/向导/audit）；索引/CRL 已恢复基线；v0.1.0 Release + GHCR 镜像发布；仓库转 public |
 | 2026-11-15 | v0.1.1 | 修复 `--lang en-US` 仅翻译帮助、不翻译命令输出的问题；新增 `deploy/neca-wrapper.sh`，转发 `NECA_LANG` 并处理非交互 TTY；服务器镜像升级 |
 | 2026-11-15 | v0.2.0 | 新增 JSON 配置文件（`neca.json`）与 `--config`/`NECA_CONFIG`；优先级 CLI > env > JSON > 默认值；`config init/show/validate/export-env`；保持 index/meta/CRL 格式不变 |
+| 2026-11-15 | v0.2.0 验收 | 服务器快照后全量测试 **96 通过 / 0 失败**：config/language、五平台 issue/installers、p12、zip、downloads、verify、platform/package、revoke/unrevoke/reload、reissue/delete、JSON/错误/向导/wrapper；测试后索引/CRL/meta/clients 恢复基线，strongSwan 未重启 |
+
+## 20. M6 开发准备（待确认）
+
+### 20.1 已验证的输入
+
+- v0.2.0 在服务器完成全量验收（2026-11-15，快照 15:12:34 之后）：最终 **96 项通过 / 0 失败**。
+- 覆盖：config/language、dry-run、五平台 issue、installers、compat/modern p12、zip/manifest/no key、downloads TTL/clean、verify、platform add/set、package、export、revoke/unrevoke/幂等/reload、reissue/archive/delete、吊销证书删除拒绝与 purge、JSON 错误、help/version/wizard/wrapper。
+- 测试后：索引哈希 `redacted…redacted`、CRL 5 条、证书 8 个、meta 3 个、clients 3 个、archive/downloads 为空；测试 CN、配置、CSV、审计与下载残留清零；strongSwan 容器 healthy 且未重启，既有 IKE SA 保留。
+- 生产运行镜像仍为 `neca:v0.2.0`；本次未改变 CLI/core 代码。
+
+### 20.2 推荐范围：只读 Web MVP
+
+M6 按原出口标准先做**只读面板**，不把签发/吊销等写操作放进第一阶段：
+
+- 新增 `cmd/necad` + `internal/web`，复用 `internal/core` 的 list/verify/export 只读逻辑；不复制业务规则。
+- `necad` 以**非 root** 运行，只读挂载 `neca.json`、`pki/ca/index.txt`、`pki/meta`、`clients`、`downloads` 和 CA 公钥；**不挂载 `ca.key`、`docker.sock`**。
+- 监听 `127.0.0.1:18080`，由 Caddy/Nginx 终止 TLS 并对外提供 HTTPS；不让应用直接暴露公网。
+- 页面：概览（证书数/CRL 数/到期提醒）、证书列表与搜索、证书详情、p12 verify、下载列表/下载。
+- 鉴权：单管理员；密码只以 Argon2id/bcrypt 哈希形式通过 `NECA_WEB_PASSWORD_HASH` 注入；会话密钥放 0600 文件，使用 HttpOnly + SameSite 的签名 Cookie；登录限流。
+- 下载：必须登录；只接受由 sidecar 元数据解析出的下载 ID，不接受任意路径；TTL 30 分钟，过期返回 410/404；后台定时清理；不提供目录列表。
+- 多语言：复用 `internal/i18n` 的 zh-CN/en-US；前端使用 Go 模板 + 少量原生 JS，静态资源 embed，避免外部 CDN。
+- 配置：只读 `neca.json`；M6 不提供设置写回。
+- SQLite：**M6 不引入**。只读查询和签名 Cookie 会话不需要数据库；等写操作/多用户阶段再评估 SQLite（只存会话、任务、归属，不替代 index.txt）。
+
+### 20.3 M6 暂不做
+
+- Web 端 issue/revoke/reissue/delete/package 与设置编辑；
+- 多用户/RBAC；
+- 内置 TLS（优先反向代理）；
+- 把 `ca.key` 暴露给 Web 进程。
+
+如果后续要把写操作放进 Web，再按 §12.2 方案 2 增加 root helper（Unix socket + 命令白名单），Web 进程继续保持非 root。
+
+### 20.4 开发顺序
+
+1. 确认下列 Q1–Q5，冻结 M6 只读契约与 API；
+2. 新增 `cmd/necad` + `internal/web` 骨架、只读 config 加载、健康检查；
+3. 登录/会话/CSRF 基础设施与限流；
+4. 只读 API + Go 模板页面 + 下载 TTL/鉴权；
+5. 非 root 容器、反向代理示例、i18n 与安全测试；
+6. `go test`、`httptest`、路径遍历/TTL/鉴权/并发测试，服务器灰度验收后发 v0.3.0。
+
+### 20.5 需要确认的决策
+
+| # | 决策 | 推荐 |
+|---|---|---|
+| Q1 | M6 是否只做只读面板 | **是**，写操作留到下一阶段 |
+| Q2 | Web 进程权限 | **非 root + 只读挂载，不挂 docker.sock** |
+| Q3 | 对外暴露方式 | **127.0.0.1 + 反向代理 TLS**，不直接暴露 |
+| Q4 | 登录凭据与会话 | **env 注入密码哈希 + 0600 会话密钥文件 + 签名 Cookie** |
+| Q5 | UI 技术 | **Go 模板 + 原生 JS/embed**，不做 SPA；SQLite 继续延后 |
+
+M6 粗估 4–5 人日；上述 5 项确认后即可开始。
 
 ---
 

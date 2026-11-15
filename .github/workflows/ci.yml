@@ -11,6 +11,7 @@
 #   4. go test -race 全绿
 #   5. 交叉编译 linux/amd64 与 linux/arm64
 #   6. 对产物做一次 version 冒烟测试
+#   7. Markdown 链接/代码围栏/帮助站结构（M7）
 #
 # 说明：release.yml 与 docker.yml 按计划在 M5 随 v0.1.0 一起落地，
 # 当前仓库只有本工作流；GHCR 推送权限届时用内置 GITHUB_TOKEN。
@@ -63,6 +64,9 @@ jobs:
 
       - name: 语言包 key 一致性
         run: make check-locales
+
+      - name: 文档检查（链接/围栏/帮助站结构）
+        run: make check-docs
 
       - name: 单元测试（-race）
         run: make test

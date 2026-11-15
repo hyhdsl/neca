@@ -30,12 +30,12 @@ LDFLAGS := -s -w \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build build-lite build-web build-native test vet fmt fmt-check check-ascii check-locales dev docker shadow clean
+.PHONY: help all build build-lite build-web build-native test vet fmt fmt-check check-ascii check-locales check-docs publish-help publish-help-apply dev docker shadow clean
 
 help: ## 显示可用目标
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
-all: fmt-check vet check-ascii check-locales test build ## 完整本地校验（等价 CI）
+all: fmt-check vet check-ascii check-locales check-docs test build ## 完整本地校验（等价 CI）
 
 build: build-lite build-web ## 交叉编译 lite + neca-web 的全部二进制到 dist/
 
@@ -80,6 +80,15 @@ check-ascii: ## 校验平台脚本模板为纯 ASCII（文档 §9 硬规则 1）
 check-locales: ## 校验 CLI/Web 内置语言包 key 集合一致（文档 §8.11）
 	$(GO) test ./internal/i18n -run TestLocaleKeysAligned -count=1
 	$(GO) test ./internal/web -run TestWebLocaleKeysAligned -count=1
+
+check-docs: ## 校验 Markdown 链接、代码围栏与帮助站结构（M7）
+	python3 scripts/check-docs.py
+
+publish-help: ## 生成 docs/help → neca-help 发布差异（dry-run）
+	bash scripts/publish-help-site.sh
+
+publish-help-apply: ## 推送 docs/help 到 neca-help（需已提交）
+	bash scripts/publish-help-site.sh --yes
 
 dev: ## 构建并进入开发容器（docker compose 解析挂载路径，Windows 同样可用）
 	docker compose run --rm dev bash

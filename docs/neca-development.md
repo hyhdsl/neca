@@ -653,6 +653,9 @@ docker run --rm -it -v "$PWD":/src -w /src \
 | `make check-ascii` | 校验 Windows 模板 |
 | `make shadow` | 新旧实现影子对比（只读命令 + M2 写命令 + issue；bash + openssl + python3，diff 必须为 0） |
 | `make check-locales` | 校验内置语言包 key 一致（M3 已实现） |
+| `make check-docs` | 校验 Markdown 链接、代码围栏与帮助站结构（M7） |
+| `make publish-help` | 生成 `docs/help` → `neca-help` 发布差异（dry-run） |
+| `make publish-help-apply` | 推送 `docs/help` 到 `neca-help`（需先提交） |
 | `make docker` | 构建运行镜像 `ghcr.io/hyhdsl/neca:dev` |
 
 ### 14.3 交叉编译

@@ -187,12 +187,15 @@ dist/               构建产物（不入库）
 | 命令 | 作用 |
 |---|---|
 | `make dev` | 构建并进入开发容器 |
-| `make all` | gofmt 检查 + vet + ASCII 校验 + 测试 + 交叉编译 |
+| `make all` | gofmt 检查 + vet + ASCII 校验 + 文档检查 + 测试 + 交叉编译 |
 | `make build` | 交叉编译 CLI + necad/helper（linux/amd64、linux/arm64）到 `dist/` |
 | `make test` | 容器内 `go test -race ./...` |
 | `make check-ascii` | 校验 Windows/Linux/macOS 脚本模板为纯 ASCII |
 | `make shadow` | 新旧实现影子对比（只读 + M2 写命令 + issue，diff 必须为 0） |
 | `make check-locales` | 校验 zh-CN/en-US 语言包 key 一致 |
+| `make check-docs` | 校验 Markdown 链接、代码围栏与帮助站结构 |
+| `make publish-help` | 生成 `docs/help` → `neca-help` 发布差异（dry-run） |
+| `make publish-help-apply` | 推送 `docs/help` 到 `neca-help`（需先提交） |
 | `make docker` | 构建 lite 与 neca-web 运行镜像（本地 `:dev`） |
 
 ## 里程碑

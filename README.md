@@ -14,7 +14,7 @@
 前身是 [legacy/vpn-cert-manager.sh](legacy/vpn-cert-manager.sh)（506 行 bash），
 负责 `/opt/ipsec` 下的证书签发、吊销、重签发、平台包生成与 CRL 维护。
 
-- 仓库：https://github.com/hyhdsl/neca （public；v0.4.0 正式版）
+- 仓库：https://github.com/hyhdsl/neca （public；v0.4.1 正式版）
 - 技术路线：Go 1.25，单静态二进制，`CGO_ENABLED=0`
 - 运行形态：服务器上以 root 执行，`ca.key` 保持 `0600 root:root`
 - 开发环境：本地 Docker（开发机不需要安装 Go，见文档 §14）
@@ -109,9 +109,9 @@ root 执行 `neca web readonly off` 且 helper 健康后才开放写操作。
 ```bash
 make build
 # 默认 lite 镜像
-docker build --target lite -t ghcr.io/hyhdsl/neca:v0.4.0 .
+docker build --target lite -t ghcr.io/hyhdsl/neca:v0.4.1 .
 # 可选 Web 面板包（默认只读）
-docker build --target web -t ghcr.io/hyhdsl/neca-web:v0.4.0 .
+docker build --target web -t ghcr.io/hyhdsl/neca-web:v0.4.1 .
 install -m 0755 deploy/neca-wrapper.sh /usr/local/bin/neca
 neca list
 ```
@@ -211,7 +211,7 @@ dist/               构建产物（不入库）
 | M6a | 只读 Web 面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite + neca-web 双镜像 | ✅ 2026-11-15 v0.3.0 正式发布 |
 | M6b | root helper、issue/revoke/unrevoke/reissue 写能力、Web 写 API/UI | ✅ 2026-11-15 v0.3.0 正式发布；Web 默认只读 |
 | M7 | 文档与发布自动化：`check-docs`、CI 门禁、`docs/help` → `neca-help` 本地一键发布 | ✅ 2026-11-15：`make check-docs`、`make publish-help` / `publish-help-apply`；本地脚本发布验证；Actions 自动同步未采用 |
-| M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15 v0.4.0 正式发布并部署；readOnly/idleTimeout 热重载、cache 落盘 `/run/neca`、继续 OpenSSH |
+| M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15 v0.4.0 首发、v0.4.1 补发布置修正；readOnly/idleTimeout 热重载、cache 落盘 `/run/neca`、继续 OpenSSH |
 
 > **预览包策略**：正式版发布后，历史预览只保留 GitHub 自动源代码归档；使用
 > [scripts/archive-preview-release.sh](scripts/archive-preview-release.sh) 删除旧资产。
@@ -222,14 +222,14 @@ dist/               构建产物（不入库）
 
 - **许可**：**AGPL-3.0-only**（OSI 认可的开源协议；允许商业使用，但分发/网络服务须按 AGPL 公开对应源码），全文见 [LICENSE](LICENSE)。
 - **二次开发**：必须保留原作者与仓库链接、保留 AGPL 许可与源码公开义务；详见 [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)。
-- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；正式 Release 为 [v0.4.0](https://github.com/hyhdsl/neca/releases/tag/v0.4.0)。M6 历史预览包（preview.1–preview.3）仅保留源代码归档。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
+- **仓库状态**：已于 2026-11-15 随 [v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 转为 **public**；正式 Release 为 [v0.4.1](https://github.com/hyhdsl/neca/releases/tag/v0.4.1)。M6 历史预览包（preview.1–preview.3）仅保留源代码归档。**开发期暂不接受外部 PR**，仅维护者内部合并；完成后重新评估开放。
 
 ## 帮助文档
 
-- **中文帮助中心（全量）**：<https://neca.nekobiglazyer.work>
+- **中文帮助中心（全量）**：<https://neca.nekobiglazyer.work/zh/>
 - **English core pages**：<https://neca.nekobiglazyer.work/en/>
-- **文档源码**：[docs/help/README.md](docs/help/README.md)
-- **实验性 Web API**：[API 说明](https://neca.nekobiglazyer.work/#/api)
+- **文档源码**：[docs/help/zh/README.md](docs/help/zh/README.md)
+- **实验性 Web API**：[API 说明](https://neca.nekobiglazyer.work/zh/#/api)
 
 > 使用或部署前先看帮助中心；开发、设计和历史评估仍见下列文档索引。
 
@@ -252,7 +252,7 @@ dist/               构建产物（不入库）
 
 ## 现状
 
-- **v0.4.0（M8）已完成**：v0.4.0 正式发布；SIGHUP 热重载 readOnly/idleTimeout；helper 幂等缓存持久化；继续 OpenSSH 访问。
+- **v0.4.1（M8 补丁）已完成**：v0.4.0 首发 M8；v0.4.1 补齐配置目录挂载，确保 SIGHUP 对原子替换生效；SIGHUP、helper 缓存与生产部署已验证。
 - **v0.3.0（M6）已完成**：[v0.3.0](https://github.com/hyhdsl/neca/releases/tag/v0.3.0) 正式发布；lite + neca-web + root helper 已部署，Web 默认只读；Playwright/axe、zh-CN/en-US、深浅色与移动端验收通过；用户帮助见 [帮助中心](https://neca.nekobiglazyer.work)。
 - M5 已完成：[v0.1.0](https://github.com/hyhdsl/neca/releases/tag/v0.1.0) 已发布并转 public；[v0.1.1](https://github.com/hyhdsl/neca/releases/tag/v0.1.1) 修复 `--lang`；[v0.2.0](https://github.com/hyhdsl/neca/releases/tag/v0.2.0) 引入 JSON 配置。Docker CLI 镜像已部署到服务器；全功能测试通过；生产索引与 CRL 已恢复到测试前状态。
 - M3 已完成：`--json` / `--dry-run` / `--lang`、交互向导、审计日志、旧 flag 兼容、zh-CN/en-US 语言文件与 `make check-locales`。

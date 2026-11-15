@@ -1,8 +1,8 @@
-# neca 开发文档（M0–M8，v0.4.0）
+# neca 开发文档（M0–M8，v0.4.1）
 
 > 项目代号：**neca**（CA 管理工具；品牌、域名与服务器标识在仓库中一律使用占位值）
-> 文档版本：2026-11-15 第 7 稿（v0.4.0 发布；M7 文档自动化、M8 Web 运维加固完成）
-> 本文保留从 v0.1 规划到 v0.4.0 的实施记录；当前发布状态与验收以 §19 为准。
+> 文档版本：2026-11-15 第 8 稿（v0.4.1 发布；M7 文档自动化、M8 Web 运维加固完成，配置目录挂载修正）
+> 本文保留从 v0.1 规划到 v0.4.1 的实施记录；当前发布状态与验收以 §19 为准。
 > 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
 
@@ -26,7 +26,7 @@
 | D10 | 平台扩展与安装脚本 | 支持 Windows/Linux/macOS/Android/iOS；一键安装脚本默认关闭，`--installers` 显式开启（2026-11-15 决定） |
 | D11 | p12 算法 profile | 默认 `compat`（3DES+SHA1，MIUI 兼容）；新增 `modern`（AES-256/SHA256）可选，默认行为不变 |
 | D12 | 多语言 | 语言文件 JSON，默认 `zh-CN`，内置 `en-US`；社区可扩展；Web 多语言 M6 单独实现（2026-11-15 决定） |
-| D13 | 许可与仓库策略 | **AGPL-3.0-only**（OSI 开源，允许商业使用但须履行源码公开义务）；**开发期暂不接受外部 PR**，完成后重新评估开放；v0.1.0 后已转 public，v0.4.0 仍为 public |
+| D13 | 许可与仓库策略 | **AGPL-3.0-only**（OSI 开源，允许商业使用但须履行源码公开义务）；**开发期暂不接受外部 PR**，完成后重新评估开放；v0.1.0 后已转 public，v0.4.1 仍为 public |
 
 D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7，差距仅 1.6 分，属于"按阶段优先级取舍"而非"语言能力差距"。选 Go 的理由是**一次到位**：未来 Web 面板与多用户都复用同一份强类型 core，不再做第二次语言迁移；代价是阶段一的模板与文本处理工作量增加约 30–50%，以及需要先搭 Go 工具链。
 
@@ -712,7 +712,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 
 ```text
 feature 分支 → 维护者内部合并（CI 全绿；开发期暂不接受外部 PR）→ squash merge 到 main
-  → 打 tag vX.Y.Z（当前 v0.4.0）→ release.yml 产出二进制 + Release
+  → 打 tag vX.Y.Z（当前 v0.4.1）→ release.yml 产出二进制 + Release
   → docker.yml 推送镜像 → 服务器更新 Compose 镜像标签/重启对应容器
 ```
 
@@ -723,7 +723,7 @@ Docker CLI 部署：镜像包含 openssl + 静态 docker CLI，挂载 `/opt/ipse
 `/opt/ipsec/neca.env`（0600）配合使用，真实 `SERVER_ID`/`ORG`/`CA_CN` 不进入仓库。
 详见 `deploy.md`。
 
-发布已完成（2026-11-15）：v0.4.0 的二进制、checksums 与 GHCR 镜像已发布，仓库保持 public；README 警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已就位。外部 PR 在开发期暂不接收，完成后重新评估。
+发布已完成（2026-11-15）：v0.4.1 的二进制、checksums 与 GHCR 镜像已发布，仓库保持 public；README 警告、AGPL `LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已就位。外部 PR 在开发期暂不接收，完成后重新评估。
 
 ### 15.4 DSH 的 GitHub 集成
 
@@ -778,7 +778,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
 | M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a/M6b 已实现、服务器部署和 Playwright/axe 验收完成；**v0.3.0 正式发布**。规格与实施记录见 [web-panel-development.md](web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
 | M7 | 文档与发布自动化：Markdown 链接/围栏检查、帮助站发布脚本、CI 门禁 | ✅ 2026-11-15：`make check-docs`；`publish-help` 默认 dry-run，`publish-help-apply` 推送；本地脚本发布验证；Actions 自动同步未采用 | 0.5 人日 |
-| M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15 v0.4.0：readOnly/idleTimeout 热重载；helper cache 落盘 `/run/neca`；继续 OpenSSH | 1 人日 |
+| M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15：v0.4.0 首发，v0.4.1 补发配置目录挂载；readOnly/idleTimeout 热重载；helper cache 落盘 `/run/neca`；继续 OpenSSH | 1 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
 
@@ -825,19 +825,19 @@ gh auth login --hostname github.com --git-protocol https --web
 
 | 项 | 状态 |
 |---|---|
-| 仓库 | `github.com/hyhdsl/neca`（public）已发布 v0.4.0；`main` 历史已安全清理 |
+| 仓库 | `github.com/hyhdsl/neca`（public）已发布 v0.4.1；`main` 历史已安全清理 |
 | 代码 | ✅ M6 已完成：M1–M6 全部 CLI/Web/helper；JSON/dry-run/向导/audit/兼容 flag/语言文件；影子对比 diff=0 |
 | 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
 | 平台与打包 | ✅ Windows/Linux/macOS/Android/iOS；Linux/macOS 安装/卸载脚本已实现（默认 none）；zip/TTL/downloads |
 | p12 算法 | ✅ M2 已实现 `compat`/`modern` profile，默认兼容不变 |
 | 多语言 | ✅ M3：`internal/i18n` + zh-CN/en-US 语言文件、`--lang`/`NECA_LANG`；M6 Web 支持 zh-CN/en-US 页面切换；`make check-locales` |
 | 配置 | ✅ v0.2.0：JSON 配置、`--config`/`NECA_CONFIG`、config init/show/validate/export-env；优先级 CLI > env > JSON > 默认值 |
-| 许可/公开 | ✅ **AGPL-3.0-only**；**开发期暂不接受外部 PR**（完成后重新评估）；v0.1.0 后已转 public，v0.4.0 仍为 public |
+| 许可/公开 | ✅ **AGPL-3.0-only**；**开发期暂不接受外部 PR**（完成后重新评估）；v0.1.0 后已转 public，v0.4.1 仍为 public |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
-| CI/CD 工作流 | ✅ `ci.yml`、`release.yml`、`docker.yml` 均已落地；完成 v0.4.0 多架构发布与 GHCR 推送 |
-| 服务器 | ✅ v0.4.0 已部署（lite + neca-web + helper）；Web 监听 127.0.0.1:18080、默认只读；索引哈希 `redacted…redacted`、CRL `redacted…redacted` 与部署前一致，strongSwan 未重启；SIGHUP 与 helper 缓存已验证 |
+| CI/CD 工作流 | ✅ `ci.yml`、`release.yml`、`docker.yml` 均已落地；完成 v0.4.1 多架构发布与 GHCR 推送 |
+| 服务器 | ✅ v0.4.1 已部署（lite + neca-web + helper）；Web 监听 127.0.0.1:18080、默认只读；索引哈希 `redacted…redacted`、CRL `redacted…redacted` 与部署前一致，strongSwan 未重启；SIGHUP 与 helper 缓存已验证 |
 | 文档/发布 | ✅ M7：`make check-docs` 接入 CI/`make all`；`publish-help` 默认 dry-run、`publish-help-apply` 推送；本地脚本已完成一次实际发布 |
 | Web 运维 | ✅ M8 main：SIGHUP 重载 readOnly/idleTimeout；helper 幂等缓存落盘；访问仍以 OpenSSH 为主，公网 TLS/mTLS 未启用 |
 
@@ -864,6 +864,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | M7 | 文档与发布自动化：`scripts/check-docs.py` 检查 Markdown 链接/围栏/帮助站结构并接入 CI；`scripts/publish-help-site.sh` 提供 dry-run 与 `--yes` 发布，完成实际推送验证 |
 | 2026-11-15 | M8 | Web 运维加固：SIGHUP 热重载 readOnly/idleTimeout；helper 幂等缓存持久化到 `/run/neca/web-helper-cache.json`；访问评估继续 OpenSSH，公网 mTLS 保留为可选设计。代码进入 main，随 v0.4.0 发布 |
 | 2026-11-15 | v0.4.0 | 正式版发布：M7 文档检查/发布流程与 M8 SIGHUP/幂等缓存持久化；二进制、checksums、GHCR `neca`/`neca-web` 发布；服务器切换 v0.4.0，SIGHUP/缓存验证通过 |
+| 2026-11-15 | v0.4.1 | 补发版：配置目录挂载修正（Web 挂载 `/opt/ipsec/config`）使 SIGHUP 对 CLI 原子写入生效；补入根主页、`/zh` 中文帮助与 sitemap；服务器切换 v0.4.1 |
 
 ## 20. M6 开发记录（已完成）
 

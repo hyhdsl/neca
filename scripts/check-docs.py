@@ -28,6 +28,8 @@ REQUIRED_ROOT = [
     "index.html",
     "home.css",
     "404.html",
+    "sitemap.xml",
+    "robots.txt",
     "custom.css",
     "CNAME",
     ".nojekyll",
@@ -142,6 +144,12 @@ def check_help_structure() -> list[str]:
         errors.append("docs/help/zh/_sidebar.md: missing English entry")
     if en_sidebar.exists() and "https://neca.nekobiglazyer.work/zh/" not in en_sidebar.read_text(encoding="utf-8"):
         errors.append("docs/help/en/_sidebar.md: missing Chinese entry")
+    sitemap = HELP / "sitemap.xml"
+    if sitemap.exists():
+        sm = sitemap.read_text(encoding="utf-8")
+        for target in ("https://neca.nekobiglazyer.work/", "/zh/", "/en/"):
+            if target not in sm:
+                errors.append(f"docs/help/sitemap.xml: missing {target}")
     root_index = HELP / "index.html"
     if root_index.exists():
         root_html = root_index.read_text(encoding="utf-8")

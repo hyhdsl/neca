@@ -1,7 +1,8 @@
 # neca Web 面板设计评估（M6）
 
-> 状态：**评估稿，未实现**。日期：2026-11-15。
+> 状态：**设计已确认，未实现**。日期：2026-11-15。
 > 本文回答 Web 面板的访问控制、只读开关、证书访问、鉴权、UI 与后续 SQLite 迁移问题。实现以本文确认后的版本为准。
+> 实施规格见 [web-panel-development.md](web-panel-development.md)。
 
 ## 1. 结论摘要
 
@@ -579,7 +580,7 @@ Web 面板不是独立产品，而是 neca core 的一个可选展示层：
 1. ✅ Q1：M6a 只读 + M6b 写能力分期（已确认）。
 2. ✅ Q2：root helper 作为唯一写边界（已确认）。
 3. ✅ Q3：单管理员优先 OpenSSH 本地转发；浏览器场景系统原生 IKEv2 + mTLS；不使用第三方 VPN 客户端（已确认）。
-4. ⏳ Q4：Web 用户不拥有 web-secrets 目录；采用 root 属主 + 组权限 + 按文件挂载（本方案待最终确认）。
+4. ✅ Q4：Web 用户不拥有 web-secrets 目录；采用 root 属主 + 组权限 + 按文件挂载（2026-11-15 已确认）。
 5. ✅ Q5：Go 模板 + 原生 JS；深浅色、蓝白/蓝黑；SQLite 延后（已确认）。
 6. ✅ Q6：neca（lite）+ neca-web（可选面板包）两个镜像标签。
 7. ✅ Q7：Web 包使用独立 Docker 镜像。
@@ -588,6 +589,6 @@ Web 面板不是独立产品，而是 neca core 的一个可选展示层：
 10. ✅ Q10：空闲超时默认 30m、最大 24h、绝对会话上限 24h。
 11. ✅ Q11：Passkey 首版作为第二因素，仅在 HTTPS + 稳定域名/RP ID 可用时启用；仅保留接口。
 
-**除 Q4 外，其余问题均已回答；Q4 只需确认是否接受“否”方案。**
+**Q1–Q11 均已确认；无剩余设计问题。实施规格见 [web-panel-development.md](web-panel-development.md)。**
 
 M6a 只读 + 会话超时 + Passkey 接口占位 + lite/neca-web 发布约 5 人日；M6b helper 写能力再加约 3 人日。

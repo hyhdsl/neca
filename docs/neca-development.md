@@ -766,7 +766,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
-| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | 评估中；方案、Q1–Q11 与发布形态见 [web-panel.md](web-panel.md) | 5–8 人日 |
+| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | 设计已确认，待开发；规格见 [web-panel-development.md](web-panel-development.md) | 5–8 人日 |
 
 > M2 已于 2026-11-15 完成：写命令、Linux/macOS 平台包、p12 profile、zip/TTL/downloads 均落地，`make shadow` 覆盖只读 + 写命令 + issue。
 
@@ -847,7 +847,7 @@ gh auth login --hostname github.com --git-protocol https --web
 
 ## 20. M6 开发准备（待确认）
 
-> Web 面板的完整评估、权限边界、mTLS/只读开关与 UI 方案已拆分为独立文档：[web-panel.md](web-panel.md)。本节只保留初始草案，Q1–Q5 以独立文档为准。
+> Web 面板的评估见 [web-panel.md](web-panel.md)，开发规格见 [web-panel-development.md](web-panel-development.md)。Q1–Q11 已确认，本节只保留里程碑入口。
 
 ### 20.1 已验证的输入
 

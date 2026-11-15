@@ -171,7 +171,7 @@ dist/               构建产物（不入库）
 | M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | ✅ 2026-11-15 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
 | M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | ✅ 2026-11-15（v0.1.0 → v0.1.1 语言补丁 → v0.2.0 JSON 配置，仓库已 public） |
-| M6 | Web 面板（只读 + 可选写能力；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权与多语言） | 评估中；见 [docs/web-panel.md](docs/web-panel.md) 的 Q1–Q11 |
+| M6 | Web 面板（只读 + 可选写能力；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权与多语言） | 设计已确认，待开发；规格见 [docs/web-panel-development.md](docs/web-panel-development.md) |
 
 ## 许可与二次开发
 
@@ -187,6 +187,7 @@ dist/               构建产物（不入库）
 |---|---|
 | [docs/neca-development.md](docs/neca-development.md) | 开发文档：架构、CLI 契约、CI/CD、路线图、验收记录 |
 | [docs/web-panel.md](docs/web-panel.md) | Web 面板设计评估：只读开关、权限、VPN/mTLS、UI、SQLite 迁移 |
+| [docs/web-panel-development.md](docs/web-panel-development.md) | M6 Web 面板开发规格：组件、CLI、会话、权限、Docker 与验收 |
 | [docs/vpn-cert-manager-rewrite-assessment.md](docs/vpn-cert-manager-rewrite-assessment.md) | 技术选型评估（Python vs Go） |
 | [docs/legacy-vpn-cert-manager.md](docs/legacy-vpn-cert-manager.md) | 旧 bash 脚本的使用与二次开发说明（归档） |
 | [docs/deploy.md](docs/deploy.md) | Docker 服务器部署、备份/回滚与安全说明 |

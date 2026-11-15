@@ -479,7 +479,7 @@ type PasskeyAuthenticator interface {
 - 当前继续以 **OpenSSH 本地转发** 为默认访问方式，不开放公网 Web 端口。
 - 浏览器直连场景保留反向代理 TLS + mTLS：代理必须校验管理员证书 CN、设置
   `X-Neca-Proxy-Secret` / `X-Neca-Client-CN`，并启用 Secure Cookie；本轮未部署。
-- 结论：M8 的代码加固进入 main；服务器仍运行 v0.3.0，M8 需按 v0.4.0 发布/部署。
+- 结论：M8 已随 v0.4.0 发布并部署到服务器；SIGHUP 与 helper 缓存持久化已在生产验证。
 
 ### 22.4 验证
 

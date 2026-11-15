@@ -40,18 +40,19 @@ install -m 0755 deploy/init-web-secrets.sh /opt/ipsec/init-web-secrets.sh
 chmod 0600 /opt/ipsec/neca.env
 ```
 
-业务设置统一放在 `/opt/ipsec/neca.json`，`neca.env` 只保留 bootstrap：
+业务设置统一放在 `/opt/ipsec/config/neca.json`，`neca.env` 只保留 bootstrap：
 
 ```bash
-# 新部署：从模板创建后编辑真实值
-install -m 0600 deploy/neca.json.example /opt/ipsec/neca.json
+# 新部署：配置目录单独挂载给 Web，保证原子写入后 SIGHUP 能看到新文件
+install -d -m 0750 -o root -g neca-web /opt/ipsec/config
+install -m 0600 deploy/neca.json.example /opt/ipsec/config/neca.json
 
 # 从已有环境变量迁移（neca.env 仍含完整设置时）
 neca config init --from-env
 neca config validate
 ```
 
-真实 `SERVER_ID` / `ORG` / `CA_CN` 只写服务器 `/opt/ipsec/neca.json`，
+真实 `SERVER_ID` / `ORG` / `CA_CN` 只写服务器 `/opt/ipsec/config/neca.json`，
 不提交仓库。优先级：**CLI flag > 环境变量 > neca.json > 默认值**。
 
 ## 3. 安装便捷命令
@@ -81,7 +82,7 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 
 ### 5.1 启用配置
 
-编辑 `/opt/ipsec/neca.json`：
+编辑 `/opt/ipsec/config/neca.json`：
 
 ```json
 {
@@ -124,8 +125,8 @@ NECA_IMAGE=neca:v0.4.0 /opt/ipsec/init-web-secrets.sh
 Web 进程是非 root，必须能读取配置、客户端包和下载 zip：
 
 ```bash
-chgrp neca-web /opt/ipsec/neca.json
-chmod 0640 /opt/ipsec/neca.json
+chgrp neca-web /opt/ipsec/config/neca.json
+chmod 0640 /opt/ipsec/config/neca.json
 
 chgrp -R neca-web /opt/ipsec/clients /opt/ipsec/downloads
 chmod -R g+rX /opt/ipsec/clients /opt/ipsec/downloads

@@ -1,11 +1,20 @@
 # neca
 
+> [!WARNING]
+> **重要声明（使用前必读）**
+>
+> 1. **AI 披露**：本项目的代码、测试与文档由 AI 编程助手（DeepSeek Harness / DeepSeek 模型）辅助生成与修改。AI 输出可能存在错误、遗漏或不适用，使用前请自行审查、测试并自行承担风险。
+> 2. **责任限制**：在适用法律允许的最大范围内，原作者、AI 模型/工具提供方及其所属公司不对因使用、无法使用或误用本软件造成的任何直接、间接、偶然、特殊或后果性损失（包括但不限于数据丢失、业务中断、证书/密钥泄露、VPN 不可用）承担责任。本软件按“现状”提供，不提供任何明示或默示担保。
+> 3. **暂不接受 PR**：本项目当前不接受 Pull Request；如需修改请 fork，并遵守 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
+>
+> 完整授权与二次开发要求见 [LICENSE](LICENSE)、[NOTICE](NOTICE) 与 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
+
 基于 Go 的 strongSwan IKEv2 用户证书管理工具（CLI，后续含 Web 面板）。
 
 前身是 [legacy/vpn-cert-manager.sh](legacy/vpn-cert-manager.sh)（506 行 bash），
 负责 `/opt/ipsec` 下的证书签发、吊销、重签发、平台包生成与 CRL 维护。
 
-- 仓库：https://github.com/hyhdsl/neca （私有）
+- 仓库：https://github.com/hyhdsl/neca （私有；首个正式 Release 后转 public）
 - 技术路线：Go 1.25，单静态二进制，`CGO_ENABLED=0`
 - 运行形态：服务器上以 root 执行，`ca.key` 保持 `0600 root:root`
 - 开发环境：本地 Docker（开发机不需要安装 Go，见文档 §14）
@@ -42,6 +51,20 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 | `neca version` / `-V` | 版本信息 |
 
 所有命令都遵循 `[OK]/[INFO]/[WARN]/[ERR]` 前缀与 0/1/2/3 退出码契约（开发文档 §6.3）。
+
+## 规划中的命令（尚未实现）
+
+以下命令按里程碑落地，设计细节见开发文档 §6 与 §9：
+
+| 命令/开关 | 里程碑 | 作用 |
+|---|---|---|
+| `neca package <CN> [--platforms] [--installers] [--p12-profile] [--zip]` | M2 | 从现有证书重新生成平台包，可选打包 zip |
+| `neca downloads list` / `neca downloads clean [--expired\|--all]` | M2 | 查看/清理下载目录中的 zip（默认 30 分钟过期） |
+| `neca issue/reissue ... --installers ... --p12-profile ... --zip` | M2 | 签发/重签时选择一键脚本、p12 算法并直接打包 |
+| `--lang zh-CN\|en-US` / `NECA_LANG` | M3 | 控制台语言切换（语言文件由社区扩展） |
+
+平台包扩展为 Windows / Linux / macOS / Android / iOS；一键安装脚本默认全部关闭，需显式开启。
+
 ## 目录结构
 
 ```text
@@ -85,11 +108,17 @@ dist/               构建产物（不入库）
 |---|---|---|
 | M0 | 仓库骨架、Makefile、Dockerfile.dev、CI、`neca version` | ✅ 2026-11-15 |
 | M1 | 只读命令（list / verify / export / index sync） | ✅ 2026-11-15 |
-| M2 | 写命令（issue / reissue / revoke / platform / delete） | 待开始 |
-| M3 | 向导、JSON、dry-run、审计、退出码 | 待开始 |
+| M2 | 写命令、Linux/macOS 平台包、安装脚本选项、p12 算法 profile、zip 打包与清理 | 待开始 |
+| M3 | 向导、JSON、dry-run、审计、退出码、多语言语言包 | 待开始 |
 | M4 | 热加载模式（已完成实验） | ✅ 2026-11-15 |
-| M5 | v0.1.0 发布与服务器切换 | 待开始 |
-| M6 | Web 面板 | 待开始 |
+| M5 | v0.1.0 发布、服务器切换、首个正式 Release 后仓库转 public | 待开始 |
+| M6 | Web 面板（含 30 分钟下载有效期与 Web 多语言） | 待开始 |
+
+## 许可与二次开发
+
+- **许可**：PolyForm Noncommercial 1.0.0（源码可见、禁止商业用途；不是 OSI 定义的开源协议），全文见 [LICENSE](LICENSE)。
+- **二次开发**：必须保留原作者与仓库链接、公开完整源码、继续采用非商业许可，且不得用于商业用途；详见 [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md)。
+- **仓库状态**：当前为私有开发期；首个正式 Release（v0.1.0）后转为 public。当前**不接受 PR**，问题请通过 Issue 反馈。
 
 ## 文档
 
@@ -98,6 +127,9 @@ dist/               构建产物（不入库）
 | [neca-development.md](neca-development.md) | 开发文档：架构、CLI 契约、CI/CD、路线图、实验记录 |
 | [vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md) | 技术选型评估（Python vs Go） |
 | [legacy/vpn-cert-manager.md](legacy/vpn-cert-manager.md) | 旧 bash 脚本的使用与二次开发说明（归档） |
+| [LICENSE](LICENSE) | PolyForm Noncommercial 1.0.0 许可全文 |
+| [NOTICE](NOTICE) | 版权、AI 披露与署名 |
+| [SECONDARY-DEVELOPMENT.md](SECONDARY-DEVELOPMENT.md) | 二次开发、开源与非商业要求 |
 
 ## 现状
 

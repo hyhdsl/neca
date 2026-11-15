@@ -1,7 +1,7 @@
 # neca 开发文档（v0.1 规划稿）
 
 > 项目代号：**neca**（CA 管理工具；品牌、域名与服务器标识在仓库中一律使用占位值）
-> 文档版本：2026-11-15 第 2 稿（新增：仓库落地、load-creds 实测、Docker 环境实测）
+> 文档版本：2026-11-15 第 3 稿（新增：Linux/macOS 平台包、安装脚本选项、zip 下载有效期、p12 算法 profile、多语言、许可与仓库策略）
 > 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
 
@@ -9,19 +9,23 @@
 
 ## 0. 决策记录（本稿锁定）
 
-评估报告推荐的是 Python，本稿按你的最终决定改为 **Go 一步到位**。以下 9 条为本项目已确认的决策，后续所有设计以此为准：
+评估报告推荐的是 Python，本稿按你的最终决定改为 **Go 一步到位**。以下 13 条为本项目已确认的决策，后续所有设计以此为准：
 
 | # | 决策 | 说明 |
 |---|---|---|
 | D1 | 语言：**Go** | 一步到位：CLI 与未来 Web 面板共用同一套 core，单静态二进制部署 |
 | D2 | 软件名：**neca** | 命令 `neca`；模块路径 `github.com/hyhdsl/neca`（仓库已建） |
 | D3 | 旧 CLI 双轨 | 旧 `--issue` 等 flag 全部保留为兼容别名，至少保留一个版本周期 |
-| D4 | p12 继续走 `openssl` 子进程 | 3DES + SHA1 是 MIUI 兼容性硬需求，重实现风险大于收益 |
+| D4 | p12 继续走 `openssl` 子进程 | 默认 `compat`（3DES+SHA1）是 MIUI 兼容性硬需求，重实现风险大于收益；算法 profile 见 D11 |
 | D5 | `ca.key` 保持 `0600 root:root` | 不做组权限放宽；`neca` 以 root 身份执行所有涉及 CA 私钥的操作 |
 | D6 | `swanctl --load-creds` 实验：**已执行，结论可用** | 2026-11-15 实测：charon 日志出现 `crl #10:0d is newer - existing crl #10:0b replaced`，热加载生效且未重启容器；吊销默认改为 `creds` 模式 |
 | D7 | 开发环境：本地 Docker | 本机无 Go、无 WSL 发行版；用容器获得可复现的构建与测试环境 |
 | D8 | 服务器验证：真实环境 | 用临时 PKI 与真实 strongSwan 各验一遍，生产操作一律先 `--dry-run` |
 | D9 | GitHub 集成 | 由 DSH 插件 `dsh-github-flow`（复用 `gh` CLI 的 OAuth 登录）承担仓库、PR、Actions 与发布操作 |
+| D10 | 平台扩展与安装脚本 | 支持 Windows/Linux/macOS/Android/iOS；一键安装脚本默认关闭，`--installers` 显式开启（2026-11-15 决定） |
+| D11 | p12 算法 profile | 默认 `compat`（3DES+SHA1，MIUI 兼容）；新增 `modern`（AES-256/SHA256）可选，默认行为不变 |
+| D12 | 多语言 | 语言文件 JSON，默认 `zh-CN`，内置 `en-US`；社区可扩展；Web 多语言 M6 单独实现（2026-11-15 决定） |
+| D13 | 许可与仓库策略 | PolyForm Noncommercial 1.0.0；首个正式 Release 后转 public；暂不接受 PR；二次开发须署名、公开源码、不得商用（2026-11-15 决定） |
 
 D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7，差距仅 1.6 分，属于"按阶段优先级取舍"而非"语言能力差距"。选 Go 的理由是**一次到位**：未来 Web 面板与多用户都复用同一份强类型 core，不再做第二次语言迁移；代价是阶段一的模板与文本处理工作量增加约 30–50%，以及需要先搭 Go 工具链。
 
@@ -38,7 +42,7 @@ D1 与评估报告的偏差需要记录：评估报告给 Python 85.3、Go 83.7�
 - 证书签发、吊销、恢复吊销、重签发、补平台包、改平台标注、删除；
 - 列表、p12 自检、CSV 导出、索引同步；
 - 交互向导（菜单 0–10 与编号语义不变）；
-- 平台包生成：Windows（PowerShell + cmd）、Android（说明 + p12）、iOS（mobileconfig）；
+- 平台包生成：Windows（PowerShell + cmd）、Linux/macOS（p12 + 说明，一键脚本可选）、Android（说明 + p12）、iOS（mobileconfig）；
 - CRL 生成与引擎重载（默认 `creds` 热加载，可配置回 `restart`）；
 - 锁、审计、结构化输出、`--dry-run`。
 
@@ -213,6 +217,8 @@ neca/
 └─ testdata/               # 黄金文件与 fixture
 ```
 
+M2/M3 规划新增：`internal/core/p12.go`、`package.go`、`downloads.go`、`bundle/linux.go`、`bundle/macos.go`、`internal/i18n/{i18n.go,locales/*.json}`、`templates/linux/`、`templates/mac/`。
+
 ---
 
 ## 5. 依赖策略
@@ -228,6 +234,8 @@ neca/
 | 模板 | `text/template` + `embed` | 标准库；模板随二进制内置 |
 | 日志 | `log/slog` | 标准库，结构化输出 |
 | 测试 | `testing` + `testdata` | 标准库 |
+| zip | `archive/zip` | 标准库；不依赖外部 `zip` 命令 |
+| 多语言 | `encoding/json` + `embed` | 标准库；语言包随二进制内置 |
 
 **总共 1 个第三方模块**（`x/text`），交叉编译无 cgo，`CGO_ENABLED=0`。
 
@@ -238,17 +246,19 @@ neca/
 
 | 子命令 | 兼容旧写法 | 作用 |
 |---|---|---|
-| `neca issue <CN> --platforms a,b --days N` | `--issue CN` | 签发新证书 |
+| `neca issue <CN> --platforms a,b --days N [--installers …] [--p12-profile …] [--zip]` | `--issue CN` | 签发新证书 |
 | `neca revoke <CN>` | `--revoke CN` | 吊销 |
 | `neca unrevoke <CN>` | `--unrevoke CN` | 恢复吊销 |
-| `neca reissue <CN>` | `--reissue CN` | 归档旧证书并重签 |
-| `neca platform add <CN> --platforms ios` | `--add-platform CN` | 补平台包 |
+| `neca reissue <CN> [--installers …] [--p12-profile …] [--zip]` | `--reissue CN` | 归档旧证书并重签 |
+| `neca platform add <CN> --platforms ios [--installers …] [--zip]` | `--add-platform CN` | 补平台包 |
 | `neca platform set <CN> --platforms …` | `--set-platforms CN` | 只改元数据标注 |
 | `neca delete <CN> [--yes] [--purge-revoked]` | `--delete CN --yes` | 删除（默认拒删 R 行） |
 | `neca list [--json]` | `--list` | 证书列表 |
 | `neca verify [CN…] [--json]` | `--verify` | p12 自检 |
 | `neca export issued\|revoked [--out F]` | `--export-issued` / `--export-revoked` | CSV 导出 |
 | `neca index sync` | `--sync` | 补索引与元数据 |
+| `neca package <CN> [--platforms …] [--installers …] [--p12-profile …] [--zip]` | — | 从现有证书重建平台包，可选 zip |
+| `neca downloads list\|clean [--expired\|--all]` | — | 管理下载目录中的 zip 与有效期 |
 | `neca`（无参数） | 无参数 | 进入交互向导 |
 | `neca version` | `-V` | 版本与构建信息 |
 
@@ -267,6 +277,7 @@ neca/
 | `--no-reload` | 只生成 CRL，不重载引擎 | 关 |
 | `--reload-mode restart\|creds` | 重载方式，默认 `creds` | creds |
 | `--config <file>` | 读取配置文件（未来用），优先级低于环境变量 | 无 |
+| `--lang zh-CN\|en-US` | 控制台语言；M3 起从语言文件加载，默认 `zh-CN` | zh-CN |
 | `-q` / `--quiet` | 仅输出错误 | 关 |
 | `--version` | 打印版本 | — |
 
@@ -322,6 +333,13 @@ neca/
 | `DEFAULT_DAYS` / `KEY_BITS` | `365` / `3072` |
 | `NECA_RELOAD_MODE` | `creds`（热加载；设为 `restart` 则重启容器） |
 | `NECA_LOCK_FILE` | `$PKI_DIR/.lock` |
+| `NECA_DOWNLOAD_DIR` | `/opt/ipsec/downloads`（zip 下载目录） |
+| `NECA_DOWNLOAD_TTL` | `30m`（下载有效期） |
+| `NECA_DOWNLOAD_MAX_FILES` | `50`（防积压上限） |
+| `NECA_P12_PROFILE` | `compat`（3DES+SHA1；可选 `modern`） |
+| `NECA_INSTALLERS` | `none`（可选 `all` 或平台列表） |
+| `NECA_LANG` | `zh-CN`（M3 起生效） |
+| `NECA_LOCALE_DIR` | 空（可选外部语言包目录，M3 起） |
 
 > `SERVER_ID` / `ORG` / `CA_CN` 的默认值是仓库占位值（`vpn.example.com` / `ExampleOrg` / `ExampleOrg VPN CA`）。生产部署必须用环境变量注入真实值，不要把真实服务器标识写回仓库。
 
@@ -366,6 +384,8 @@ M1 的 `index sync` 仍按旧脚本的 5 个键（CN/PLATFORMS/CREATED/EXPIRES/S
 
 签发流程与旧脚本一致：校验 CN → 生成密钥（0600）→ CSR → 写 `.ext` → `x509 -req` → 索引 → 元数据 → p12 → 平台包。每个失败路径用 `defer` 清理未完成产物（旧脚本会残留密钥）。
 
+p12 默认走 `compat` profile（§8.9）；`issue/reissue/package` 可用 `--p12-profile` 选择其他算法，默认行为与旧脚本一致。
+
 ### 8.6 crl / engine
 
 - `crl.Gen()`：调用 `openssl ca -gencrl`，先写临时文件再原子替换，`chmod 0644`；
@@ -381,26 +401,91 @@ M1 的 `index sync` 仍按旧脚本的 5 个键（CN/PLATFORMS/CREATED/EXPIRES/S
 
 按 East Asian Width 计算显示宽度（W/F 记 2），列宽取最大值，输出两空格分隔；与旧 python 实现逐行等价。
 
+### 8.9 p12 算法 profile
+
+| profile | 参数 | 用途 |
+|---|---|---|
+| `compat`（默认） | `-keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1` | 旧契约，MIUI/旧 Android 兼容 |
+| `modern` | `-keypbe AES-256-CBC -certpbe AES-256-CBC -macalg sha256` | 新客户端；MIUI 可能卡在“提取证书” |
+
+- 开关：`--p12-profile compat|modern`，环境变量 `NECA_P12_PROFILE`，默认 `compat`。
+- 默认 profile 必须与旧脚本逐字节兼容；影子测试固定用 `compat`。
+- 非默认 profile 可在 meta 写 `P12_PROFILE`（可选键）；默认不写，避免旧脚本 diff。
+- 密码仍为 12 位字母数字、仅客户端证书；算法切换不改变证书、密码与目录布局。
+
+### 8.10 package / downloads
+
+- `bundle/` 新增 `linux.go`、`macos.go`；`package` 负责重建平台包（不重签证书）。
+- `downloads` 负责 zip 生命周期：创建、列出、按 TTL/上限清理；目录与元数据见 §9.3。
+- zip 用 `archive/zip`；打包前校验路径，拒绝绝对路径与 `..`。
+- 删除/清理只作用于 `NECA_DOWNLOAD_DIR`，不触碰 `clients/`、`exports/`、`pki/`。
+
+### 8.11 多语言
+
+- 语言文件：`internal/i18n/locales/<lang>.json`，`embed` 进二进制；内置 `zh-CN`（默认）与 `en-US`。
+- 选择顺序：`--lang` > `NECA_LANG` > `LANG/LC_ALL` > `zh-CN`；缺 key 回退到 `zh-CN`，再回退到 key 本身并告警。
+- CI 校验内置 locale 的 key 集合一致；社区可通过 fork 增加语言包（当前不接受 PR）。
+- 输出前缀 `[OK]/[INFO]/[WARN]/[ERR]` 不翻译，保持下游契约；Web 多语言在 M6 单独实现。
+
 ---
 
 ## 9. 模板与平台包
 
-| 平台 | 产物 | 生成方式 |
-|---|---|---|
-| Windows | `install.ps1`、`uninstall.ps1`、`connect.ps1`、三个 `.cmd`、`使用说明.txt`、p12/pass/ca.crt | `text/template` + `embed`，占位符 `{{.CN}}`、`{{.Profile}}`、`{{.Server}}` |
-| Android | p12/pass/ca.crt、`使用说明.txt` | 同上 |
-| iOS | `<CN>.mobileconfig`（CA + 身份 + IKEv2，OverridePrimary=0） | 手写 plist XML，证书用 base64(DER)，UUID 用 `crypto/rand` v4 |
+### 9.1 平台矩阵
 
-两条硬规则：
+面向 5 个平台：Windows / Linux / macOS / Android / iOS。
+
+| 平台 | 目录 | 默认产物 | 可选一键脚本（默认关闭） | 说明 |
+|---|---|---|---|---|
+| Windows | `Windows/` | `p12`、`pass`、`ca.crt`、`使用说明.txt` | `install.ps1`、`uninstall.ps1`、`connect.ps1` + 三个 `.cmd` | 脚本由旧实现验证；现在需 `--installers windows` 才生成 |
+| Linux | `Linux/` | 同上 | `install.sh`、`uninstall.sh`（模板保留、未验证） | 说明面向 strongSwan / NetworkManager；脚本验证后再考虑默认开放 |
+| macOS | `macOS/` | 同上 | `install.command`、`uninstall.command`（模板保留、未验证） | 首版以 p12 + 说明为主，`.mobileconfig` 可选后续 |
+| Android | `Android/` | `p12`、`pass`、`ca.crt`、`使用说明.txt` | — | 与旧实现一致 |
+| iOS | `iOS/` | `<CN>.mobileconfig`（CA + 身份 + IKEv2） | — | 与旧实现一致 |
+
+- 平台名统一为 `windows/linux/macos/android/ios`；兼容别名：`win/windows`、`mac/macos/darwin/osx`、`and/android`。
+- 共同产物：`<CN>.p12`、`<CN>.p12.pass`、`ca.crt`、`MANIFEST.txt`（CN、序列号、到期、生成时间、平台、p12 profile、文件校验和）。
+- **不进入平台包**：`<CN>.key`、`ca.key`、`index.txt`、meta 文件、审计日志。
+
+### 9.2 一键安装脚本选项
+
+- 统一开关：`--installers none|all|windows|linux|macos`（逗号分隔可多选），默认 **none**。
+- 兼容说明：旧脚本默认生成 Windows 脚本；neca 改为默认不生成，需要时显式 `--installers windows`。M2 影子测试必须带该开关才能与旧 `clients/` 树逐项对比。
+- Windows 脚本保留现有内容与文件名，模板必须纯 ASCII（§9.4）。
+- Linux/macOS 脚本只有模板占位，默认不生成；启用前必须完成人工验证与测试，避免分发未经验证的特权脚本。
+- `issue/reissue/platform add/package` 均支持该开关；`NECA_INSTALLERS` 可作为环境级默认值。
+
+### 9.3 zip 打包与下载有效期
+
+- CLI：`neca package <CN> [--platforms ...] [--installers ...] [--p12-profile ...] [--zip]` 重新生成平台包；`--zip` 额外生成压缩包。`issue/reissue` 也接受 `--zip`，签发完成后直接打包。
+- **不新增独立 `zip` 子命令**：zip 是打包输出而非独立业务动作，用 `--zip` 更符合现有流程，减少子命令数量；生命周期管理由 `neca downloads` 承担：
+  - `neca downloads list`：列出 zip、CN、生成时间、过期时间、大小；
+  - `neca downloads clean [--expired|--all]`：清理过期/全部 zip。
+- 存储位置：`NECA_DOWNLOAD_DIR`（默认 `/opt/ipsec/downloads`），不放进 `clients/` 或 `exports/`，避免污染证书目录与备份范围。
+- 命名与元数据：`<CN>-<YYYYmmdd-HHmmss>-<6位随机>.zip` + 同名 `.json`（CN、createdAt、expiresAt、size、sha256、platforms、p12Profile）。
+- 权限：目录 `0700`、zip/元数据 `0600`；zip 含 p12 与密码文件，按敏感凭据处理。
+- 有效期：`NECA_DOWNLOAD_TTL` 默认 `30m`；创建时写入 expiresAt。CLI 在每次创建前清理过期项；`downloads clean` 手动清理；Web（M6）在下载前检查并在后台定时清理，过期返回 410/404。
+- 防积压：TTL + `NECA_DOWNLOAD_MAX_FILES`（默认 50）；不依赖 cron 也能自净，生产可另配 systemd timer 兜底。
+- 压缩实现：标准库 `archive/zip`，**不调用外部 `zip` 命令**。理由：debian-slim 默认无 `zip`、跨平台行为不一致、需防命令注入；标准库产物可被常见工具打开且便于单测。
+- 压缩包以 `<CN>/<Platform>/...` 为根，不含绝对路径、`..`、私钥、CA 私钥；生成前校验所有路径。
+- CLI 打印 zip 路径、过期时间与清理命令；下载 URL 的鉴权由 Web（M6）负责。
+
+### 9.4 硬规则
 
 1. **Windows 模板必须是纯 ASCII**（PowerShell 5.1 无 BOM 时按 ANSI 读，中文会乱码报语法错误）。用 `make check-ascii` 在 CI 里校验 `templates/win/*` 无 >127 字节。
-2. iOS 的 `LocalIdentifier` 取 CN、`RemoteAddress`/`RemoteIdentifier` 取 `SERVER_ID`，与旧实现一致；plist 生成后要用解析器回读校验键值。
+2. Linux/macOS 安装脚本启用前必须完成人工验证；默认不生成。
+3. iOS 的 `LocalIdentifier` 取 CN、`RemoteAddress`/`RemoteIdentifier` 取 `SERVER_ID`；plist 生成后要用解析器回读校验键值。
+4. zip 与 `MANIFEST.txt` 不得包含私钥、CA 私钥、审计或服务器敏感标识。
 
 ---
 
 ## 10. 数据与兼容
 
-- 不迁移、不重命名任何目录；新旧实现共用同一份 `index.txt`、`meta/`、`clients/`、`exports/`。
+- 不迁移、不重命名任何已有目录；新旧实现共用同一份 `index.txt`、`meta/`、`clients/`、`exports/`。
+- 新增 `downloads/`（默认 `/opt/ipsec/downloads`）只存临时 zip 与 sidecar，可随时清理，不属于证书事实源。
+- 平台标识扩展为 `windows/linux/macos/android/ios`；meta 的 PLATFORMS 仍兼容旧值。
+- 默认 `--installers none` 会让 `clients/` 树比旧脚本少 Windows 脚本；M2 影子测试必须用 `--installers windows` 才能与旧产物对比，另测默认 none。
+- p12 默认 `compat`；非默认 profile 可写 meta `P12_PROFILE`，默认不写以保持 diff=0。
 - `index.txt` 是 CRL 的唯一事实源，**不允许**引入第二份证书状态存储；SQLite（阶段三）只存用户、审计、归属。
 - 版本切换用 `git` 管脚本与二进制，回退只需换回旧 `legacy/vpn-cert-manager.sh`。
 
@@ -415,6 +500,8 @@ M1 的 `index sync` 仍按旧脚本的 5 个键（CN/PLATFORMS/CREATED/EXPIRES/S
 | gencrl 失败 | 不回滚索引，但**不替换**旧 CRL；提示手工排查 |
 | 容器重载失败 | 保留新 CRL，`[WARN]` 提示需手工重启（下次重启自动生效） |
 | 并发执行 | `flock` 拿不到锁立即失败（退出码 3），提示已有实例在运行 |
+| 平台包/zip 失败 | 删除临时文件与半成品 zip，保留已成功平台包；`[ERR]` 提示可重试 |
+| 下载清理失败 | 只 `[WARN]`，不阻断主流程；下次创建/访问时重试 |
 
 ---
 
@@ -439,7 +526,9 @@ Web 服务若还需要读写 CA 私钥，只有三种选择：
 - 私钥、p12、密码文件权限：`0600`；
 - 审计日志只追加；
 - `--dry-run` 默认用于任何生产变更前的演练；
-- 不记录密码、私钥到日志；错误信息里只出现路径与序列号。
+- 不记录密码、私钥到日志；错误信息里只出现路径与序列号；
+- `downloads/` 目录 `0700`、zip/元数据 `0600`；zip 仅含 p12/pass/ca.crt/说明/可选脚本，严禁私钥与 CA 私钥；
+- 下载有效期默认 30 分钟，Web 需鉴权 + TTL；不接受任意路径参数，防目录遍历。
 
 ---
 ## 13. 测试策略
@@ -452,6 +541,8 @@ Web 服务若还需要读写 CA 私钥，只有三种选择：
 | 黄金测试 | `testdata/golden/` 存期望输出，`-update` 更新；覆盖 list/export/verify 文本 | 需要 fixture 证书 |
 | 集成测试 | 临时 PKI（`t.TempDir()` + `PKI_DIR` 重定向）跑完整签发/吊销/重签 | 需要 openssl；docker 用 stub |
 | 影子测试 | 同一 fixture 跑旧 bash 与新 neca，比对产物与索引三元组 | 需要 bash + openssl |
+| 平台包测试 | Windows/Linux/macOS 文件树、安装脚本开关、MANIFEST、zip 内容与路径安全 | 纯 Go + fixture |
+| 多语言测试 | zh-CN/en-US key 对齐、缺 key 回退、`NECA_LANG`/`--lang` | 纯 Go |
 | 手工验收 | 真实服务器、真实手机导入 p12、真实 VPN 连接 | 人工 |
 
 ### 13.2 fixture 生成
@@ -471,12 +562,15 @@ issue TMP01 windows,android → list → verify → add-platform ios → export 
 
 M1 已落地：`scripts/shadow.sh` + `make shadow` 自动生成 fixture 的独立副本，比较 list/verify/export/index sync 的输出、CSV、index.txt 与 meta 目录；CI 将差异视为失败。
 
+M2 的 issue/reissue 影子对比使用 `--installers windows`，保证 `clients/` 树与旧脚本一致；默认 `none` 的产物作为独立用例验证。
+
 ### 13.4 CI 门禁
 
 - `go vet ./...`、`gofmt -l` 无输出、`go test -race ./...`；
 - `make check-ascii`（Windows 模板纯 ASCII）；
 - `make build` 产出 linux/amd64 与 linux/arm64 两个二进制；
 - `make shadow`（新旧实现输出与产物 diff = 0）；
+- `make check-locales`（M3 起，校验内置语言包 key 一致）；
 - 提交信息遵循 Conventional Commits。
 
 ---
@@ -522,6 +616,7 @@ docker run --rm -it -v "$PWD":/src -w /src \
 | `make vet` / `make fmt` | 静态检查与格式化 |
 | `make check-ascii` | 校验 Windows 模板 |
 | `make shadow` | 新旧实现影子对比（bash + openssl + python3，diff 必须为 0） |
+| `make check-locales` | 校验内置语言包 key 一致（M3 起） |
 | `make docker` | 构建运行镜像 `ghcr.io/hyhdsl/neca:dev` |
 
 ### 14.3 交叉编译
@@ -549,11 +644,14 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 | 项 | 建议 |
 |---|---|
 | 仓库 | `github.com/hyhdsl/neca`，**私有**，已创建并推送基线（2026-11-15） |
-| 默认分支 | `main`，保护：必须 PR + CI 通过 |
+| 默认分支 | `main`，维护者内部合并必须 CI 通过；不接受外部 PR。私有免费计划暂无法启用分支保护，以 CI 为门禁 |
 | 分支命名 | `feat/…`、`fix/…`、`chore/…` |
 | 提交信息 | Conventional Commits（`feat:`、`fix:`、`chore:`、`docs:`） |
 | 版本 | SemVer；tag `v0.1.0` 起 |
-| 许可证 | 私有仓库可不加；若开源建议 MIT |
+| 许可证 | **PolyForm Noncommercial 1.0.0**（源码可见、禁止商业用途；不是 OSI 开源协议）；见 `LICENSE` / `NOTICE` / `SECONDARY-DEVELOPMENT.md` |
+| 公开时间 | 首个正式 Release（v0.1.0）后由私有转为 public；之前保持私有 |
+| PR 策略 | 当前**不接受 PR**；问题走 Issue，修改请 fork 并遵守二次开发要求 |
+| 二次开发 | 必须保留原作者与仓库链接、公开完整源码、沿用非商业许可、不得商用 |
 
 ### 15.2 工作流
 
@@ -580,6 +678,8 @@ feature 分支 → PR（CI 全绿）→ squash merge 到 main
 ```
 
 回滚：保留上一个二进制为 `/usr/local/bin/neca.prev`，或直接从 Release 下载旧版本。
+
+发布完成后：确认 `README.md` 顶部警告、`LICENSE`、`NOTICE`、`SECONDARY-DEVELOPMENT.md` 均已在 main 上，再将仓库从私有转为 public；首个正式 Release 之前不得转公开。
 
 ### 15.4 DSH 的 GitHub 集成
 
@@ -628,11 +728,11 @@ gh auth login --hostname github.com --git-protocol https --web
 |---|---|---|---|
 | M0 | 仓库骨架、go.mod、Makefile、Dockerfile.dev、ci.yml、`neca version` | CI 绿，容器内 `make build` 成功 | 0.5 人日 |
 | M1 | config / proc / openssl / index(只读) / meta / table / csv；`list`、`verify`、`export`、`index sync` | 与旧脚本输出 diff 为 0 | 1.5 人日 |
-| M2 | pki / issue / reissue / revoke / unrevoke / platform / delete；flock；失败清理 | 临时 PKI 全流程通过；影子测试通过 | 2 人日 |
-| M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨 | 人工回归清单全过 | 1 人日 |
+| M2 | pki / issue / reissue / revoke / unrevoke / platform / package / delete；flock；失败清理；Linux/macOS 平台包；安装脚本选项；p12 profile；zip/TTL/downloads | 临时 PKI 全流程；影子测试（`--installers windows`）通过；Linux/macOS 包与 zip TTL 测试通过 | 3 人日 |
+| M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | 人工回归清单全过；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
-| M5 | v0.1.0 发布、服务器部署、旧脚本保留两周 | 生产连续两周无回退 | 0.5 人日 |
-| M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`） | 只读面板上线，与 CLI 共用 core | 3–4 人日 |
+| M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | 生产连续两周无回退；公开后仓库合规检查通过 | 1 人日 |
+| M6 | 阶段二 Web 面板（`cmd/necad` + `internal/web`，含 30 分钟下载 TTL、鉴权与清理、Web 多语言） | 只读面板上线，与 CLI 共用 core；下载有效期与清理测试通过 | 4–5 人日 |
 
 ---
 
@@ -647,6 +747,11 @@ gh auth login --hostname github.com --git-protocol https --web
 | 并发写坏索引 | 中 | 中 | 全局 flock + 原子替换 |
 | `--load-creds` 实验失败 | 已排除 | — | 2026-11-15 实测通过，默认 `creds`；`restart` 保留为回退 |
 | GHCR 推送权限配置错误 | 中 | 低 | 用内置 `GITHUB_TOKEN` + `packages: write` |
+| 非商业许可被误认为 OSI 开源 | 中 | 中 | README/NOTICE 明确声明；发布前法律审阅 |
+| zip 含 p12/pass 泄露 | 中 | 高 | 0700/0600、TTL、鉴权、清理；不提供目录列表 |
+| Linux/macOS 脚本未验证 | 中 | 中 | 默认关闭，人工验证后再开放 |
+| 语言包 key 漂移 | 中 | 低 | CI `make check-locales`；缺 key 回退 |
+| Windows 脚本默认关闭导致回归 | 中 | 中 | M2 影子测试固定 `--installers windows`；默认 none 单独测试 |
 
 ---
 
@@ -654,9 +759,14 @@ gh auth login --hostname github.com --git-protocol https --web
 
 1. ~~GitHub 仓库 owner/名称~~：已定 `github.com/hyhdsl/neca`（私有）；
 2. 运行镜像：已定 **debian-slim**（内置 openssl，约 80MB；scratch/distroless 无法运行 openssl 子进程）；
-3. Go 版本锁定：镜像内实测 `go1.25.14`，`go.mod` 声明 `go 1.25`；
-4. ~~是否把旧 bash 脚本放入 `legacy/` 一并归档~~：已归档到 `legacy/`（2026-11-15，M0）；
-5. 阶段二 Web 的权限方案（§12.2 的三选一）。
+3. ~~Go 版本锁定~~：镜像内实测 `go1.25.14`，`go.mod` 声明 `go 1.25`；
+4. ~~旧 bash 脚本归档~~：已归档到 `legacy/`（2026-11-15，M0）；
+5. **许可与二次开发条款的最终法律审阅**：目前选 PolyForm Noncommercial 1.0.0 + 额外“衍生源码公开”政策；后者可能需要自定义协议，发布前确认；
+6. **Linux/macOS 一键脚本**：模板先保留、默认关闭；完成人工验证后再决定是否默认开放；
+7. **下载目录与 TTL**：CLI 与 Web 共用 `NECA_DOWNLOAD_DIR`；Web 鉴权与清理策略在 M6 前确定；
+8. **社区语言包**：“暂不接受 PR”期间的接收方式（Issue 附件或 fork）在 M3 前确定；
+9. **阶段二 Web 权限方案**（§12.2 的三选一）；
+10. **首个正式 Release 后转 public 的检查清单**：README 警告、LICENSE、NOTICE、二次开发要求、分支保护/CI 门禁。
 
 ---
 
@@ -666,9 +776,13 @@ gh auth login --hostname github.com --git-protocol https --web
 
 | 项 | 状态 |
 |---|---|
-| 仓库 | `github.com/hyhdsl/neca`（私有）已创建，`main` 已推送基线（`fbe67d6`、`16338b0`） |
+| 仓库 | `github.com/hyhdsl/neca`（私有）已创建；`main` 已于 2026-11-15 重写历史并推送安全清理提交 |
 | 代码 | ✅ M1 已完成：只读命令 list/verify/export/index sync；core 模块 config/proc/openssl/index/meta/table/csv；影子对比 diff=0 |
 | 扩展点 | ✅ §3.1 已落地：`IndexStore`/`Source` 接口契约、CLI 命令注册表；其余候选先登记 |
+| 平台与打包 | ⏳ 设计完成（§9）；M2 实现 Linux/macOS、安装脚本选项、zip/TTL |
+| p12 算法 | ⏳ 设计完成（§8.9）；M2 实现 `compat`/`modern` profile，默认兼容不变 |
+| 多语言 | ⏳ 设计完成（§8.11）；M3 实现语言文件与 `--lang` |
+| 许可/公开 | ✅ `LICENSE`/`NOTICE`/`SECONDARY-DEVELOPMENT.md` 已落地；首个正式 Release 后转 public，当前不接受 PR |
 | `load-creds` 实验 | ✅ 已完成，`creds` 设为默认重载模式 |
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
@@ -685,6 +799,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | 2026-11-15 | 扩展点 | 新增 §3.1：索引存储/配置来源接口契约（`internal/core/ports`）与 CLI 子命令注册表；候选扩展点登记，无行为变更 |
 | 2026-11-15 | M1 | 只读命令落地：config/proc/openssl/index/meta/table/csv；list/verify/export/index sync；新增 fixture 生成器与 `make shadow`，新旧实现 diff=0 |
 | 2026-11-15 | 安全 | 清理仓库中的服务器标识（IP、VPN 内网段、真实域名、组织/CA 名称），统一为占位值；生产值改为环境变量注入，并重写 Git 历史 |
+| 2026-11-15 | 第 3 稿 | Linux/macOS 平台包、安装脚本选项、zip/TTL 下载管理、p12 profile、多语言语言包；许可（PolyForm NC）与仓库公开/PR 策略；README 顶部警告 |
 
 ---
 

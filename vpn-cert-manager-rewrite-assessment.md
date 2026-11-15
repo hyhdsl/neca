@@ -85,7 +85,7 @@
 | 目录布局 | `pki/`、`pki/ca/`、`pki/meta/`、`pki/archive/`、`clients/<CN>/<平台>/`、`exports/` | 原样保留，不迁移、不重命名 |
 | `index.txt` | 6 字段、TAB 分隔、openssl ca 数据库格式 | **继续作为 CRL 的唯一事实源**，格式不变 |
 | `meta/<CN>.env` | `CN/PLATFORMS/CREATED/EXPIRES/SERIAL` | 保留，新增键向后兼容（旧 bash 用 sed 按前缀读取，加键无害） |
-| p12 规范 | 3DES + SHA1、仅客户端证书、12 位字母数字密码 | 不变。MIUI 兼容性是硬需求 |
+| p12 规范 | 3DES + SHA1、仅客户端证书、12 位字母数字密码 | 作为 neca 默认 `compat` profile 保持不变；新增 `modern`（AES-256/SHA256）等可选 profile，默认仍走兼容算法，MIUI 兼容性是硬需求 |
 | 证书扩展 | `clientAuth`、SAN 含 `SERVER_ID` 与 `CN`、SKI/AKI | 不变 |
 
 > 结论：**重写的是实现，不是行为**。新实现必须能在同一份 `index.txt`、同一套目录、同一组环境变量下，与旧脚本产出可 diff 的结果。

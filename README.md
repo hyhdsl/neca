@@ -59,7 +59,7 @@ docker compose run -T --rm dev ./dist/neca-linux-amd64 help
 | `neca`（无参数）/ `neca wizard` | 进入交互向导（菜单 0–10） |
 | `neca <命令> --json` | 结构化 JSON 输出 |
 | `neca <写命令> --dry-run` | 只打印将执行的动作，不落盘 |
-| `neca --lang en-US <命令>` | 英文控制台（帮助/通用提示） |
+| `neca --lang en-US <命令>` | 英文控制台（命令输出/帮助） |
 | `neca version` / `-V` | 版本信息 |
 
 所有命令都遵循 `[OK]/[INFO]/[WARN]/[ERR]` 前缀与 0/1/2/3 退出码契约（开发文档 §6.3）。
@@ -97,11 +97,24 @@ neca config validate       # 校验 JSON + PKI
 neca config init --from-env  # 从现有环境变量生成 neca.json
 ```
 
-语言切换是**单次命令**生效：
+语言优先级：**`--lang` > `NECA_LANG` > `neca.json` 的 `language` > `LANG/LC_ALL` > `zh-CN`**。
+
+持久设置写入 `neca.json`：
+
+```json
+{ "language": "en-US" }
+```
+
+```bash
+neca config validate
+neca list
+```
+
+临时覆盖：
 
 ```bash
 neca --lang en-US list
-# 或让当前 shell 持续使用英文（包装命令会转发 NECA_LANG 给容器）
+# 当前 shell 会话内覆盖（包装命令会转发给容器）
 export NECA_LANG=en-US
 neca list
 ```
@@ -184,4 +197,21 @@ dist/               构建产物（不入库）
 - 扩展点契约已落地：`IndexStore`、配置来源接口与 CLI 命令注册表（无行为变更）。
 - 2026-11-15 完成 `swanctl --load-creds` 实测：新 CRL 可热替换，吊销不再需要重启容器。
 - 旧 bash 实现已移入 `legacy/`，保留作为影子测试基准与回退手段。
-- 仓库内服务器标识均为占位值，生产值通过环境变量注入（详见下文「敏感信息」）。
+- 仓库内服务器标识均为占位值，生产值通过环境变量/服务器侧 `neca.json` 注入（详见上文「敏感信息」）。
+
+## 致谢与第三方组件
+
+neca 的实现和运行依赖以下开源项目/发行版组件，感谢维护者与社区：
+
+| 组件 | 用途 | 许可证 |
+|---|---|---|
+| [Go 标准库](https://go.dev/) | CLI、HTTP、加密、归档与模板 | BSD-3-Clause |
+| [golang.org/x/text](https://pkg.go.dev/golang.org/x/text) | 中文表格显示宽度计算 | BSD-3-Clause |
+| [OpenSSL](https://www.openssl.org/) | CA/证书/p12/CRL 操作（子进程调用） | Apache-2.0 |
+| [Debian bookworm-slim](https://www.debian.org/) | 运行镜像基础系统 | Debian 各组件许可 |
+| [Docker CLI](https://www.docker.com/) | 容器内通过 docker.sock 触发 CRL 热加载 | Apache-2.0 |
+| [ca-certificates](https://salsa.debian.org/debian/ca-certificates) | 运行镜像 CA 根证书 | MPL-2.0（Mozilla CA bundle） |
+| [strongSwan](https://www.strongswan.org/) | 外部 IKEv2 服务端，neca 不包含其代码 | GPL-2.0 |
+| [GitHub Actions](https://github.com/actions) / [Docker Buildx](https://github.com/docker/buildx) | CI、发布与多架构镜像构建 | MIT / Apache-2.0（各组件不同） |
+
+以上为主要组件；完整许可文本以各项目发布为准。neca 自身以 **AGPL-3.0-only** 发布，详见 [LICENSE](LICENSE)。测试使用的 bash、openssl、python3 等工具不随发布二进制分发。

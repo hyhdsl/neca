@@ -54,7 +54,7 @@ neca list
 包装命令会在非交互环境自动加 `docker compose run -T`，并把当前 shell 的
 `NECA_LANG` 传入容器。
 
-## 5. 直接运行
+## 4. 直接运行
 
 ```bash
 cd /opt/ipsec
@@ -66,7 +66,7 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 写操作建议先 `--dry-run`，再在维护窗口执行。审计日志在
 `NECA_AUDIT_LOG`（默认 `/opt/ipsec/pki/audit.log`）。
 
-## 6. 备份与回滚
+## 5. 备份与回滚
 
 升级前至少备份：
 
@@ -77,9 +77,13 @@ tar -C /opt/ipsec -czf /root/ipsec-backup-$(date +%Y%m%d-%H%M%S).tar.gz pki clie
 回滚：恢复备份，并 `docker run --rm -v /opt/ipsec:/opt/ipsec ...` 使用旧镜像
 版本；strongSwan 容器本身不需要重建。
 
-## 7. 安全
+## 6. 安全
 
 - 挂载 `docker.sock` 等价于宿主 root 权限，仅 root 可执行/读取配置；
 - `/opt/ipsec/pki`、`clients`、`neca.env`、`neca.json` 含敏感路径或 p12，权限保持 0600/0700；
 - 不要把镜像、env 文件或 `/opt/ipsec` 目录整体上传到公共 registry；
 - 容器默认 `network_mode: none`，只通过 docker socket 工作。
+- neca CLI 容器只挂载 `/opt/ipsec` 与 `/var/run/docker.sock`，**不修改宿主 `/etc/ssl`、
+  `/etc/hosts`、iptables 或 Docker daemon 配置**；Linux 安装脚本只会在用户手动执行
+  的目标客户端上安装指定 CA。其它容器出现 TLS unknown authority 时，应检查该容器
+  自身的 CA bundle，而不是 neca 容器。

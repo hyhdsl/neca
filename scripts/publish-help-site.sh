@@ -7,10 +7,8 @@
 set -euo pipefail
 
 ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
-TARGET="$NECA_HELP_REPO"
-if [ -z "$TARGET" ]; then TARGET="https://github.com/hyhdsl/neca-help.git"; fi
-BRANCH="$NECA_HELP_BRANCH"
-if [ -z "$BRANCH" ]; then BRANCH="main"; fi
+TARGET="${NECA_HELP_REPO:-https://github.com/hyhdsl/neca-help.git}"
+BRANCH="${NECA_HELP_BRANCH:-main}"
 MODE="dry-run"
 
 usage() {
@@ -68,7 +66,7 @@ if [ "$MODE" != "apply" ]; then
   exit 0
 fi
 
-SOURCE_COMMIT="$NECA_SOURCE_COMMIT"
+SOURCE_COMMIT="${NECA_SOURCE_COMMIT:-}"
 if [ -z "$SOURCE_COMMIT" ]; then SOURCE_COMMIT="$(git -C "$ROOT" rev-parse --short HEAD)"; fi
 git commit -m "docs: publish help site from $SOURCE_COMMIT"
 git push origin "$BRANCH"

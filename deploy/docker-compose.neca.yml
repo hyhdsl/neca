@@ -19,7 +19,7 @@ services:
     env_file:
       - ${NECA_ENV_FILE:-/opt/ipsec/neca.env}
     environment:
-      NECA_CONFIG: /opt/ipsec/neca.json
+      NECA_CONFIG: /opt/ipsec/config/neca.json
     volumes:
       - /opt/ipsec:/opt/ipsec
       - /var/run/docker.sock:/var/run/docker.sock
@@ -46,7 +46,7 @@ services:
     env_file:
       - ${NECA_ENV_FILE:-/opt/ipsec/neca.env}
     environment:
-      NECA_CONFIG: /opt/ipsec/neca.json
+      NECA_CONFIG: /opt/ipsec/config/neca.json
       NECA_WEB_SESSION_KEY_FILE: /opt/ipsec/web-secrets/session.key
       NECA_WEB_PASSWORD_HASH_FILE: /opt/ipsec/web-secrets/password.hash
       NECA_WEB_AUDIT_LOG: /opt/ipsec/web-secrets/web-audit.log
@@ -54,7 +54,7 @@ services:
       # 反向代理 TLS 终止后在 neca.env 设置 NECA_WEB_SECURE_COOKIES=1；
       # OpenSSH 本地转发 HTTP 时保持未设置/0。
     volumes:
-      - /opt/ipsec/neca.json:/opt/ipsec/neca.json:ro
+      - /opt/ipsec/config:/opt/ipsec/config:ro
       # 只挂载 Web 需要的公钥/索引/客户端包，绝不挂载 pki 根目录或 ca.key。
       - /opt/ipsec/pki/ca.crt:/opt/ipsec/pki/ca.crt:ro
       - /opt/ipsec/pki/ca/index.txt:/opt/ipsec/pki/ca/index.txt:ro
@@ -89,7 +89,7 @@ services:
     env_file:
       - ${NECA_ENV_FILE:-/opt/ipsec/neca.env}
     environment:
-      NECA_CONFIG: /opt/ipsec/neca.json
+      NECA_CONFIG: /opt/ipsec/config/neca.json
       NECA_WEB_HELPER_SOCKET: /run/neca/web-helper.sock
       NECA_WEB_HELPER_GID: "10001"
       NECA_WEB_HELPER_CACHE_FILE: /run/neca/web-helper-cache.json

@@ -23,14 +23,32 @@ LINK_RE = re.compile(r"\]\(\s*(<[^>]+>|[^)\s]+)(?:\s+[^)]*)?\)")
 FENCE_TICK = chr(96) * 3
 FENCE_TILDE = "~~~"
 HELP = ROOT / "docs" / "help"
-REQUIRED_HELP = [
+REQUIRED_ROOT = [
+    "README.md",
+    "index.html",
+    "home.css",
+    "404.html",
+    "custom.css",
+    "CNAME",
+    ".nojekyll",
+]
+REQUIRED_ZH = [
     "README.md",
     "SUMMARY.md",
     "_sidebar.md",
     ".gitbook.yaml",
     "index.html",
-    "CNAME",
-    ".nojekyll",
+    "getting-started.md",
+    "install.md",
+    "certificates.md",
+    "packages.md",
+    "web.md",
+    "operations.md",
+    "security.md",
+    "troubleshooting.md",
+    "faq.md",
+    "development.md",
+    "api.md",
 ]
 REQUIRED_EN = [
     "README.md",
@@ -109,19 +127,27 @@ def require(path: Path, label: str, errors: list[str]) -> None:
 
 def check_help_structure() -> list[str]:
     errors: list[str] = []
-    for name in REQUIRED_HELP:
-        require(HELP / name, "help file", errors)
+    for name in REQUIRED_ROOT:
+        require(HELP / name, "root help file", errors)
+    for name in REQUIRED_ZH:
+        require(HELP / "zh" / name, "Chinese help file", errors)
     for name in REQUIRED_EN:
         require(HELP / "en" / name, "English help file", errors)
     cname = HELP / "CNAME"
     if cname.exists() and cname.read_text(encoding="utf-8").strip() != "neca.nekobiglazyer.work":
         errors.append("docs/help/CNAME must be neca.nekobiglazyer.work")
-    root_sidebar = HELP / "_sidebar.md"
+    zh_sidebar = HELP / "zh" / "_sidebar.md"
     en_sidebar = HELP / "en" / "_sidebar.md"
-    if root_sidebar.exists() and "https://neca.nekobiglazyer.work/en/" not in root_sidebar.read_text(encoding="utf-8"):
-        errors.append("docs/help/_sidebar.md: missing English entry")
-    if en_sidebar.exists() and "https://neca.nekobiglazyer.work/" not in en_sidebar.read_text(encoding="utf-8"):
+    if zh_sidebar.exists() and "https://neca.nekobiglazyer.work/en/" not in zh_sidebar.read_text(encoding="utf-8"):
+        errors.append("docs/help/zh/_sidebar.md: missing English entry")
+    if en_sidebar.exists() and "https://neca.nekobiglazyer.work/zh/" not in en_sidebar.read_text(encoding="utf-8"):
         errors.append("docs/help/en/_sidebar.md: missing Chinese entry")
+    root_index = HELP / "index.html"
+    if root_index.exists():
+        root_html = root_index.read_text(encoding="utf-8")
+        for target in ("/zh/", "/en/"):
+            if target not in root_html:
+                errors.append(f"docs/help/index.html: missing {target}")
     return errors
 
 

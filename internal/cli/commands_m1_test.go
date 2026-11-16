@@ -43,19 +43,19 @@ func TestParseExportArgs(t *testing.T) {
 	}
 }
 
-// TestBuiltinRegistryIncludesM1Commands 校验 M1 子命令已注册。
-func TestBuiltinRegistryIncludesM1Commands(t *testing.T) {
+// TestBuiltinRegistryIncludesNamespaces 校验 v0.5 顶层命名空间已注册。
+func TestBuiltinRegistryIncludesNamespaces(t *testing.T) {
 	registry := newBuiltinRegistry()
-	for _, name := range []string{"list", "verify", "export", "index"} {
+	for _, name := range []string{"cert", "pki", "trash", "config", "web"} {
 		if _, ok := registry.Lookup(name); !ok {
-			t.Fatalf("缺少子命令 %q", name)
+			t.Fatalf("缺少命名空间 %q", name)
 		}
 	}
 }
 
 // TestListRejectsExtraArgs 校验 list 参数校验发生在加载配置之前。
 func TestListRejectsExtraArgs(t *testing.T) {
-	code, _, errOut := runCLI("list", "extra")
+	code, _, errOut := runCLI("cert", "list", "extra")
 	if code != ExitUsage {
 		t.Fatalf("exit code = %d, want %d", code, ExitUsage)
 	}

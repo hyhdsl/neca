@@ -22,26 +22,6 @@ func TestParseGlobals(t *testing.T) {
 	}
 }
 
-func TestCompatArgs(t *testing.T) {
-	cases := map[string][]string{
-		"--list":          {"list"},
-		"--sync":          {"index", "sync"},
-		"--issue":         {"issue", "TMP01"},
-		"--add-platform":  {"platform", "add", "TMP01"},
-		"--export-issued": {"export", "issued"},
-	}
-	for input, want := range cases {
-		args := []string{input}
-		if input == "--issue" || input == "--add-platform" {
-			args = append(args, "TMP01")
-		}
-		got := compatArgs(args)
-		if strings.Join(got, " ") != strings.Join(want, " ") {
-			t.Fatalf("compatArgs(%v) = %v, want %v", args, got, want)
-		}
-	}
-}
-
 func TestJSONVersion(t *testing.T) {
 	code, out, errOut := runCLI("version", "--json")
 	if code != ExitOK || errOut != "" {
@@ -57,7 +37,7 @@ func TestJSONVersion(t *testing.T) {
 }
 
 func TestDryRunWritesNothing(t *testing.T) {
-	code, out, _ := runCLI("issue", "TMP01", "--dry-run", "--json")
+	code, out, _ := runCLI("cert", "issue", "TMP01", "--dry-run", "--json")
 	if code != ExitOK {
 		t.Fatalf("code = %d", code)
 	}

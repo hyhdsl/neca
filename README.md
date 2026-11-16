@@ -34,9 +34,9 @@
 ~~~bash
 docker pull ghcr.io/hyhdsl/neca:v0.4.1
 neca version
-neca list
-neca issue alice --platforms windows,android --zip --dry-run
-neca issue alice --platforms windows,android --zip
+neca cert list
+neca cert issue alice --platforms windows,android --zip --dry-run
+neca cert issue alice --platforms windows,android --zip
 ~~~
 
 生产环境把 <code>/opt/ipsec</code> 挂载给容器，并通过 wrapper 或 compose 运行；完整步骤见 [部署文档](docs/deploy.md)。

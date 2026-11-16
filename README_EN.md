@@ -36,9 +36,9 @@ Pin the version, dry-run first, then issue:
 ~~~bash
 docker pull ghcr.io/hyhdsl/neca:v0.4.1
 neca version
-neca list
-neca issue alice --platforms windows,android --zip --dry-run
-neca issue alice --platforms windows,android --zip
+neca cert list
+neca cert issue alice --platforms windows,android --zip --dry-run
+neca cert issue alice --platforms windows,android --zip
 ~~~
 
 In production, mount <code>/opt/ipsec</code> into the container and run it through the wrapper or compose. See the [deployment guide](docs/deploy.md) for the full procedure.

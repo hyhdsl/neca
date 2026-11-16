@@ -37,22 +37,22 @@ func runWizard(env Env, registry *Registry) int {
 			if !ok {
 				continue
 			}
-			args := []string{cn, "--platforms", "windows,android"}
-			invokeWizard(env, registry, "issue", args)
+			args := []string{"issue", cn, "--platforms", "windows,android"}
+			invokeWizard(env, registry, "cert", args)
 		case "2":
 			cn, ok := wizardCN(env, reader)
 			if ok {
-				invokeWizard(env, registry, "revoke", []string{cn})
+				invokeWizard(env, registry, "cert", []string{"revoke", cn})
 			}
 		case "3":
 			cn, ok := wizardCN(env, reader)
 			if ok {
-				invokeWizard(env, registry, "unrevoke", []string{cn})
+				invokeWizard(env, registry, "cert", []string{"unrevoke", cn})
 			}
 		case "4":
 			cn, ok := wizardCN(env, reader)
 			if ok {
-				invokeWizard(env, registry, "reissue", []string{cn})
+				invokeWizard(env, registry, "cert", []string{"reissue", cn})
 			}
 		case "5":
 			cn, ok := wizardCN(env, reader)
@@ -64,15 +64,15 @@ func runWizard(env Env, registry *Registry) int {
 			if err != nil || platforms == "" {
 				continue
 			}
-			invokeWizard(env, registry, "platform", []string{"add", cn, "--platforms", platforms})
+			invokeWizard(env, registry, "cert", []string{"platform", "add", cn, "--platforms", platforms})
 		case "6":
-			invokeWizard(env, registry, "export", []string{"issued"})
+			invokeWizard(env, registry, "cert", []string{"export", "issued"})
 		case "7":
-			invokeWizard(env, registry, "export", []string{"revoked"})
+			invokeWizard(env, registry, "cert", []string{"export", "revoked"})
 		case "8":
-			invokeWizard(env, registry, "list", nil)
+			invokeWizard(env, registry, "cert", []string{"list"})
 		case "9":
-			invokeWizard(env, registry, "index", []string{"sync"})
+			invokeWizard(env, registry, "pki", []string{"index", "sync"})
 		case "10":
 			cn, ok := wizardCN(env, reader)
 			if !ok {
@@ -84,7 +84,7 @@ func runWizard(env Env, registry *Registry) int {
 				fmt.Fprintln(env.Stdout, "已取消")
 				continue
 			}
-			invokeWizard(env, registry, "delete", []string{cn, "--yes"})
+			invokeWizard(env, registry, "cert", []string{"trash", cn})
 		default:
 			fmt.Fprintln(env.Stdout, i18n.T("wizard.invalid"))
 		}

@@ -190,7 +190,8 @@ docker compose run -T --rm dev make check-docs
 - Web 路由已拆为：public / auth / cert / downloads / API 五组（<code>internal/web/routes.go</code>）。
 - helper 操作改为注册表（<code>internal/helper/operations.go</code>），协议校验与执行共用同一支持列表。
 - 未新增外部行为；helper/web/cli 测试与 vet 通过。
-- 下一步 M9.4：<code>neca cert ...</code> / <code>pki ...</code> 命名空间迁移并移除旧命令。
+- M9.4 已完成：<code>cert</code>/<code>pki</code>/<code>trash</code> 命名空间；旧命令与 <code>compatArgs</code> 移除；最小回收站已落地。
+- 下一步：v0.5.0 发布；M9.4 已无待迁移命令。
 
 ## 10. 当前路线
 

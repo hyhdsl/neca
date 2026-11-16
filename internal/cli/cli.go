@@ -43,7 +43,6 @@ func Run(args []string, stdout, stderr io.Writer) int {
 
 // RunWithIO 解析参数并执行对应子命令，支持可注入 stdin（向导/测试）。
 func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	args = compatArgs(args)
 	rest, opts, err := parseGlobals(args)
 	if err != nil {
 		fmt.Fprintf(stderr, "[ERR]  %v\n", err)
@@ -177,21 +176,11 @@ func newBuiltinRegistry() *Registry {
 		},
 	}, "meta", false))
 
-	// M1 只读命令：全部经 core 的结构化结果渲染，CLI 不直接调用 openssl。
-	registry.MustRegister(backendCommand(newListCommand(), "cert", false))
-	registry.MustRegister(backendCommand(newVerifyCommand(), "cert", false))
-	registry.MustRegister(backendCommand(newExportCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newIndexCommand(), "pki", true))
-
-	// M2 写命令。
-	registry.MustRegister(backendCommand(newIssueCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newReissueCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newRevokeCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newUnrevokeCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newDeleteCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newPlatformCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newPackageCommand(), "cert", true))
-	registry.MustRegister(backendCommand(newDownloadsCommand(), "pki", true))
+	// M9.4 namespaces. M1/M2 constructors remain the implementation, but are
+	// no longer registered as top-level commands.
+	registry.MustRegister(backendCommand(newCertCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newPkiCommand(), "pki", true))
+	registry.MustRegister(backendCommand(newTrashCommand(), "trash", true))
 	registry.MustRegister(backendCommand(newConfigCommand(), "config", true))
 	registry.MustRegister(backendCommand(newWebCommand(), "web", true))
 

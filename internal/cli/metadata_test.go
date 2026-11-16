@@ -2,6 +2,23 @@ package cli
 
 import "testing"
 
+func TestGuessCNNamespaces(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{"cert", []string{"issue", "TMP01"}, "TMP01"},
+		{"cert", []string{"list"}, ""},
+		{"trash", []string{"restore", "entry-1"}, "entry-1"},
+	}
+	for _, tc := range cases {
+		if got := guessCN(tc.name, tc.args); got != tc.want {
+			t.Fatalf("guessCN(%q, %v) = %q, want %q", tc.name, tc.args, got, tc.want)
+		}
+	}
+}
+
 func TestBuiltinCommandMetadata(t *testing.T) {
 	registry := newBuiltinRegistry()
 	cases := []struct {
@@ -10,10 +27,9 @@ func TestBuiltinCommandMetadata(t *testing.T) {
 		write bool
 	}{
 		{"help", "meta", false},
-		{"list", "cert", false},
-		{"issue", "cert", true},
-		{"index", "pki", true},
-		{"downloads", "pki", true},
+		{"cert", "cert", true},
+		{"pki", "pki", true},
+		{"trash", "trash", true},
 		{"web", "web", true},
 	}
 	for _, tc := range cases {

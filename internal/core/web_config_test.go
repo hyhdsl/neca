@@ -43,6 +43,18 @@ func TestWebConfigDefaultsAndValidation(t *testing.T) {
 	}
 }
 
+func TestWebSessionEpoch(t *testing.T) {
+	cfg := parseWebConfigValues(map[string]string{"NECA_WEB_SESSION_EPOCH": "3"})
+	if cfg.SessionEpoch != 3 {
+		t.Fatalf("sessionEpoch = %d, want 3", cfg.SessionEpoch)
+	}
+	bad := cfg
+	bad.SessionEpoch = -1
+	if err := bad.Validate(); err == nil {
+		t.Fatal("negative sessionEpoch must be rejected")
+	}
+}
+
 func TestUpdateWebConfigPreservesDocument(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "neca.json")
@@ -54,6 +66,7 @@ func TestUpdateWebConfigPreservesDocument(t *testing.T) {
     "enabled": true,
     "listen": "127.0.0.1:18080",
     "readOnly": true,
+    "sessionEpoch": 2,
     "idleTimeout": "30m",
     "adminCNs": ["webadmin-01"]
   }
@@ -102,6 +115,9 @@ func TestUpdateWebConfigPreservesDocument(t *testing.T) {
 	}
 	if webDoc["idleTimeout"] != "10m0s" {
 		t.Fatalf("idleTimeout not persisted: %v", webDoc)
+	}
+	if webDoc["sessionEpoch"] != float64(2) {
+		t.Fatalf("sessionEpoch not preserved: %v", webDoc)
 	}
 }
 

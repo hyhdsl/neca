@@ -60,6 +60,7 @@ func runWebStatus(env Env) int {
 			"enabled":       cfg.Web.Enabled,
 			"listen":        cfg.Web.Listen,
 			"readOnly":      cfg.Web.ReadOnly,
+			"sessionEpoch":  cfg.Web.SessionEpoch,
 			"writable":      !cfg.Web.ReadOnly && helperErr == nil && helperStatus != nil && !helperStatus.ReadOnly,
 			"idleTimeout":   cfg.Web.IdleTimeoutRaw,
 			"absoluteLimit": core.AbsoluteWebSessionTimeout.String(),
@@ -110,7 +111,7 @@ func runWebStatus(env Env) int {
 			mode = "配置可写（helper 不可用）"
 		}
 	}
-	fmt.Fprintf(env.Stdout, "[INFO] 模式: %s\n", mode)
+	fmt.Fprintf(env.Stdout, "[INFO] 模式: %s（sessionEpoch=%d）\n", mode, cfg.Web.SessionEpoch)
 	if idleErr == nil {
 		fmt.Fprintf(env.Stdout, "[INFO] 空闲超时: %s（绝对上限 %s）\n", idle, core.AbsoluteWebSessionTimeout)
 	} else {

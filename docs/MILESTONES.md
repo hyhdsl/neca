@@ -101,9 +101,10 @@
 
 ### M10：安全运维（当前阶段）
 
-#### M10.1 配置与会话代际
+#### M10.1 配置与会话代际（已完成）
 
-- 增加 <code>web.sessionEpoch</code>；签名 Cookie 携带 epoch。
+- ✅ 已增加 <code>web.sessionEpoch</code>；签名 Cookie 携带 epoch；SIGHUP 重载。
+- 已完成：配置校验、示例配置、Web 状态展示、旧 Cookie 失效测试。
 - 配置 schema 向后兼容，SIGHUP 原子重载；缺失默认 0。
 - 单测：旧 Cookie 失效、重启后仍失效。
 

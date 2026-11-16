@@ -38,6 +38,7 @@ type WebConfig struct {
 	Enabled        bool
 	Listen         string
 	ReadOnly       bool
+	SessionEpoch   int
 	IdleTimeoutRaw string
 	AdminCNs       []string
 	Passkey        PasskeyConfig
@@ -75,6 +76,11 @@ func parseWebConfigValues(values map[string]string) WebConfig {
 	if value, ok := values["NECA_WEB_READONLY"]; ok {
 		if parsed, err := strconv.ParseBool(strings.TrimSpace(value)); err == nil {
 			cfg.ReadOnly = parsed
+		}
+	}
+	if value := strings.TrimSpace(values["NECA_WEB_SESSION_EPOCH"]); value != "" {
+		if parsed, err := strconv.Atoi(value); err == nil {
+			cfg.SessionEpoch = parsed
 		}
 	}
 	if value := strings.TrimSpace(values["NECA_WEB_IDLE_TIMEOUT"]); value != "" {
@@ -132,6 +138,9 @@ func (w WebConfig) Validate() error {
 			return usagef("Web 配置", "web.listen 必须绑定回环地址（127.0.0.1/::1），实际为 %q", host)
 		}
 	}
+	if w.SessionEpoch < 0 {
+		return usagef("Web 配置", "web.sessionEpoch 不能为负数: %d", w.SessionEpoch)
+	}
 	if _, err := w.IdleTimeout(); err != nil {
 		return usagef("Web 配置", "%v", err)
 	}
@@ -153,12 +162,13 @@ func (w WebConfig) Validate() error {
 
 // webFileConfig 是 JSON 文件中的 web 对象；布尔值用指针区分“未设置”和 false。
 type webFileConfig struct {
-	Enabled     *bool                `json:"enabled,omitempty"`
-	Listen      string               `json:"listen,omitempty"`
-	ReadOnly    *bool                `json:"readOnly,omitempty"`
-	IdleTimeout string               `json:"idleTimeout,omitempty"`
-	AdminCNs    []string             `json:"adminCNs,omitempty"`
-	Passkey     webPasskeyFileConfig `json:"passkey,omitempty"`
+	Enabled      *bool                `json:"enabled,omitempty"`
+	Listen       string               `json:"listen,omitempty"`
+	ReadOnly     *bool                `json:"readOnly,omitempty"`
+	SessionEpoch int                  `json:"sessionEpoch,omitempty"`
+	IdleTimeout  string               `json:"idleTimeout,omitempty"`
+	AdminCNs     []string             `json:"adminCNs,omitempty"`
+	Passkey      webPasskeyFileConfig `json:"passkey,omitempty"`
 }
 
 type webPasskeyFileConfig struct {
@@ -179,6 +189,7 @@ func webConfigFromFile(file webFileConfig) WebConfig {
 	if file.ReadOnly != nil {
 		cfg.ReadOnly = *file.ReadOnly
 	}
+	cfg.SessionEpoch = file.SessionEpoch
 	if strings.TrimSpace(file.IdleTimeout) != "" {
 		cfg.IdleTimeoutRaw = strings.TrimSpace(file.IdleTimeout)
 	}
@@ -203,11 +214,12 @@ func webFileFromConfig(cfg WebConfig) webFileConfig {
 	passkeyEnabled := cfg.Passkey.Enabled
 	adminCNs := append([]string{}, cfg.AdminCNs...)
 	return webFileConfig{
-		Enabled:     &enabled,
-		Listen:      cfg.Listen,
-		ReadOnly:    &readOnly,
-		IdleTimeout: cfg.IdleTimeoutRaw,
-		AdminCNs:    adminCNs,
+		Enabled:      &enabled,
+		Listen:       cfg.Listen,
+		ReadOnly:     &readOnly,
+		SessionEpoch: cfg.SessionEpoch,
+		IdleTimeout:  cfg.IdleTimeoutRaw,
+		AdminCNs:     adminCNs,
 		Passkey: webPasskeyFileConfig{
 			Enabled: &passkeyEnabled,
 			RPID:    cfg.Passkey.RPID,

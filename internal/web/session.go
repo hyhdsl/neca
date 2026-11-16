@@ -31,12 +31,14 @@ type sessionClaims struct {
 	LastSeen  int64  `json:"last"`
 	ExpiresAt int64  `json:"exp"`
 	ID        string `json:"jti"`
+	Epoch     int64  `json:"epoch"`
 	ClientCN  string `json:"cn,omitempty"`
 }
 
 type sessionManager struct {
 	secret   []byte
 	idle     atomic.Int64
+	epoch    atomic.Int64
 	absolute time.Duration
 	now      func() time.Time
 
@@ -60,7 +62,7 @@ func (m *sessionManager) issue(clientCN string) (string, sessionClaims, error) {
 	now := m.now().UTC()
 	claims := sessionClaims{
 		IssuedAt: now.Unix(), LastSeen: now.Unix(),
-		ExpiresAt: now.Add(m.absolute).Unix(), ID: randomToken(16), ClientCN: clientCN,
+		ExpiresAt: now.Add(m.absolute).Unix(), ID: randomToken(16), Epoch: m.epoch.Load(), ClientCN: clientCN,
 	}
 	token, err := m.sign(claims)
 	return token, claims, err
@@ -105,11 +107,23 @@ func (m *sessionManager) SetIdle(idle time.Duration) {
 	m.idle.Store(int64(idle))
 }
 
+// SetEpoch 更新会话代际；不匹配的旧 Cookie 立即失效。
+func (m *sessionManager) SetEpoch(epoch int64) {
+	m.epoch.Store(epoch)
+}
+
+func (m *sessionManager) Epoch() int64 {
+	return m.epoch.Load()
+}
+
 // validate 校验签名、绝对上限、空闲超时与登出撤销表。
 func (m *sessionManager) validate(token string) (sessionClaims, error) {
 	claims, err := m.parse(token)
 	if err != nil {
 		return sessionClaims{}, err
+	}
+	if claims.Epoch != m.epoch.Load() {
+		return sessionClaims{}, errSessionExpired
 	}
 	now := m.now().UTC().Unix()
 	if claims.ExpiresAt <= now || claims.IssuedAt <= 0 || claims.LastSeen <= 0 {

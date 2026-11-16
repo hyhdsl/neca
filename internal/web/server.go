@@ -128,6 +128,7 @@ func New(opts Options) (*Server, error) {
 	}
 	server.readOnlyFlag.Store(opts.Config.Web.ReadOnly)
 	server.idleTimeoutNanos.Store(int64(idle))
+	server.sessions.SetEpoch(int64(opts.Config.Web.SessionEpoch))
 	return server, nil
 }
 
@@ -161,6 +162,7 @@ func (s *Server) Reload(cfg *core.Config) error {
 	s.idleTimeoutNanos.Store(int64(idle))
 	if s.sessions != nil {
 		s.sessions.SetIdle(idle)
+		s.sessions.SetEpoch(int64(cfg.Web.SessionEpoch))
 	}
 	return nil
 }

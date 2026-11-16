@@ -68,6 +68,7 @@ Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🧱 [M9 refactor plan](docs/REFACTOR-PLAN.md) | Add/remove/modify plan, extension interfaces and feature ideas |
 | 🔎 [M9.1 command inventory](docs/M9.1-COMMAND-INVENTORY.md) | Current commands, migration table, routes and confirmation matrix |
 | 🗺️ [Milestones](docs/MILESTONES.md) | Goals, M9–M14 and open decisions |
+| 🧪 [v1.0 stability contract](docs/STABILITY.md) | Stable scope, RC flow, freeze rules and release gates |
 | 📜 [Historical development doc](docs/neca-development.md) | Historical architecture, CLI contract and acceptance records |
 | 🤖 [AI disclosure](AI-DISCLOSURE.md) | AI scope and acceptance boundaries |
 
@@ -83,9 +84,9 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 ## 📌 Status
 
-- **Current release**: v0.5.0 (M9 command migration; `cert`/`pki`/`trash` namespaces; old commands removed)
-- **Completed**: M0–M8 (CLI, web, root helper, docs and release automation, operational hardening)
-- **Next**: **M9 command/control-plane refactor** (unified command standard; backend/Web/helper origins; v0.5.0 breaking) → M10 security operations (lock/lockdown, export switch, backup/restore) → M11 trash/settings → M12 maintainability → M13 public access, M14 OpenAPI long-term deferred
+- **Current release**: v0.5.0; **v1.0.0-rc.1 candidate** is in stabilization (not a stable release)
+- **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
+- **Next**: v1.0.0-rc.1 upgrade/rollback validation → v1.0.0; M13 public access later, M14 OpenAPI long-term deferred
 - **Production**: v0.4.1 still runs; migrate commands and back up config/PKI before upgrading to v0.5.0
 
 ## ⚖️ License and acknowledgements

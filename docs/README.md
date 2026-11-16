@@ -9,6 +9,7 @@
 | [M9.1 命令盘点](M9.1-COMMAND-INVENTORY.md) | 当前 CLI/legacy/Web/helper 清单、目标命令树、迁移与确认矩阵 |
 | [里程碑与目标](MILESTONES.md) | 重新评估的十项建议、M9–M14 路线、用户决策清单 |
 | [发布检查清单](RELEASE-CHECKLIST.md) | 发布前、升级演练、发布、发布后与回滚 |
+| [v1.0 稳定化契约](STABILITY.md) | 稳定/非稳定范围、RC 流程、冻结规则与发布门槛 |
 | [历史开发文档](neca-development.md) | 历史架构、CLI 契约、CI/CD 与验收记录（深度参考，不再是最新状态来源） |
 | [Web 面板设计评估](web-panel.md) | M6 只读/写边界、权限、VPN/mTLS、UI、SQLite 迁移、lite + neca-web 面板包与仓库边界评估（历史设计） |
 | [Web 面板开发文档](web-panel-development.md) | M6 实施规格与 M6a/M6b 记录：组件、CLI、会话、web-secrets、Docker 与验收（历史实施记录） |

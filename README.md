@@ -66,6 +66,7 @@ neca web readonly off
 | 🧱 [M9 重构计划](docs/REFACTOR-PLAN.md) | 增删改清单、扩展接口与新功能建议 |
 | 🔎 [M9.1 命令盘点](docs/M9.1-COMMAND-INVENTORY.md) | 当前命令、迁移表、路由与确认矩阵 |
 | 🗺️ [里程碑](docs/MILESTONES.md) | 开发目标、M9–M14 与待决策事项 |
+| 🧪 [v1.0 稳定化契约](docs/STABILITY.md) | 稳定范围、RC 流程、冻结规则与发布门槛 |
 | ✅ [发布检查清单](docs/RELEASE-CHECKLIST.md) | 发布、升级演练与回滚检查 |
 | 📜 [历史开发文档](docs/neca-development.md) | 历史架构、CLI 契约与验收记录 |
 | 🤖 [AI 披露](AI-DISCLOSURE.md) | AI 参与范围与验收边界 |
@@ -82,9 +83,9 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 状态
 
-- **当前正式版**：v0.5.0（M9 命令迁移；`cert`/`pki`/`trash` 命名空间；旧命令已移除）
+- **当前发布**：v0.5.0；**v1.0.0-rc.1 候选**正在稳定化（未视为正式版）
 - **已完成**：M0–M12（CLI、Web、root helper、M9 命令迁移、M10 安全运维、M11 回收站/设置、M12 可维护性/可观测性）
-- **下一步**：M13 公网访问安全（后置）→ M14 OpenAPI（长期搁置）
+- **下一步**：v1.0.0-rc.1 升级/回滚验证 → v1.0.0；M13 公网访问后置，M14 OpenAPI 长期搁置
 - **生产环境**：v0.4.1 仍在运行；升级到 v0.5.0 前先按迁移表切换命令并备份配置/PKI
 
 ## ⚖️ 许可与致谢

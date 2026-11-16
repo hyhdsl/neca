@@ -177,6 +177,12 @@ docker compose run -T --rm dev make check-docs
 - 新功能建议（待排序）：到期/状态概览、一键备份恢复、审计导出/轮转、CLI completion、配置 schema 迁移、证书导入/链验证。
 - 不做：多租户/RBAC、默认公网、Passkey 实际登录、OpenAPI 稳定契约。
 
+## 9.1 M9.2 进展
+
+- 已落地：<code>Surface</code>、<code>Origin</code>、<code>ConfirmationMode</code>、Command 元数据字段、默认值/校验、独立 <code>Confirmer</code> 接口与 TTY 实现；单测覆盖默认 N、yes、cancel、缺失 I/O、元数据校验。
+- 未完成：内置命令的实际元数据标注、审计 origin 接线、<code>--yes</code> 解析、Web 高风险确认实现。
+- 当前对旧命令行为无变化；M9.3 才进入 Web/helper 模块化与命令迁移。
+
 ## 10. 当前路线
 
 M9 命令/边界重构（v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性与可观测性 → M13 公网访问 → M14 OpenAPI 长期搁置。详见 [MILESTONES.md](MILESTONES.md)。

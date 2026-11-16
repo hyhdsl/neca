@@ -79,7 +79,8 @@ func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 
 	registry := newBuiltinRegistry()
 	env := Env{
-		Stdin: stdin, Stdout: stdout, Stderr: stderr,
+		Origin: OriginCLI,
+		Stdin:  stdin, Stdout: stdout, Stderr: stderr,
 		JSON: opts.JSON, DryRun: opts.DryRun, Quiet: opts.Quiet,
 		Lang: lang, Started: time.Now(),
 	}

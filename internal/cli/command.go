@@ -17,6 +17,8 @@ import (
 // 命令实现不得直接读写 os.Stdout / os.Args：I/O 全部从 Env 取，
 // 这样单元测试、未来的 --json 模式以及 Web 端复用都不必修改命令本身。
 type Env struct {
+	Origin Origin // 命令来源：cli/web/helper；默认 cli
+
 	Stdin  io.Reader // 交互向导输入
 	Stdout io.Writer // 正常输出
 	Stderr io.Writer // 错误与告警
@@ -35,12 +37,47 @@ type Env struct {
 //
 // 新增子命令时只实现 Run 并注册，不需要修改 Run 函数里的分发 switch，
 // 也不需要手写帮助文本——帮助由注册表自动生成。
+type Surface string
+
+const (
+	SurfaceBackend Surface = "backend"
+	SurfaceWeb     Surface = "web"
+	SurfaceShared  Surface = "shared"
+)
+
+// Origin 是命令执行来源，供审计与策略使用。
+type Origin string
+
+const (
+	OriginCLI    Origin = "cli"
+	OriginWeb    Origin = "web"
+	OriginHelper Origin = "helper"
+)
+
+// ConfirmationMode 声明命令是否需要交互式确认。
+type ConfirmationMode string
+
+const (
+	ConfirmationNone ConfirmationMode = "none"
+	ConfirmationYN   ConfirmationMode = "yn-default-no"
+)
+
+// Command 是一个可注册的 CLI 子命令。
+//
+// 新增子命令时只实现 Run 并注册；M9.2 增加的元数据先用于策略/审计，
+// 不改变现有命令行为。
 type Command struct {
-	Name       string        // 子命令名，例如 "list"
-	Aliases    []string      // 兼容别名，例如 {"ls"}；不得与任何命令名/别名冲突
-	Summary    string        // 帮助列表里的一句话说明（默认语言）
-	SummaryKey string        // 可选 i18n key；内置命令由注册表设置
-	Run        func(Env) int // 返回进程退出码（见 ExitOK 等常量）
+	Name         string           // 子命令名，例如 "list"
+	Aliases      []string         // 兼容别名；不得与任何命令名/别名冲突
+	Summary      string           // 帮助列表里的一句话说明（默认语言）
+	SummaryKey   string           // 可选 i18n key；内置命令由注册表设置
+	Group        string           // 功能分组，例如 cert/pki/web/trash
+	Surface      Surface          // backend/web/shared；空值按 backend
+	Write        bool             // 是否修改持久状态（PKI/config/trash）
+	Confirmation ConfirmationMode // none / yn-default-no；空值按 none
+	AuditEvent   string           // 审计事件名；空值表示沿用命令名
+	Deprecated   bool             // 是否已废弃
+	Run          func(Env) int    // 返回进程退出码（见 ExitOK 等常量）
 }
 
 // Registry 保存子命令表，是 CLI 的扩展点。
@@ -83,13 +120,41 @@ func (r *Registry) Register(cmd Command) error {
 		}
 	}
 
-	copied := cmd
+	normalized, err := normalizeCommand(cmd)
+	if err != nil {
+		return err
+	}
+	copied := normalized
 	r.byName[copied.Name] = &copied
 	for _, alias := range copied.Aliases {
 		r.byName[alias] = &copied
 	}
 	r.order = append(r.order, &copied)
 	return nil
+}
+
+func normalizeCommand(cmd Command) (Command, error) {
+	if cmd.Surface == "" {
+		cmd.Surface = SurfaceBackend
+	}
+	switch cmd.Surface {
+	case SurfaceBackend, SurfaceWeb, SurfaceShared:
+	default:
+		return Command{}, fmt.Errorf("cli: command %q has invalid surface %q", cmd.Name, cmd.Surface)
+	}
+
+	if cmd.Confirmation == "" {
+		cmd.Confirmation = ConfirmationNone
+	}
+	switch cmd.Confirmation {
+	case ConfirmationNone, ConfirmationYN:
+	default:
+		return Command{}, fmt.Errorf("cli: command %q has invalid confirmation %q", cmd.Name, cmd.Confirmation)
+	}
+	if cmd.Confirmation == ConfirmationYN && !cmd.Write {
+		return Command{}, fmt.Errorf("cli: command %q requests confirmation for a read-only command", cmd.Name)
+	}
+	return cmd, nil
 }
 
 // MustRegister 注册命令，冲突时 panic；仅用于内置命令这类静态注册。

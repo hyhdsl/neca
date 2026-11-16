@@ -85,6 +85,7 @@
 
 - [x] **M9.1 命令盘点与迁移表**：[M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md) 已完成并确认：downloads/package 归属、Y/N 范围、CSV 文件名、确认函数接口。
 - [ ] **M9.2 命令元数据/确认/审计**：CommandSpec、Surface、Confirmer、AuditOrigin；保持业务行为不变。
+  - 基础类型/Confirmer 已落地并有单测；命令注解、审计接线、--yes 解析仍待完成。
 - 建立命令元数据：名称、别名、来源（backend/web/helper）、是否写操作、确认级别、JSON、审计、废弃状态。
 - 新命令标准：
   - <code>neca cert issue|list|verify|reissue|revoke|unrevoke|trash|export|platform</code>（不再提供直接物理 delete；物理 purge 走 <code>neca trash purge</code>）

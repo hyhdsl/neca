@@ -56,7 +56,7 @@
 
 - 后台二次确认统一交互式 <b>Y/N，默认 N</b>；不再使用输入 <code>PURGE &lt;CN&gt;</code> 的二次确认方式。
 - 高风险设置无论后台还是 Web，都必须 Y/N 二次确认；Web 还需重新认证、CSRF、审计。
-- 交互式确认与自动化脚本存在冲突：是否允许 <code>--yes</code> 等非交互逃生口，仍需决策。
+- 自动化允许显式 <code>--yes</code>/<code>-y</code> 跳过 Y/N；后台命令必须记录该信号与审计事件，不能隐式跳过。
 - 以后 commit：标题默认中文，正文中文 + English 两段；不重写历史 commit。
 
 ## 5. 十项建议评估（更新版）
@@ -78,6 +78,8 @@
 
 ### M9：命令与边界重构（最高优先级）
 
+详细增删改、接口与扩展点见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md)。
+
 **目标**：在加新安全功能前，先统一命令/控制面，避免旧接口和新接口并存。
 
 - 盘点 legacy 脚本命令、当前 CLI 命令、Web 路由、helper 操作。
@@ -95,7 +97,7 @@
 
 - <code>neca web lock</code>：设置 <code>readOnly=true</code>，递增 <code>web.sessionEpoch</code>，SIGHUP；旧会话全部失效，服务保留。
 - <code>neca web lockdown</code>：只停止明确命名的 Web + helper 服务/容器；不触碰 strongSwan/SSH。
-- <code>neca web export on/off</code>：默认关闭；导出 issued/revoked 两类 CSV 简易名单；Web/API 守卫；审计。
+- <code>neca web export on/off</code>：默认关闭；导出 issued.csv / revoked.csv 两类简易名单；Web/API 守卫；审计。
 - 备份/恢复与回滚演练：PKI、config、web-secrets、clients、meta、downloads。
 - 出口：两种紧急命令可审计、可确认；导出默认关闭；恢复演练通过。
 
@@ -103,7 +105,7 @@
 
 - Web 设置页：低风险偏好（语言/显示）可直接改；高风险安全设置默认只读展示。
 - 后台开关 <code>web.allowHighRiskSettings</code> 默认关闭；开启后 Web 高风险修改仍必须 Y/N 二次确认、重新认证、CSRF、审计；建议白名单仅 readOnly/idleTimeout/导出。
-- 证书回收站：Web 仅移入；后台 <code>neca trash list|restore|purge</code>；默认不限时；恢复已吊销证书保留吊销状态；purge 需要一次 Y/N 确认（默认 N），不再要求输入 CN；不承诺安全擦除。
+- 证书回收站：Web 仅移入；后台 <code>neca trash list|restore|purge</code>；默认不限时；恢复已吊销证书保留吊销状态；purge 一次 Y/N（默认 N，<code>--yes</code> 可跳过）且不输入 CN；不承诺安全擦除。
 - 出口：删除/恢复/清理有测试；私钥访问、保留期和恢复规则明确。
 
 ### M12：可维护性与可观测性
@@ -130,22 +132,32 @@
 - **文档**：中文主版本；英文版本另行统一更新。
 - **测试**：每个新功能都要有“关闭/回退”路径；破坏性操作需要故障注入和恢复测试。
 
-## 7.1 需求冲突与解释
+## 7.1 已解决的冲突
 
-- **冲突 1：purge 的二次确认**。第 1 条要求所有后台二次确认使用 Y/N；第 4 条说“不采用二次确认的方法”。当前按“仅取消输入 <code>PURGE &lt;CN&gt;</code>，保留一次 Y/N（默认 N）”解释。若你的意思是 purge 完全无确认，则与第 1 条冲突，必须明确。
-- **冲突 2：交互式确认与自动化**。Y/N 会阻塞脚本/JSON/无人值守；必须决定是否允许非交互式显式确认（如 <code>--yes</code>）以及其审计要求。
-- **冲突 3：delete 命名**。旧命令无过渡期，但回收站模型下不应再有直接物理 delete；建议 <code>neca cert trash</code> 移入回收站，<code>neca trash purge</code> 后台物理清理。
+- purge：不再输入 <code>PURGE &lt;CN&gt;</code>，保留一次 Y/N（默认 N）；自动化可用显式 <code>--yes</code> 跳过并审计。
+- Y/N 与自动化：通过显式 <code>--yes</code> 解决；不接受隐式跳过。
+- delete 命名：取消直接物理 delete，使用 <code>neca cert trash</code> 与 <code>neca trash purge</code>。
+- 仍有安全注意：交互式确认只能降低误操作，不能替代备份与回滚。
 
-## 8. 推荐默认与仍需确认
+## 8. 已确认默认与后续功能选择
 
-按以下默认执行；用户可在下一轮纠正：
+以下已确认并作为实现基线：
 
-1. 紧急命令采用 **<code>lock</code> / <code>lockdown</code>**，均交互式 Y/N（默认 N）。
-2. 新命令采用 <code>neca cert ...</code> 命名空间；v0.5.0 直接移除旧命令，不设过渡期；<code>neca cert trash</code> 移入回收站，物理清理走 <code>neca trash purge</code>。
-3. 高风险设置开关名 <code>web.allowHighRiskSettings</code>；建议白名单仅 readOnly / idleTimeout / 导出；adminCNs、passkey、helper 永远后台-only。
-4. 回收站命令 <code>neca trash list|restore|purge</code>；配置键 <code>trash.retention</code>（默认 0=不限时）；purge 一次 Y/N（默认 N），不要求输入 CN。
-5. 导出仅 CSV，区分 issued/revoked；建议列为 CN、状态、序列号、到期时间、平台。
-6. 大重构完成后版本 **v0.5.0**；旧命令不保留，回滚使用 v0.4.1 镜像/配置备份。
-7. 公网访问继续后置；OpenAPI 长期搁置，不排期。
+1. 紧急命令 **<code>lock</code> / <code>lockdown</code>**，交互式 Y/N（默认 N）。
+2. 新命令 **<code>neca cert ...</code>**；v0.5.0 直接移除旧命令；<code>neca cert trash</code> 移入回收站，<code>neca trash purge</code> 后台清理。
+3. 高风险开关 <code>web.allowHighRiskSettings</code> 默认关闭；白名单 readOnly / idleTimeout / 导出；adminCNs、passkey、helper 永远后台-only；前后台 Y/N。
+4. 回收站 <code>neca trash list|restore|purge</code>；<code>trash.retention</code> 默认 0=不限时；purge 一次 Y/N，<code>--yes</code> 可自动化跳过；不输入 CN。
+5. 导出仅 CSV，区分 issued/revoked；建议列 CN、状态、序列号、到期时间、平台。
+6. 大重构版本 **v0.5.0**；旧命令不保留；回滚使用 v0.4.1 镜像/配置备份。
+7. 公网访问后置；OpenAPI 长期搁置。
 
-仍需确认：purge 是否允许完全无确认（与统一 Y/N 冲突）、自动化是否允许 <code>--yes</code>、<code>neca cert trash</code> 命名是否接受。
+后续新增功能优先级（需你选择）：
+
+- A. 证书到期/状态概览（只读）
+- B. 一键备份/恢复（高价值）
+- C. 审计日志导出/轮转
+- D. CLI shell completion
+- E. 配置 schema 版本/迁移
+- F. 证书导入/链验证（只读）
+
+详见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md) 第 6 节。

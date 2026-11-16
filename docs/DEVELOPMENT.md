@@ -86,7 +86,8 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 
 - 后台二次确认统一为交互式 **Y/N，默认 N**；不再采用输入 <code>PURGE &lt;CN&gt;</code> 的方式。
 - 高风险设置前后台均需 Y/N 二次确认；Web 还需重新认证、CSRF、审计。
-- Y/N 与 JSON/非交互自动化冲突；是否允许 <code>--yes</code> 仍需决策（见 MILESTONES 冲突说明）。
+- 自动化允许显式 <code>--yes</code>/<code>-y</code> 跳过 Y/N；必须记录该信号与审计事件，不能隐式跳过。
+- 后台高危操作默认 Y/N，默认 N；Web 高风险设置同样 Y/N，且需重新认证、CSRF、审计。
 - Web 只能把证书移入回收站；物理 purge 只能后台。
 
 **回滚方法**：升级前备份配置/PKI，保留 v0.4.1 镜像 tar 和旧 compose；v0.5.0 出问题时停止新 Web/helper，加载 v0.4.1 镜像、恢复配置备份和 compose，验证索引/CRL 哈希与健康检查后再恢复流量。不得用“反向停止所有服务”方式；只操作明确命名的 Web/helper。
@@ -94,6 +95,8 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 ### 4.6 扩展/移除
 
 CLI 已有注册表（<code>internal/cli/command.go</code>），当前新增命令成本低；Web 路由集中在 <code>Server.Handler</code>，页面/API handler 集中在 <code>pages.go</code>/<code>api.go</code>，缺少 feature flag 时移除功能较费力。
+
+详细的增删改、扩展接口与新功能建议见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md)。
 
 重构方向：
 
@@ -110,7 +113,7 @@ CLI 已有注册表（<code>internal/cli/command.go</code>），当前新增命�
 - 写操作只经 helper 白名单；Web 端仍需双重检查。
 - 低风险偏好（语言/显示）可 Web 修改；高风险设置默认后台-only，Web 只读展示。
 - 高风险设置开关 <code>web.allowHighRiskSettings</code> 默认 false；即使开启，前后台修改都必须 Y/N 二次确认、重新认证、CSRF、审计。建议白名单仅 readOnly/idleTimeout/导出。
-- 删除先移入回收站；物理 purge 只能后台，并执行一次 Y/N（默认 N）确认；不承诺 SSD/快照/备份上的安全擦除；恢复已吊销证书保留吊销状态。
+- 删除先移入回收站；物理 purge 只能后台，执行一次 Y/N（默认 N），自动化可显式 <code>--yes</code>；不承诺 SSD/快照/备份上的安全擦除；恢复已吊销证书保留吊销状态。
 - 紧急命令只允许后台 root；<code>lock</code> 设置 readOnly + 递增 <code>web.sessionEpoch</code> + SIGHUP，旧会话失效但服务保留；<code>lockdown</code> 只停止明确命名的 Web/helper 服务或容器，不触碰 SSH/strongSwan。
 - Web 导出默认关闭，仅 CSV 简易名单，区分 issued/revoked（CN/状态/序列号/到期时间/平台），不导出私钥/p12/zip。
 - 生产默认 OpenSSH 本地转发；公网访问需要单独的 TLS/mTLS 或 Tunnel/Access 设计。
@@ -164,11 +167,12 @@ docker compose run -T --rm dev make check-docs
 - 用户帮助：[help/README.md](help/README.md)
 - AI 披露：[AI-DISCLOSURE.md](../AI-DISCLOSURE.md)
 
-## 9. 冲突与待确认
+## 9. 扩展接口与新功能
 
-- purge 的统一 Y/N 与“不采用二次确认”存在表述冲突：当前按“取消输入 PURGE CN，保留一次 Y/N（默认 N）”执行；若完全无确认，需要用户明确。
-- Y/N 会阻塞 JSON/自动化；是否允许 `--yes` 需要决策。
-- 回收站物理清理命名建议 `neca cert trash` + `neca trash purge`，不保留 `neca cert delete`。
+- 详细设计：[REFACTOR-PLAN.md](REFACTOR-PLAN.md)。
+- 保留接口：CommandSpec / Surface / ConfirmationPolicy / AuditOrigin / Feature / HelperOperation / SessionEpochStore / ServiceController / TrashStore / Exporter / SettingsService。
+- 新功能建议（待排序）：到期/状态概览、一键备份恢复、审计导出/轮转、CLI completion、配置 schema 迁移、证书导入/链验证。
+- 不做：多租户/RBAC、默认公网、Passkey 实际登录、OpenAPI 稳定契约。
 
 ## 10. 当前路线
 

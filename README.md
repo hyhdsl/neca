@@ -63,6 +63,7 @@ neca web readonly off
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | 实验性接口说明 |
 | 🐳 [部署与回滚](docs/deploy.md) | Docker、权限、备份与恢复 |
 | 🧑‍💻 [开发指南](docs/DEVELOPMENT.md) | 当前架构、扩展方式、测试与文档地图 |
+| 🧱 [M9 重构计划](docs/REFACTOR-PLAN.md) | 增删改清单、扩展接口与新功能建议 |
 | 🗺️ [里程碑](docs/MILESTONES.md) | 开发目标、M9–M14 与待决策事项 |
 | 📜 [历史开发文档](docs/neca-development.md) | 历史架构、CLI 契约与验收记录 |
 | 🤖 [AI 披露](AI-DISCLOSURE.md) | AI 参与范围与验收边界 |

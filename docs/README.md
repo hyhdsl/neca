@@ -5,7 +5,8 @@
 | 文档 | 内容 |
 |---|---|
 | [开发指南（当前）](DEVELOPMENT.md) | 当前架构、CLI/Web 扩展方式、测试、配置与文档地图 |
-| [里程碑与目标](MILESTONES.md) | 重新评估的十项建议、M9–M13 路线、用户决策清单 |
+| [M9 重构计划](REFACTOR-PLAN.md) | 命令/控制面增删改、扩展接口、新功能建议与实施顺序 |
+| [里程碑与目标](MILESTONES.md) | 重新评估的十项建议、M9–M14 路线、用户决策清单 |
 | [历史开发文档](neca-development.md) | 历史架构、CLI 契约、CI/CD 与验收记录（深度参考，不再是最新状态来源） |
 | [Web 面板设计评估](web-panel.md) | M6 只读/写边界、权限、VPN/mTLS、UI、SQLite 迁移、lite + neca-web 面板包与仓库边界评估（历史设计） |
 | [Web 面板开发文档](web-panel-development.md) | M6 实施规格与 M6a/M6b 记录：组件、CLI、会话、web-secrets、Docker 与验收（历史实施记录） |

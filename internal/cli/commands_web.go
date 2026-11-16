@@ -65,15 +65,16 @@ func runWebStatus(env Env) int {
 	helperText := helperSummary(helperStatus, helperErr)
 	if env.JSON {
 		data := map[string]any{
-			"enabled":       cfg.Web.Enabled,
-			"listen":        cfg.Web.Listen,
-			"readOnly":      cfg.Web.ReadOnly,
-			"sessionEpoch":  cfg.Web.SessionEpoch,
-			"exportEnabled": cfg.Web.ExportEnabled,
-			"writable":      !cfg.Web.ReadOnly && helperErr == nil && helperStatus != nil && !helperStatus.ReadOnly,
-			"idleTimeout":   cfg.Web.IdleTimeoutRaw,
-			"absoluteLimit": core.AbsoluteWebSessionTimeout.String(),
-			"adminCNs":      cfg.Web.AdminCNs,
+			"enabled":               cfg.Web.Enabled,
+			"listen":                cfg.Web.Listen,
+			"readOnly":              cfg.Web.ReadOnly,
+			"sessionEpoch":          cfg.Web.SessionEpoch,
+			"exportEnabled":         cfg.Web.ExportEnabled,
+			"allowHighRiskSettings": cfg.Web.AllowHighRiskSettings,
+			"writable":              !cfg.Web.ReadOnly && helperErr == nil && helperStatus != nil && !helperStatus.ReadOnly,
+			"idleTimeout":           cfg.Web.IdleTimeoutRaw,
+			"absoluteLimit":         core.AbsoluteWebSessionTimeout.String(),
+			"adminCNs":              cfg.Web.AdminCNs,
 			"passkey": map[string]any{
 				"enabled": cfg.Web.Passkey.Enabled,
 				"rpId":    cfg.Web.Passkey.RPID,

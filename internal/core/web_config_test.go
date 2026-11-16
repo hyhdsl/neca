@@ -121,6 +121,13 @@ func TestUpdateWebConfigPreservesDocument(t *testing.T) {
 	}
 }
 
+func TestWebAllowHighRiskSettings(t *testing.T) {
+	cfg := parseWebConfigValues(map[string]string{"NECA_WEB_ALLOW_HIGH_RISK_SETTINGS": "true"})
+	if !cfg.AllowHighRiskSettings {
+		t.Fatal("allowHighRiskSettings was not parsed")
+	}
+}
+
 func TestUpdateWebLockAndExport(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "neca.json")

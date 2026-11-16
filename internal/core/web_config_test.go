@@ -144,6 +144,20 @@ func TestUpdateWebSettingsWhitelist(t *testing.T) {
 	}
 }
 
+func TestWebFeatureFlags(t *testing.T) {
+	cfg := defaultWebConfig()
+	if !cfg.FeatureEnabled("trash") || !cfg.FeatureEnabled("settings") {
+		t.Fatal("features should default on")
+	}
+	cfg.Features = map[string]bool{"trash": false, "settings": true}
+	if cfg.FeatureEnabled("trash") {
+		t.Fatal("trash should be disabled")
+	}
+	if !cfg.FeatureEnabled("settings") || !cfg.FeatureEnabled("unknown") {
+		t.Fatal("explicit/absent feature behavior is wrong")
+	}
+}
+
 func TestWebAllowHighRiskSettings(t *testing.T) {
 	cfg := parseWebConfigValues(map[string]string{"NECA_WEB_ALLOW_HIGH_RISK_SETTINGS": "true"})
 	if !cfg.AllowHighRiskSettings {

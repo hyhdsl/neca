@@ -50,6 +50,10 @@
     "readOnly": true,
     "sessionEpoch": 0,
     "exportEnabled": false,
+    "features": {
+      "trash": true,
+      "settings": true
+    },
     "allowHighRiskSettings": false,
     "idleTimeout": "30m",
     "adminCNs": [],

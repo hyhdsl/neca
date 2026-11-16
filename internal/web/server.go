@@ -354,6 +354,8 @@ type pageData struct {
 	Platforms       string
 	P12Profile      string
 	Web             *core.WebConfig
+	TrashEnabled    bool
+	SettingsEnabled bool
 	TrashRetention  string
 }
 
@@ -373,6 +375,8 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, name string, dat
 
 func (s *Server) renderStatus(w http.ResponseWriter, r *http.Request, status int, name string, data pageData) {
 	data.ReadOnly = s.readOnly()
+	data.TrashEnabled = s.cfg.Web.FeatureEnabled("trash")
+	data.SettingsEnabled = s.cfg.Web.FeatureEnabled("settings")
 	data.Version = version.Get().Version
 	data.Path = r.URL.RequestURI()
 	tr := s.translatorFor(r)

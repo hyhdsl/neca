@@ -38,10 +38,12 @@
         <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
         <button type="submit" class="button secondary" data-testid="reissue">{{$.T "web.detail.reissue"}}</button>
       </form>
+      {{if $.TrashEnabled}}
       <form method="post" action="/certs/{{.CN}}/trash" class="inline-form">
         <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
         <button type="submit" class="button danger" data-testid="trash">{{$.T "web.detail.trash"}}</button>
       </form>
+      {{end}}
     </div>
     {{else}}
     <p class="muted small">{{$.T "web.detail.readonly"}}</p>

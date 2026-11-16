@@ -83,8 +83,8 @@ docker compose run -T --rm dev make test     # go test -race ./...
 ## 📌 状态
 
 - **当前正式版**：v0.5.0（M9 命令迁移；`cert`/`pki`/`trash` 命名空间；旧命令已移除）
-- **已完成**：M0–M8（CLI、Web、root helper、文档与发布自动化、运维加固）
-- **下一步**：**M9 命令/边界重构**（统一命令标准、区分后台/Web/helper，v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性 → M13 公网访问，M14 OpenAPI 长期搁置
+- **已完成**：M0–M12（CLI、Web、root helper、M9 命令迁移、M10 安全运维、M11 回收站/设置、M12 可维护性/可观测性）
+- **下一步**：M13 公网访问安全（后置）→ M14 OpenAPI（长期搁置）
 - **生产环境**：v0.4.1 仍在运行；升级到 v0.5.0 前先按迁移表切换命令并备份配置/PKI
 
 ## ⚖️ 许可与致谢

@@ -169,15 +169,16 @@
 
 - ✅ 新增 [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md)：发布前、升级演练、发布、发布后、回滚与签字。
 
-#### M12.4 功能开关与后续
+#### M12.4 功能开关（已完成）
 
-- 现有开关：<code>web.exportEnabled</code>、<code>web.allowHighRiskSettings</code>、<code>trash.retention</code>。
-- [ ] 通用 feature flag 映射/回退开关（按需）。
-- 出口：不改变默认行为；新增功能可通过开关回退。
+- ✅ 新增 <code>web.features</code>（如 <code>trash:false</code>、<code>settings:false</code>），默认全部开启。
+- ✅ 关闭时对应 Web 路由返回 404，导航/按钮隐藏；CLI 不受影响。
+- ✅ 现有 <code>web.exportEnabled</code>、<code>web.allowHighRiskSettings</code>、<code>trash.retention</code> 保留。
+- 功能开关在 Web 启动时注册路由；变更后需重启 Web，SIGHUP 只重载运行参数。
 
-**M12 当前状态**：审计轮转、诊断与发布清单已完成；通用 feature flag 仍待决定。
+**M12 出口**：审计轮转、诊断、发布/回滚清单与通用 feature flag 已完成；默认行为不变。
 
-### M13：公网访问安全（后置）
+### M13：公网访问安全（下一步，后置）
 
 - TLS + mTLS 或 Tunnel/Access；默认仍 OpenSSH；单独威胁建模。
 

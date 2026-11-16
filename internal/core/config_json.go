@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -145,6 +146,9 @@ func (s JSONSource) Load(ctx context.Context) (map[string]string, error) {
 	if cfg.Web.AllowHighRiskSettings {
 		set("NECA_WEB_ALLOW_HIGH_RISK_SETTINGS", "true")
 	}
+	if len(cfg.Web.Features) > 0 {
+		set("NECA_WEB_FEATURES", featureEnv(cfg.Web.Features))
+	}
 	set("NECA_WEB_IDLE_TIMEOUT", cfg.Web.IdleTimeout)
 	if len(cfg.Web.AdminCNs) > 0 {
 		set("NECA_WEB_ADMIN_CNS", strings.Join(cfg.Web.AdminCNs, ","))
@@ -196,6 +200,22 @@ func ReadConfigLanguage(path string) (string, error) {
 	return cfg.Language, nil
 }
 
+func featureEnv(features map[string]bool) string {
+	if len(features) == 0 {
+		return ""
+	}
+	keys := make([]string, 0, len(features))
+	for key := range features {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, key := range keys {
+		parts = append(parts, key+"="+strconv.FormatBool(features[key]))
+	}
+	return strings.Join(parts, ",")
+}
+
 // ConfigSnapshot 返回可安全展示的有效配置（只有路径/开关，无密钥内容）。
 func ConfigSnapshot(cfg *Config) map[string]any {
 	if cfg == nil {
@@ -241,6 +261,7 @@ func ConfigSnapshot(cfg *Config) map[string]any {
 			"readOnly":              cfg.Web.ReadOnly,
 			"sessionEpoch":          cfg.Web.SessionEpoch,
 			"exportEnabled":         cfg.Web.ExportEnabled,
+			"features":              cfg.Web.Features,
 			"allowHighRiskSettings": cfg.Web.AllowHighRiskSettings,
 			"idleTimeout":           cfg.Web.IdleTimeoutRaw,
 			"adminCNs":              cfg.Web.AdminCNs,
@@ -284,6 +305,7 @@ func ConfigEnvMap(cfg *Config) map[string]string {
 		"NECA_WEB_IDLE_TIMEOUT": cfg.Web.IdleTimeoutRaw, "NECA_WEB_SESSION_EPOCH": strconv.Itoa(cfg.Web.SessionEpoch),
 		"NECA_WEB_EXPORT_ENABLED":           strconv.FormatBool(cfg.Web.ExportEnabled),
 		"NECA_WEB_ALLOW_HIGH_RISK_SETTINGS": strconv.FormatBool(cfg.Web.AllowHighRiskSettings),
+		"NECA_WEB_FEATURES":                 featureEnv(cfg.Web.Features),
 		"NECA_WEB_ADMIN_CNS":                strings.Join(cfg.Web.AdminCNs, ","),
 		"NECA_WEB_PASSKEY_ENABLED":          strconv.FormatBool(cfg.Web.Passkey.Enabled),
 		"NECA_WEB_PASSKEY_RPID":             cfg.Web.Passkey.RPID, "NECA_WEB_PASSKEY_RPNAME": cfg.Web.Passkey.RPName,

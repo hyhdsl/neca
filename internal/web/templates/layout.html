@@ -29,7 +29,7 @@
         <a href="/certs" data-testid="nav-certs" {{if eq .Nav "certs"}}aria-current="page"{{end}}>{{.T "web.nav.certs"}}</a>
         {{if .Writable}}<a href="/certs/new" data-testid="nav-issue" {{if eq .Nav "issue"}}aria-current="page"{{end}}>{{.T "web.nav.issue"}}</a>{{end}}
         <a href="/downloads" data-testid="nav-downloads" {{if eq .Nav "downloads"}}aria-current="page"{{end}}>{{.T "web.nav.downloads"}}</a>
-        <a href="/settings" data-testid="nav-settings" {{if eq .Nav "settings"}}aria-current="page"{{end}}>{{.T "web.nav.settings"}}</a>
+        {{if .SettingsEnabled}}<a href="/settings" data-testid="nav-settings" {{if eq .Nav "settings"}}aria-current="page"{{end}}>{{.T "web.nav.settings"}}</a>{{end}}
       </nav>
       <div class="sidebar-footer">
         <span class="mode-badge {{if .Writable}}is-writable{{else}}is-readonly{{end}}" data-testid="readonly-badge">

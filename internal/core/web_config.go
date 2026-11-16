@@ -40,6 +40,7 @@ type WebConfig struct {
 	ReadOnly              bool
 	SessionEpoch          int
 	ExportEnabled         bool
+	Features              map[string]bool
 	AllowHighRiskSettings bool
 	IdleTimeoutRaw        string
 	AdminCNs              []string
@@ -95,6 +96,25 @@ func parseWebConfigValues(values map[string]string) WebConfig {
 			cfg.AllowHighRiskSettings = parsed
 		}
 	}
+	if value := strings.TrimSpace(values["NECA_WEB_FEATURES"]); value != "" {
+		cfg.Features = map[string]bool{}
+		for _, item := range strings.Split(value, ",") {
+			item = strings.TrimSpace(item)
+			if item == "" {
+				continue
+			}
+			name, enabled := item, true
+			if index := strings.IndexByte(item, '='); index >= 0 {
+				name = strings.TrimSpace(item[:index])
+				parsed, err := strconv.ParseBool(strings.TrimSpace(item[index+1:]))
+				if err != nil {
+					continue
+				}
+				enabled = parsed
+			}
+			cfg.Features[name] = enabled
+		}
+	}
 	if value := strings.TrimSpace(values["NECA_WEB_IDLE_TIMEOUT"]); value != "" {
 		cfg.IdleTimeoutRaw = value
 	}
@@ -133,6 +153,18 @@ func (w WebConfig) IdleTimeout() (time.Duration, error) {
 		return 0, fmt.Errorf("web.idleTimeout 必须在 %s–%s 之间: %q", MinWebIdleTimeout, MaxWebIdleTimeout, w.IdleTimeoutRaw)
 	}
 	return timeout, nil
+}
+
+// FeatureEnabled returns true when a feature is absent or explicitly enabled.
+func (w WebConfig) FeatureEnabled(name string) bool {
+	if w.Features == nil {
+		return true
+	}
+	value, ok := w.Features[name]
+	if !ok {
+		return true
+	}
+	return value
 }
 
 // Validate 校验 Web 配置的安全边界。
@@ -179,6 +211,7 @@ type webFileConfig struct {
 	ReadOnly              *bool                `json:"readOnly,omitempty"`
 	SessionEpoch          int                  `json:"sessionEpoch,omitempty"`
 	ExportEnabled         bool                 `json:"exportEnabled,omitempty"`
+	Features              map[string]bool      `json:"features,omitempty"`
 	AllowHighRiskSettings bool                 `json:"allowHighRiskSettings,omitempty"`
 	IdleTimeout           string               `json:"idleTimeout,omitempty"`
 	AdminCNs              []string             `json:"adminCNs,omitempty"`
@@ -206,6 +239,7 @@ func webConfigFromFile(file webFileConfig) WebConfig {
 	cfg.SessionEpoch = file.SessionEpoch
 	cfg.ExportEnabled = file.ExportEnabled
 	cfg.AllowHighRiskSettings = file.AllowHighRiskSettings
+	cfg.Features = file.Features
 	if strings.TrimSpace(file.IdleTimeout) != "" {
 		cfg.IdleTimeoutRaw = strings.TrimSpace(file.IdleTimeout)
 	}
@@ -235,6 +269,7 @@ func webFileFromConfig(cfg WebConfig) webFileConfig {
 		ReadOnly:              &readOnly,
 		SessionEpoch:          cfg.SessionEpoch,
 		ExportEnabled:         cfg.ExportEnabled,
+		Features:              cfg.Features,
 		AllowHighRiskSettings: cfg.AllowHighRiskSettings,
 		IdleTimeout:           cfg.IdleTimeoutRaw,
 		AdminCNs:              adminCNs,

@@ -18,7 +18,7 @@
 
 **Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
-🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.4.1](https://github.com/hyhdsl/neca/releases/tag/v0.4.1)
+🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.5.0](https://github.com/hyhdsl/neca/releases/tag/v0.5.0)
 
 ## ✨ Features
 
@@ -34,7 +34,7 @@
 Pin the version, dry-run first, then issue:
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v0.4.1
+docker pull ghcr.io/hyhdsl/neca:v0.5.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -83,10 +83,10 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 ## 📌 Status
 
-- **Current release**: v0.4.1 (tag <code>6060c2b</code>; config-directory mount, SIGHUP, helper cache)
+- **Current release**: v0.5.0 (M9 command migration; `cert`/`pki`/`trash` namespaces; old commands removed)
 - **Completed**: M0–M8 (CLI, web, root helper, docs and release automation, operational hardening)
 - **Next**: **M9 command/control-plane refactor** (unified command standard; backend/Web/helper origins; v0.5.0 breaking) → M10 security operations (lock/lockdown, export switch, backup/restore) → M11 trash/settings → M12 maintainability → M13 public access, M14 OpenAPI long-term deferred
-- **Production**: v0.4.1, web read-only by default; existing PKI format and strongSwan configuration unchanged
+- **Production**: v0.4.1 still runs; migrate commands and back up config/PKI before upgrading to v0.5.0
 
 ## ⚖️ License and acknowledgements
 

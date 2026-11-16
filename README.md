@@ -16,7 +16,7 @@
 
 **Neko's Efficient Certificate Administrator（neca，亦写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具。一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
 
-🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.4.1](https://github.com/hyhdsl/neca/releases/tag/v0.4.1)
+🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.5.0](https://github.com/hyhdsl/neca/releases/tag/v0.5.0)
 
 ## ✨ 特性
 
@@ -32,7 +32,7 @@
 固定版本标签，先 dry-run，再签发：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v0.4.1
+docker pull ghcr.io/hyhdsl/neca:v0.5.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -81,10 +81,10 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 状态
 
-- **当前正式版**：v0.4.1（tag <code>6060c2b</code>；配置目录挂载、SIGHUP、helper 缓存）
+- **当前正式版**：v0.5.0（M9 命令迁移；`cert`/`pki`/`trash` 命名空间；旧命令已移除）
 - **已完成**：M0–M8（CLI、Web、root helper、文档与发布自动化、运维加固）
 - **下一步**：**M9 命令/边界重构**（统一命令标准、区分后台/Web/helper，v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性 → M13 公网访问，M14 OpenAPI 长期搁置
-- **生产环境**：v0.4.1，Web 默认只读；PKI 采用现有格式，未改变 strongSwan 配置
+- **生产环境**：v0.4.1 仍在运行；升级到 v0.5.0 前先按迁移表切换命令并备份配置/PKI
 
 ## ⚖️ 许可与致谢
 

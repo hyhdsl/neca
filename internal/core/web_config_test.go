@@ -121,6 +121,29 @@ func TestUpdateWebConfigPreservesDocument(t *testing.T) {
 	}
 }
 
+func TestUpdateWebSettingsWhitelist(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "neca.json")
+	original := `{"schemaVersion":1,"web":{"enabled":true,"listen":"127.0.0.1:18080","readOnly":false,"idleTimeout":"30m","exportEnabled":false,"adminCNs":["admin-01"],"passkey":{"enabled":false,"rpId":"","rpName":"neca Admin"}}}`
+	if err := os.WriteFile(path, []byte(original), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	readOnly, idle, export := true, "10m", true
+	updated, err := UpdateWebSettings(path, WebSettingsUpdate{ReadOnly: &readOnly, IdleTimeout: &idle, ExportEnabled: &export})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !updated.ReadOnly || updated.IdleTimeoutRaw != "10m0s" || !updated.ExportEnabled {
+		t.Fatalf("updated = %+v", updated)
+	}
+	if len(updated.AdminCNs) != 1 || updated.AdminCNs[0] != "admin-01" {
+		t.Fatalf("adminCNs changed: %+v", updated.AdminCNs)
+	}
+	if _, err := UpdateWebSettings(path, WebSettingsUpdate{}); err == nil {
+		t.Fatal("empty update must fail")
+	}
+}
+
 func TestWebAllowHighRiskSettings(t *testing.T) {
 	cfg := parseWebConfigValues(map[string]string{"NECA_WEB_ALLOW_HIGH_RISK_SETTINGS": "true"})
 	if !cfg.AllowHighRiskSettings {

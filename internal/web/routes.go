@@ -35,6 +35,7 @@ func (s *Server) registerCertRoutes(mux *http.ServeMux) {
 func (s *Server) registerDownloadRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	mux.HandleFunc("GET /settings", s.handleSettings)
+	mux.HandleFunc("POST /settings/high-risk", s.handleSettingsHighRisk)
 }
 
 func (s *Server) registerExportRoutes(mux *http.ServeMux) {

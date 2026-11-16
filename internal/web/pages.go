@@ -159,7 +159,76 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, "settings", pageData{
 		TitleKey: "web.settings.title", Nav: "settings", Web: &cfg.Web, TrashRetention: retention,
 		ReadOnly: s.readOnly(), Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
+		NoticeKey: noticeKey(r.URL.Query().Get("notice")),
 	})
+}
+
+func (s *Server) handleSettingsHighRisk(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		s.renderError(w, r, http.StatusBadRequest, "表单非法")
+		return
+	}
+	if !s.validCSRF(r) {
+		s.renderError(w, r, http.StatusForbidden, "CSRF token 无效")
+		return
+	}
+	cfg, err := core.LoadConfigReadOnly()
+	if err != nil {
+		s.renderError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if !cfg.Web.AllowHighRiskSettings {
+		s.renderError(w, r, http.StatusForbidden, "后台未允许 Web 修改高风险设置")
+		return
+	}
+	if !s.writable(r.Context()) {
+		s.renderError(w, r, http.StatusForbidden, "Web 当前不可写或 root helper 不可用")
+		return
+	}
+	if !s.checkPassword(r.FormValue("password")) {
+		s.audit.log("settings-reauth-failed", clientIP(r), "", "high-risk")
+		s.renderError(w, r, http.StatusForbidden, "重新认证失败")
+		return
+	}
+	if r.FormValue("confirm") != "yes" {
+		s.renderError(w, r, http.StatusBadRequest, "需要明确确认（Y）")
+		return
+	}
+	update := helper.SettingsRequest{RequestID: newWriteRequestID()}
+	if value := r.FormValue("readOnly"); value == "true" || value == "false" {
+		parsed := value == "true"
+		update.ReadOnly = &parsed
+	}
+	if value := strings.TrimSpace(r.FormValue("idleTimeout")); value != "" {
+		update.IdleTimeout = &value
+	}
+	if value := r.FormValue("exportEnabled"); value == "true" || value == "false" {
+		parsed := value == "true"
+		update.ExportEnabled = &parsed
+	}
+	if update.ReadOnly == nil && update.IdleTimeout == nil && update.ExportEnabled == nil {
+		s.renderError(w, r, http.StatusBadRequest, "至少修改一个设置")
+		return
+	}
+	if s.helperClient == nil {
+		s.renderError(w, r, http.StatusServiceUnavailable, "root helper 未安装")
+		return
+	}
+	if _, err := s.helperClient.UpdateSettings(r.Context(), update); err != nil {
+		s.renderError(w, r, http.StatusBadGateway, err.Error())
+		return
+	}
+	next, err := core.LoadConfigReadOnly()
+	if err != nil {
+		s.renderError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := s.Reload(next); err != nil {
+		s.renderError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.audit.log("settings-high-risk", clientIP(r), "", "readOnly/idleTimeout/export updated")
+	http.Redirect(w, r, "/settings?notice=updated", http.StatusSeeOther)
 }
 
 func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {
@@ -273,6 +342,8 @@ func noticeKey(code string) string {
 		return "web.notice.already"
 	case "trashed":
 		return "web.notice.trashed"
+	case "updated":
+		return "web.notice.settings_updated"
 	default:
 		return ""
 	}

@@ -62,6 +62,25 @@ func (c *Client) Execute(ctx context.Context, req Request) (*Response, error) {
 	return &response, nil
 }
 
+func (c *Client) UpdateSettings(ctx context.Context, req SettingsRequest) (*SettingsResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	var response SettingsResponse
+	if err := c.do(ctx, http.MethodPost, "/v1/settings", req, &response); err != nil {
+		return nil, err
+	}
+	if response.Protocol != ProtocolVersion {
+		return nil, fmt.Errorf("helper 协议不匹配: %q", response.Protocol)
+	}
+	if !response.OK {
+		if response.Error != nil {
+			return nil, fmt.Errorf("%s: %s", response.Error.Code, response.Error.Message)
+		}
+		return nil, errors.New("helper 设置更新失败")
+	}
+	return &response, nil
+}
+
 func (c *Client) do(ctx context.Context, method, path string, body any, out any) error {
 	var reader io.Reader
 	if body != nil {

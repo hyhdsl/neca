@@ -67,6 +67,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.handleStatus)
 	mux.HandleFunc("POST /v1/execute", s.handleExecute)
+	mux.HandleFunc("POST /v1/settings", s.handleSettings)
 	return mux
 }
 
@@ -82,6 +83,49 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	writeHelperJSON(w, http.StatusOK, Status{
 		OK: true, Protocol: ProtocolVersion, Version: version.Get().Version,
 		ReadOnly: cfg.Web.ReadOnly, Socket: os.Getenv("NECA_WEB_HELPER_SOCKET"),
+	})
+}
+
+func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	var req SettingsRequest
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
+		writeHelperError(w, "bad_request", "请求 JSON 非法: "+err.Error())
+		return
+	}
+	if err := req.Validate(); err != nil {
+		writeHelperError(w, "bad_request", err.Error())
+		return
+	}
+	if err := s.checkWritable(); err != nil {
+		writeHelperError(w, "read_only", err.Error())
+		return
+	}
+	cfg, err := s.reloadConfig()
+	if err != nil {
+		writeHelperError(w, "config", err.Error())
+		return
+	}
+	if !cfg.Web.AllowHighRiskSettings {
+		writeHelperError(w, "forbidden", "后台未允许 Web 修改高风险设置")
+		return
+	}
+	path := s.cfgPath
+	if strings.TrimSpace(path) == "" {
+		path = cfg.ConfigFile
+	}
+	updated, err := core.UpdateWebSettings(path, core.WebSettingsUpdate{
+		ReadOnly: req.ReadOnly, IdleTimeout: req.IdleTimeout, ExportEnabled: req.ExportEnabled,
+	})
+	if err != nil {
+		writeHelperError(w, "settings", err.Error())
+		return
+	}
+	_ = core.AppendAuditWithOrigin(cfg, "helper", "web-settings", "readOnly/idleTimeout/export", "", "ok")
+	writeHelperJSON(w, http.StatusOK, SettingsResponse{
+		OK: true, Protocol: ProtocolVersion, ReadOnly: updated.ReadOnly,
+		IdleTimeout: updated.IdleTimeoutRaw, ExportEnabled: updated.ExportEnabled,
 	})
 }
 

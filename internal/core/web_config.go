@@ -314,6 +314,39 @@ func UpdateWebReadOnly(path string, readOnly bool) (*WebConfig, error) {
 	})
 }
 
+// WebSettingsUpdate is the allowlisted high-risk settings mutation surface.
+// adminCNs, passkey and helper configuration are intentionally absent.
+type WebSettingsUpdate struct {
+	ReadOnly      *bool
+	IdleTimeout   *string
+	ExportEnabled *bool
+}
+
+// UpdateWebSettings applies exactly one or more allowlisted high-risk fields
+// atomically. The caller is responsible for authorization, re-auth, CSRF,
+// confirmation and audit.
+func UpdateWebSettings(path string, update WebSettingsUpdate) (*WebConfig, error) {
+	if update.ReadOnly == nil && update.IdleTimeout == nil && update.ExportEnabled == nil {
+		return nil, usagef("更新 Web 设置", "至少需要修改一个字段")
+	}
+	return UpdateWebConfig(path, func(cfg *WebConfig) error {
+		if update.ReadOnly != nil {
+			cfg.ReadOnly = *update.ReadOnly
+		}
+		if update.IdleTimeout != nil {
+			timeout, err := time.ParseDuration(strings.TrimSpace(*update.IdleTimeout))
+			if err != nil || timeout < MinWebIdleTimeout || timeout > MaxWebIdleTimeout {
+				return usagef("更新 Web 设置", "idleTimeout 必须在 %s–%s 之间: %q", MinWebIdleTimeout, MaxWebIdleTimeout, *update.IdleTimeout)
+			}
+			cfg.IdleTimeoutRaw = timeout.String()
+		}
+		if update.ExportEnabled != nil {
+			cfg.ExportEnabled = *update.ExportEnabled
+		}
+		return nil
+	})
+}
+
 // UpdateWebLock atomically forces readOnly and increments the session epoch.
 func UpdateWebLock(path string) (*WebConfig, error) {
 	return UpdateWebConfig(path, func(cfg *WebConfig) error {

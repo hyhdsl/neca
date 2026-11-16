@@ -57,7 +57,7 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 
 ### 4.3 新命令标准（建议）
 
-- <code>neca cert issue|list|verify|reissue|revoke|unrevoke|delete|export|platform</code>
+- <code>neca cert issue|list|verify|reissue|revoke|unrevoke|trash|export|platform</code>（不提供直接物理 delete；purge 走 <code>neca trash purge</code>）
 - <code>neca pki ...</code>、<code>neca config ...</code>、<code>neca web ...</code>
 - <code>neca trash list|restore|purge</code>
 - 紧急控制：<code>neca web lock</code>、<code>neca web lockdown</code>
@@ -74,7 +74,7 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 | <code>--unrevoke CN</code> | <code>neca cert unrevoke CN</code> |
 | <code>--reissue CN</code> | <code>neca cert reissue CN</code> |
 | <code>--add-platform</code> / <code>--set-platforms</code> | <code>neca cert platform add/set</code> |
-| <code>--delete CN --yes</code> | <code>neca cert delete CN</code>（后续改为移入回收站，后台 purge） |
+| <code>--delete CN --yes</code> | <code>neca cert trash CN</code>（移入回收站；物理 purge 走后台 <code>neca trash purge</code>） |
 | <code>--export-issued</code> / <code>--export-revoked</code> | <code>neca cert export issued|revoked</code> |
 | <code>--list</code> | <code>neca cert list</code> |
 | <code>--sync</code> | <code>neca pki index sync</code> |
@@ -82,9 +82,16 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 
 **v0.5.0 直接移除旧命令，不设过渡期**；legacy 脚本只读归档，只提供迁移表。
 
+### 4.5 确认规范
+
+- 后台二次确认统一为交互式 **Y/N，默认 N**；不再采用输入 <code>PURGE &lt;CN&gt;</code> 的方式。
+- 高风险设置前后台均需 Y/N 二次确认；Web 还需重新认证、CSRF、审计。
+- Y/N 与 JSON/非交互自动化冲突；是否允许 <code>--yes</code> 仍需决策（见 MILESTONES 冲突说明）。
+- Web 只能把证书移入回收站；物理 purge 只能后台。
+
 **回滚方法**：升级前备份配置/PKI，保留 v0.4.1 镜像 tar 和旧 compose；v0.5.0 出问题时停止新 Web/helper，加载 v0.4.1 镜像、恢复配置备份和 compose，验证索引/CRL 哈希与健康检查后再恢复流量。不得用“反向停止所有服务”方式；只操作明确命名的 Web/helper。
 
-### 4.5 扩展/移除
+### 4.6 扩展/移除
 
 CLI 已有注册表（<code>internal/cli/command.go</code>），当前新增命令成本低；Web 路由集中在 <code>Server.Handler</code>，页面/API handler 集中在 <code>pages.go</code>/<code>api.go</code>，缺少 feature flag 时移除功能较费力。
 
@@ -103,9 +110,9 @@ CLI 已有注册表（<code>internal/cli/command.go</code>），当前新增命�
 - 写操作只经 helper 白名单；Web 端仍需双重检查。
 - 低风险偏好（语言/显示）可 Web 修改；高风险设置默认后台-only，Web 只读展示。
 - 高风险设置开关 <code>web.allowHighRiskSettings</code> 默认 false；即使开启，前后台修改都必须 Y/N 二次确认、重新认证、CSRF、审计。建议白名单仅 readOnly/idleTimeout/导出。
-- 删除先移入回收站；物理 purge 只能后台二次确认；不承诺 SSD/快照/备份上的安全擦除；恢复已吊销证书保留吊销状态。
+- 删除先移入回收站；物理 purge 只能后台，并执行一次 Y/N（默认 N）确认；不承诺 SSD/快照/备份上的安全擦除；恢复已吊销证书保留吊销状态。
 - 紧急命令只允许后台 root；<code>lock</code> 设置 readOnly + 递增 <code>web.sessionEpoch</code> + SIGHUP，旧会话失效但服务保留；<code>lockdown</code> 只停止明确命名的 Web/helper 服务或容器，不触碰 SSH/strongSwan。
-- Web 导出默认关闭，仅 CSV 简易名单（CN/状态/序列号/到期时间/平台），不导出私钥/p12/zip。
+- Web 导出默认关闭，仅 CSV 简易名单，区分 issued/revoked（CN/状态/序列号/到期时间/平台），不导出私钥/p12/zip。
 - 生产默认 OpenSSH 本地转发；公网访问需要单独的 TLS/mTLS 或 Tunnel/Access 设计。
 
 ## 6. 配置与部署
@@ -133,6 +140,20 @@ docker compose run -T --rm dev make check-docs
 - lock/lockdown 必须验证只影响明确服务；
 - 回收站/purge 必须验证不承诺安全擦除的文档与行为一致。
 
+## 7.1 提交规范
+
+- commit **标题默认中文**。
+- commit 正文统一提供**中文 + English 两段**；可保留列表与测试/回滚信息。
+- 不重写历史 commit；本规范从 2026-11-16 起执行。
+- 示例：
+  ~~~text
+  feat: 统一证书命令命名空间
+
+  中文说明：...
+
+  English summary: ...
+  ~~~
+
 ## 8. 文档地图
 
 - 里程碑与决策：[MILESTONES.md](MILESTONES.md)
@@ -143,6 +164,12 @@ docker compose run -T --rm dev make check-docs
 - 用户帮助：[help/README.md](help/README.md)
 - AI 披露：[AI-DISCLOSURE.md](../AI-DISCLOSURE.md)
 
-## 9. 当前路线
+## 9. 冲突与待确认
+
+- purge 的统一 Y/N 与“不采用二次确认”存在表述冲突：当前按“取消输入 PURGE CN，保留一次 Y/N（默认 N）”执行；若完全无确认，需要用户明确。
+- Y/N 会阻塞 JSON/自动化；是否允许 `--yes` 需要决策。
+- 回收站物理清理命名建议 `neca cert trash` + `neca trash purge`，不保留 `neca cert delete`。
+
+## 10. 当前路线
 
 M9 命令/边界重构（v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性与可观测性 → M13 公网访问 → M14 OpenAPI 长期搁置。详见 [MILESTONES.md](MILESTONES.md)。

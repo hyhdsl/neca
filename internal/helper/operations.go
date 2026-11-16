@@ -22,6 +22,9 @@ var operations = map[Op]operationFunc{
 	OpUnrevoke: func(ctx context.Context, s *Server, req Request, issueReq core.IssueRequest) (*core.CertificateResult, error) {
 		return core.UnrevokeCertificate(ctx, s.cfg, s.store, s.oss, s.engine, req.CN, false)
 	},
+	OpTrash: func(ctx context.Context, s *Server, req Request, issueReq core.IssueRequest) (*core.CertificateResult, error) {
+		return core.TrashCertificate(ctx, s.cfg, s.store, s.oss, s.engine, req.CN)
+	},
 }
 
 func supportedOperation(op Op) bool {

@@ -23,6 +23,7 @@ const (
 	OpRevoke   Op = "revoke"
 	OpUnrevoke Op = "unrevoke"
 	OpReissue  Op = "reissue"
+	OpTrash    Op = "trash"
 )
 
 type Request struct {

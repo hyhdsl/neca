@@ -91,7 +91,7 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 - **Y/N 必须独立成 <code>Confirmer</code> 接口/函数**（默认 N），便于按功能添加/移除确认；不需要确认的功能不注入空壳。
 - 需要 Y/N 的范围：<code>lock</code>、<code>lockdown</code>、<code>trash purge</code>、高风险设置。
 - 不强制 Y/N：<code>cert trash</code>（仅审计）、<code>cert revoke/unrevoke/reissue</code>（保留 dry-run/审计）、<code>cert issue</code>。
-- Web 只能把证书移入回收站；物理 purge 只能后台。
+- Web 只能把证书移入回收站（M11.1 已实现）；物理 purge 只能后台。
 
 **回滚方法**：升级前备份配置/PKI，保留 v0.4.1 镜像 tar 和旧 compose；v0.5.0 出问题时停止新 Web/helper，加载 v0.4.1 镜像、恢复配置备份和 compose，验证索引/CRL 哈希与健康检查后再恢复流量。不得用“反向停止所有服务”方式；只操作明确命名的 Web/helper。
 

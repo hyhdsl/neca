@@ -199,6 +199,10 @@ func (s *Server) handleCertAction(op helper.Op) http.HandlerFunc {
 			s.renderWriteError(w, r, err)
 			return
 		}
+		if op == helper.OpTrash {
+			http.Redirect(w, r, "/certs?notice=trashed", http.StatusSeeOther)
+			return
+		}
 		notice := string(op)
 		if response.Result != nil && response.Result.Already {
 			notice = "already"
@@ -251,6 +255,8 @@ func noticeKey(code string) string {
 		return "web.notice.unrevoke"
 	case "already":
 		return "web.notice.already"
+	case "trashed":
+		return "web.notice.trashed"
 	default:
 		return ""
 	}

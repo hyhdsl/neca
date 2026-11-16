@@ -14,7 +14,7 @@
 >
 > 相关文件：[LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 
-**为 strongSwan IKEv2 准备的轻量证书管理工具。** 一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
+**Neko's Efficient Certificate Administrator（neca，亦写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具。一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
 
 🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.4.1](https://github.com/hyhdsl/neca/releases/tag/v0.4.1)
 
@@ -62,7 +62,9 @@ neca web readonly off
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | 实验性接口说明 |
 | 🐳 [部署与回滚](docs/deploy.md) | Docker、权限、备份与恢复 |
-| 🧑‍💻 [开发文档](docs/neca-development.md) | 架构、CLI 契约、CI/CD 与路线图 |
+| 🧑‍💻 [开发指南](docs/DEVELOPMENT.md) | 当前架构、扩展方式、测试与文档地图 |
+| 🗺️ [里程碑](docs/MILESTONES.md) | 开发目标、M9–M13 与待决策事项 |
+| 📜 [历史开发文档](docs/neca-development.md) | 历史架构、CLI 契约与验收记录 |
 | 🤖 [AI 披露](AI-DISCLOSURE.md) | AI 参与范围与验收边界 |
 
 ## 🛠️ 开发
@@ -79,7 +81,7 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 - **当前正式版**：v0.4.1（tag <code>6060c2b</code>；配置目录挂载、SIGHUP、helper 缓存）
 - **已完成**：M0–M8（CLI、Web、root helper、文档与发布自动化、运维加固）
-- **下一步**：**M9 稳定性与可恢复性**（备份/恢复演练、可观测性、回滚自动化）；M10 公网访问安全后置；M11 API/OpenAPI 按需
+- **下一步**：**M9 安全与可恢复性**（导出开关、后台紧急断开、备份/恢复演练）→ M10 受控 Web 管理（回收站、设置偏好）→ M11 可维护性 → M12 公网访问 → M13 API/OpenAPI（按需）
 - **生产环境**：v0.4.1，Web 默认只读；PKI 采用现有格式，未改变 strongSwan 配置
 
 ## ⚖️ 许可与致谢

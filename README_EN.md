@@ -16,7 +16,7 @@
 >
 > Related files: [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 
-**A lightweight certificate manager for strongSwan IKEv2.** One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
+**Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
 🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.4.1](https://github.com/hyhdsl/neca/releases/tag/v0.4.1)
 
@@ -64,7 +64,9 @@ Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | Experimental API reference |
 | 🐳 [Deploy and roll back](docs/deploy.md) | Docker, permissions, backup and restore |
-| 🧑‍💻 [Development guide](docs/neca-development.md) | Architecture, CLI contract, CI/CD and roadmap |
+| 🧑‍💻 [Development guide](docs/DEVELOPMENT.md) | Current architecture, extension points, testing and docs map |
+| 🗺️ [Milestones](docs/MILESTONES.md) | Goals, M9–M13 and open decisions |
+| 📜 [Historical development doc](docs/neca-development.md) | Historical architecture, CLI contract and acceptance records |
 | 🤖 [AI disclosure](AI-DISCLOSURE.md) | AI scope and acceptance boundaries |
 
 ## 🛠️ Development
@@ -81,7 +83,7 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 - **Current release**: v0.4.1 (tag <code>6060c2b</code>; config-directory mount, SIGHUP, helper cache)
 - **Completed**: M0–M8 (CLI, web, root helper, docs and release automation, operational hardening)
-- **Next**: **M9 stability and recoverability** (backup/restore drill, observability, rollback automation); M10 public-access security later; M11 API/OpenAPI as needed
+- **Next**: **M9 security and recoverability** (export switch, backend emergency disconnect, backup/restore drill) → M10 controlled Web management (trash, preferences) → M11 maintainability → M12 public access → M13 API/OpenAPI (as needed)
 - **Production**: v0.4.1, web read-only by default; existing PKI format and strongSwan configuration unchanged
 
 ## ⚖️ License and acknowledgements

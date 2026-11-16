@@ -1,6 +1,6 @@
 # neca Web 面板开发文档（M6）
 
-> 状态：**M6a/M6b 已实现、完成服务器正式部署与浏览器验收，v0.3.0 已正式发布**。日期：2026-11-15。
+> 状态：**历史 Web 实施记录**；M6a/M6b 已实现并随 v0.3.0 发布。当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，里程碑见 [MILESTONES.md](MILESTONES.md)。日期：2026-11-15。
 > 设计依据：[web-panel.md](web-panel.md)。本文把已确认的 Q1–Q11 落成可执行的开发任务。
 > 目标：M6a 只读面板 + M6b helper 写能力；默认 lite，Web 作为可选 neca-web 面板包。
 

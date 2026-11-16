@@ -1,7 +1,7 @@
 # neca 开发目标与里程碑
 
 > 更新：2026-11-16 · 当前基线：v0.4.1（tag 6060c2b）
-> 当前 main：3b07882；帮助站 neca-help：29faf3d。
+> 当前 main：a21a4ba；帮助站 neca-help：29faf3d。
 > 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，历史实施记录见 [neca-development.md](neca-development.md)。
 
 ## 1. 当前状态
@@ -57,6 +57,7 @@
 - 后台二次确认统一交互式 <b>Y/N，默认 N</b>；不再使用输入 <code>PURGE &lt;CN&gt;</code> 的二次确认方式。
 - 高风险设置无论后台还是 Web，都必须 Y/N 二次确认；Web 还需重新认证、CSRF、审计。
 - 自动化允许显式 <code>--yes</code>/<code>-y</code> 跳过 Y/N；后台命令必须记录该信号与审计事件，不能隐式跳过。
+- Y/N 独立为 <code>Confirmer</code> 接口/函数（默认 N），可按键功能添加或移除；不需要确认的功能不注入空壳。
 - 以后 commit：标题默认中文，正文中文 + English 两段；不重写历史 commit。
 
 ## 5. 十项建议评估（更新版）
@@ -82,7 +83,8 @@
 
 **目标**：在加新安全功能前，先统一命令/控制面，避免旧接口和新接口并存。
 
-- [x] **M9.1 命令盘点与迁移表**：[M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md) 已完成（盘点/路由/helper/迁移/确认矩阵）。
+- [x] **M9.1 命令盘点与迁移表**：[M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md) 已完成并确认：downloads/package 归属、Y/N 范围、CSV 文件名、确认函数接口。
+- [ ] **M9.2 命令元数据/确认/审计**：CommandSpec、Surface、Confirmer、AuditOrigin；保持业务行为不变。
 - 建立命令元数据：名称、别名、来源（backend/web/helper）、是否写操作、确认级别、JSON、审计、废弃状态。
 - 新命令标准：
   - <code>neca cert issue|list|verify|reissue|revoke|unrevoke|trash|export|platform</code>（不再提供直接物理 delete；物理 purge 走 <code>neca trash purge</code>）

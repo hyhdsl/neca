@@ -1,6 +1,6 @@
 # neca M9 命令/边界重构计划
 
-> 状态：M9.1 盘点完成（2026-11-16），待评审后进入 M9.2；权威里程碑见 [MILESTONES.md](MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+> 状态：M9.1 盘点已确认（2026-11-16），下一步 M9.2；权威里程碑见 [MILESTONES.md](MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 > 范围：命令/控制面与扩展接口；**不重写** PKI 数据格式、strongSwan 配置格式或核心证书算法。
 
 ## 1. 目标
@@ -67,7 +67,7 @@
 |---|---|---|
 | <code>CommandSpec</code> | 命令名、分组、surface、写操作、确认、审计 | 统一 CLI/文档/测试 |
 | <code>Surface</code> | backend / web / helper | 防止 Web 越权调用后台命令 |
-| <code>ConfirmationPolicy</code> | Y/N 默认 N、<code>--yes</code>、Web 二次确认 | 所有破坏性操作一致 |
+| <code>Confirmer</code> / <code>ConfirmationPolicy</code> | 独立 Y/N 函数/接口，默认 N、<code>--yes</code>、Web 确认 | 按功能增删确认；CLI 与 Web 各自实现 |
 | <code>AuditOrigin</code> | cli/web/helper + 操作者 | 追责与回放 |
 | <code>Feature</code> / <code>RouteGroup</code> | 可开关的 Web 功能 | 新功能可加可撤 |
 | <code>HelperOperation</code> | 输入/权限/幂等/审计 | helper 白名单统一 |
@@ -112,8 +112,10 @@
 - 回滚：保留 v0.4.1 镜像 tar、升级前 config/PKI 备份、旧 compose；只停止明确命名的 Web/helper；验证索引/CRL 哈希后恢复流量。
 - 不承诺 SSD/快照/备份上的安全擦除。
 
-## 9. 待确认
+## 9. 已确认
 
-- <code>--yes</code>/<code>-y</code> 作为自动化跳过 Y/N 的最终拼写。
-- CSV issued/revoked 文件名与列。
-- 新功能优先级（先做到期概览、备份恢复，还是其他）。
+- <code>--yes</code>/<code>-y</code> 是后台自动化跳过 Y/N 的唯一入口；Web 使用 UI Y/N。
+- CLI 确认逻辑必须独立为 <code>Confirmer</code> 接口/函数，默认 N；无需确认的功能不注入空壳。
+- CSV 使用 <code>issued.csv</code> / <code>revoked.csv</code>，字段 CN/状态/序列号/到期时间/平台。
+- 新功能顺序：B 备份恢复 → A 到期概览 → E config schema → C 审计导出 → F 证书导入 → D CLI completion。
+- 下一步：M9.2 命令元数据/确认函数/审计来源，保持业务行为不变。

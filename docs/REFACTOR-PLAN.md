@@ -1,6 +1,6 @@
 # neca M9 命令/边界重构计划
 
-> 状态：M9.1–M9.4 已完成；下一步 v0.5.0 发布与迁移验证。M9.4 已迁移命名空间、移除旧命令并落地最小回收站。权威里程碑见 [MILESTONES.md](MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+> 状态：M9.1–M9.5 已完成，v0.5.0 已发布。M9.4 迁移命名空间、移除旧命令并落地最小回收站；M10 安全运维为下一步。权威里程碑见 [MILESTONES.md](MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 > 范围：命令/控制面与扩展接口；**不重写** PKI 数据格式、strongSwan 配置格式或核心证书算法。
 
 ## 1. 目标
@@ -101,7 +101,7 @@
 2. **M9.2 元数据/确认/审计**：✅ 已完成 Command 元数据/Confirmer/--yes/AuditOrigin；Web 高风险 Y/N 留到 M11。
 3. **M9.3 Web/helper 模块化**：✅ 路由组与 helper 操作注册表已完成；feature flag 留给 M9.4/M10。
 4. **M9.4 命令迁移**：✅ <code>neca cert ...</code>、<code>neca pki ...</code>、<code>neca trash ...</code>；旧命令移除。
-5. **M9.5 v0.5.0**：完整测试、迁移文档、回滚演练；发布。
+5. **M9.5 v0.5.0**：✅ 完整 `make all`、迁移文档、帮助站、回滚说明与发布完成。
 6. **M10/M11**：在 M9 接口上实现 lock/lockdown、CSV 导出、回收站、设置。
 
 ## 8. 测试与回滚
@@ -118,4 +118,4 @@
 - CLI 确认逻辑必须独立为 <code>Confirmer</code> 接口/函数，默认 N；无需确认的功能不注入空壳。
 - CSV 使用 <code>issued.csv</code> / <code>revoked.csv</code>，字段 CN/状态/序列号/到期时间/平台。
 - 新功能顺序：B 备份恢复 → A 到期概览 → E config schema → C 审计导出 → F 证书导入 → D CLI completion。
-- 下一步：v0.5.0 发布与迁移验证；M9.4 已完成。
+- 下一步：M10 安全运维（lock/lockdown、导出开关、备份恢复）。

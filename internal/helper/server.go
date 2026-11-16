@@ -138,7 +138,7 @@ func (s *Server) handleExecute(w http.ResponseWriter, r *http.Request) {
 	if !response.OK {
 		auditResult = "error"
 	}
-	_ = core.AppendAudit(s.cfg, "web-"+string(req.Op), req.CN, serial, auditResult)
+	_ = core.AppendAuditWithOrigin(s.cfg, "helper", "web-"+string(req.Op), req.CN, serial, auditResult)
 	writeHelperJSON(w, http.StatusOK, response)
 }
 

@@ -7,6 +7,21 @@ import (
 	"testing"
 )
 
+func TestAppendAuditWithOrigin(t *testing.T) {
+	dir := t.TempDir()
+	cfg := &Config{AuditFile: filepath.Join(dir, "audit.log")}
+	if err := AppendAuditWithOrigin(cfg, "helper", "web-issue", "TMP02", "ABCDEF", "ok"); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(cfg.AuditFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "origin=helper web-issue TMP02 ABCDEF ok") {
+		t.Fatalf("audit line = %q", string(data))
+	}
+}
+
 func TestAppendAudit(t *testing.T) {
 	dir := t.TempDir()
 	cfg := &Config{AuditFile: filepath.Join(dir, "audit.log")}

@@ -26,6 +26,7 @@ type Env struct {
 
 	JSON    bool   // --json 结构化输出
 	DryRun  bool   // --dry-run 只打印动作
+	Yes     bool   // --yes/-y：显式跳过 Y/N 确认
 	Quiet   bool   // -q/--quiet 仅输出错误
 	Lang    string // 已解析语言
 	Action  string // 命令名，用于 JSON 信封/审计
@@ -133,6 +134,17 @@ func (r *Registry) Register(cmd Command) error {
 	return nil
 }
 
+// backendCommand 为内置命令填充 v0.5 命令元数据；不改变执行行为。
+func backendCommand(cmd Command, group string, write bool) Command {
+	cmd.Group = group
+	cmd.Surface = SurfaceBackend
+	cmd.Write = write
+	if cmd.AuditEvent == "" {
+		cmd.AuditEvent = cmd.Name
+	}
+	return cmd
+}
+
 func normalizeCommand(cmd Command) (Command, error) {
 	if cmd.Surface == "" {
 		cmd.Surface = SurfaceBackend
@@ -209,6 +221,7 @@ func (r *Registry) WriteHelp(w io.Writer) {
 	fmt.Fprintln(w, i18n.T("app.global.version"))
 	fmt.Fprintln(w, i18n.T("app.global.json"))
 	fmt.Fprintln(w, i18n.T("app.global.dry_run"))
+	fmt.Fprintln(w, i18n.T("app.global.yes"))
 	fmt.Fprintln(w, i18n.T("app.global.lang"))
 	fmt.Fprintln(w, i18n.T("app.global.config"))
 	fmt.Fprintln(w, i18n.T("app.global.quiet"))

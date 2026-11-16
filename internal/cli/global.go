@@ -9,6 +9,7 @@ import (
 type globalOptions struct {
 	JSON       bool
 	DryRun     bool
+	Yes        bool
 	Quiet      bool
 	Lang       string
 	Version    bool
@@ -27,6 +28,8 @@ func parseGlobals(args []string) ([]string, globalOptions, error) {
 			opts.JSON = true
 		case arg == "--dry-run":
 			opts.DryRun = true
+		case arg == "--yes" || arg == "-y":
+			opts.Yes = true
 		case arg == "-q" || arg == "--quiet":
 			opts.Quiet = true
 		case arg == "--version" || arg == "-V":

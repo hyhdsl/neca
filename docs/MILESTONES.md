@@ -84,7 +84,7 @@
 **目标**：在加新安全功能前，先统一命令/控制面，避免旧接口和新接口并存。
 
 - [x] **M9.1 命令盘点与迁移表**：[M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md) 已完成并确认：downloads/package 归属、Y/N 范围、CSV 文件名、确认函数接口。
-- [ ] **M9.2 命令元数据/确认/审计**：CommandSpec、Surface、Confirmer、AuditOrigin；保持业务行为不变。
+- [x] **M9.2 命令元数据/确认/审计**：Command 元数据、内置命令标注、独立 Confirmer、全局 `--yes`、审计 origin 已落地；受影响包测试通过。Web 高风险确认留到 M11。
   - 基础类型/Confirmer 已落地并有单测；命令注解、审计接线、--yes 解析仍待完成。
 - 建立命令元数据：名称、别名、来源（backend/web/helper）、是否写操作、确认级别、JSON、审计、废弃状态。
 - 新命令标准：

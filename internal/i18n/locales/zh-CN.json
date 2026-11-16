@@ -7,6 +7,7 @@
   "app.global.version": "  --version, -V  只输出版本号（单行）",
   "app.global.json": "  --json         结构化 JSON 输出",
   "app.global.dry_run": "  --dry-run      只打印将执行的动作，不落盘、不调 docker",
+  "app.global.yes": "  --yes, -y      显式跳过 Y/N 确认（仅限后台自动化，写审计）",
   "app.global.lang": "  --lang LANG    控制台语言：zh-CN（默认）或 en-US",
   "app.global.config": "  --config FILE  JSON 配置路径（默认 /opt/ipsec/neca.json）",
   "app.global.quiet": "  -q, --quiet    仅输出错误",

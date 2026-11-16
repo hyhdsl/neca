@@ -323,7 +323,7 @@ func helperPrecondition(format string, args ...any) error {
 }
 
 func appendWebAudit(cfg *core.Config, action, oldValue, newValue string) {
-	_ = core.AppendAudit(cfg, action, "old="+oldValue+" new="+newValue, "", "ok")
+	_ = core.AppendAuditWithOrigin(cfg, "web", action, "old="+oldValue+" new="+newValue, "", "ok")
 }
 
 func writeWebReloadHint(env Env, path string) {

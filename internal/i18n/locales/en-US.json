@@ -7,6 +7,7 @@
   "app.global.version": "  --version, -V  print version only (single line)",
   "app.global.json": "  --json         structured JSON output",
   "app.global.dry_run": "  --dry-run      print planned actions; do not write or call docker",
+  "app.global.yes": "  --yes, -y      skip Y/N confirmation (backend automation only; audited)",
   "app.global.lang": "  --lang LANG    console language: zh-CN (default) or en-US",
   "app.global.config": "  --config FILE  JSON config path (default /opt/ipsec/neca.json)",
   "app.global.quiet": "  -q, --quiet    errors only",

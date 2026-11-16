@@ -103,7 +103,7 @@ func renderInfos(env Env, infos []string) {
 
 // auditWrite 追加审计记录；失败只告警，不影响主流程。
 func auditWrite(env Env, deps *coreDeps, action, cn, serial, result string) {
-	if err := core.AppendAudit(deps.cfg, action, cn, serial, result); err != nil {
+	if err := core.AppendAuditWithOrigin(deps.cfg, string(env.Origin), action, cn, serial, result); err != nil {
 		fmt.Fprintf(env.Stderr, "[WARN] 审计日志: %v\n", err)
 	}
 }
@@ -303,11 +303,11 @@ func newDeleteCommand() Command {
 		Name:    "delete",
 		Summary: "删除证书、客户端包与元数据（需 --yes）",
 		Run: func(env Env) int {
-			pos, _, bools, err := parseFlags(env.Args, nil, []string{"yes", "purge-revoked", "no-reload"})
+			pos, _, bools, err := parseFlags(env.Args, nil, []string{"purge-revoked", "no-reload"})
 			if err != nil || len(pos) != 1 {
 				return usageFail(env, "用法: delete <CN> --yes [--purge-revoked]")
 			}
-			if !bools["yes"] {
+			if !env.Yes {
 				return usageFail(env, "delete 需要 --yes 确认")
 			}
 			deps, err := newCoreDeps()

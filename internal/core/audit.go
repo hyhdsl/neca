@@ -11,8 +11,17 @@ import (
 // AppendAudit 追加一行审计日志（开发文档 §8.7）：
 // RFC3339 uid:user 动作 CN 序列号 结果。
 //
-// 审计失败不应阻断主流程；调用方只把错误转成 [WARN]。
+// 旧调用保持原格式；新调用使用 AppendAuditWithOrigin。
 func AppendAudit(cfg *Config, action, cn, serial, result string) error {
+	return appendAudit(cfg, "", action, cn, serial, result)
+}
+
+// AppendAuditWithOrigin 追加带来源的审计行，例如 origin=cli/helper/web。
+func AppendAuditWithOrigin(cfg *Config, origin, action, cn, serial, result string) error {
+	return appendAudit(cfg, origin, action, cn, serial, result)
+}
+
+func appendAudit(cfg *Config, origin, action, cn, serial, result string) error {
 	if cfg == nil || strings.TrimSpace(cfg.AuditFile) == "" {
 		return nil
 	}
@@ -29,9 +38,13 @@ func AppendAudit(cfg *Config, action, cn, serial, result string) error {
 			username = "unknown"
 		}
 	}
-	line := fmt.Sprintf("%s %d:%s %s %s %s %s\n",
+	originPart := ""
+	if strings.TrimSpace(origin) != "" {
+		originPart = " origin=" + sanitizeAudit(origin)
+	}
+	line := fmt.Sprintf("%s %d:%s%s %s %s %s %s\n",
 		time.Now().UTC().Format(time.RFC3339),
-		os.Getuid(), sanitizeAudit(username),
+		os.Getuid(), sanitizeAudit(username), originPart,
 		sanitizeAudit(action), sanitizeAudit(cn), sanitizeAudit(serial), sanitizeAudit(result),
 	)
 	file, err := os.OpenFile(cfg.AuditFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)

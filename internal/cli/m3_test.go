@@ -7,14 +7,14 @@ import (
 )
 
 func TestParseGlobals(t *testing.T) {
-	rest, opts, err := parseGlobals([]string{"list", "--json", "--lang=en-US", "--dry-run", "-q"})
+	rest, opts, err := parseGlobals([]string{"list", "--json", "--lang=en-US", "--dry-run", "--yes", "-q"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(rest) != 1 || rest[0] != "list" {
 		t.Fatalf("rest = %v", rest)
 	}
-	if !opts.JSON || !opts.DryRun || !opts.Quiet || opts.Lang != "en-US" {
+	if !opts.JSON || !opts.DryRun || !opts.Yes || !opts.Quiet || opts.Lang != "en-US" {
 		t.Fatalf("opts = %+v", opts)
 	}
 	if _, _, err := parseGlobals([]string{"--lang"}); err == nil {

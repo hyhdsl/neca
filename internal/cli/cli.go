@@ -81,7 +81,7 @@ func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	env := Env{
 		Origin: OriginCLI,
 		Stdin:  stdin, Stdout: stdout, Stderr: stderr,
-		JSON: opts.JSON, DryRun: opts.DryRun, Quiet: opts.Quiet,
+		JSON: opts.JSON, DryRun: opts.DryRun, Yes: opts.Yes, Quiet: opts.Quiet,
 		Lang: lang, Started: time.Now(),
 	}
 
@@ -151,7 +151,7 @@ func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 func newBuiltinRegistry() *Registry {
 	registry := NewRegistry()
 
-	registry.MustRegister(Command{
+	registry.MustRegister(backendCommand(Command{
 		Name:    "version",
 		Summary: "显示版本、提交号、构建时间与目标平台",
 		Run: func(env Env) int {
@@ -165,9 +165,9 @@ func newBuiltinRegistry() *Registry {
 			fmt.Fprintln(env.Stdout, version.Get().String())
 			return ExitOK
 		},
-	})
+	}, "meta", false))
 
-	registry.MustRegister(Command{
+	registry.MustRegister(backendCommand(Command{
 		Name:    "help",
 		Aliases: []string{"-h", "--help"},
 		Summary: "显示本帮助",
@@ -175,28 +175,28 @@ func newBuiltinRegistry() *Registry {
 			registry.WriteHelp(env.Stdout)
 			return ExitOK
 		},
-	})
+	}, "meta", false))
 
 	// M1 只读命令：全部经 core 的结构化结果渲染，CLI 不直接调用 openssl。
-	registry.MustRegister(newListCommand())
-	registry.MustRegister(newVerifyCommand())
-	registry.MustRegister(newExportCommand())
-	registry.MustRegister(newIndexCommand())
+	registry.MustRegister(backendCommand(newListCommand(), "cert", false))
+	registry.MustRegister(backendCommand(newVerifyCommand(), "cert", false))
+	registry.MustRegister(backendCommand(newExportCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newIndexCommand(), "pki", true))
 
 	// M2 写命令。
-	registry.MustRegister(newIssueCommand())
-	registry.MustRegister(newReissueCommand())
-	registry.MustRegister(newRevokeCommand())
-	registry.MustRegister(newUnrevokeCommand())
-	registry.MustRegister(newDeleteCommand())
-	registry.MustRegister(newPlatformCommand())
-	registry.MustRegister(newPackageCommand())
-	registry.MustRegister(newDownloadsCommand())
-	registry.MustRegister(newConfigCommand())
-	registry.MustRegister(newWebCommand())
+	registry.MustRegister(backendCommand(newIssueCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newReissueCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newRevokeCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newUnrevokeCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newDeleteCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newPlatformCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newPackageCommand(), "cert", true))
+	registry.MustRegister(backendCommand(newDownloadsCommand(), "pki", true))
+	registry.MustRegister(backendCommand(newConfigCommand(), "config", true))
+	registry.MustRegister(backendCommand(newWebCommand(), "web", true))
 
 	// M3 交互向导。
-	registry.MustRegister(newWizardCommand(registry))
+	registry.MustRegister(backendCommand(newWizardCommand(registry), "meta", true))
 
 	// 内置命令使用语言文件中的说明；第三方/测试注册的自定义命令保持 Summary。
 	for _, cmd := range registry.Commands() {

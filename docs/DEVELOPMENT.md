@@ -204,8 +204,8 @@ docker compose run -T --rm dev make check-docs
 ## 9.3 v1.0 RC 稳定化
 
 - 候选：v1.0.0-rc.1；当前稳定版 v0.7.0。
-- 生产快照已确认后做升级/回滚演练；只操作 Web/helper，不重启 strongSwan。
-- RC 观察期 1 周；期间只接受修复/文档/安全补丁。
+- 生产演练已完成：v0.4.1 → v1.0.0-rc.1 → 回滚 v0.4.1 → 再升级 RC；只操作 Web/helper，strongSwan 未重启。
+- RC 观察期：2026-11-16 至 2026-11-23；期间只接受修复/文档/安全补丁。
 - 发布门槛见 [STABILITY.md](STABILITY.md) 与 [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md)。
 
 ## 10. 当前路线

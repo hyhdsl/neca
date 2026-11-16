@@ -87,7 +87,7 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 - **Current stable**: v0.7.0; **v1.0.0-rc.1** is published as a pre-release candidate (not stable)
 - **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
 - **Next**: v1.0.0-rc.1 upgrade/rollback validation → v1.0.0; M13 public access later, M14 OpenAPI long-term deferred
-- **Production**: v0.4.1 still runs; migrate commands and back up config/PKI before upgrading to v0.5.0
+- **Production**: v1.0.0-rc.1 observation period; v0.4.1 rollback verified; no v1.0.0 release until observation completes
 
 ## ⚖️ License and acknowledgements
 

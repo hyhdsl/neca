@@ -79,9 +79,7 @@ func (r *Request) Validate() error {
 			return errors.New("requestId 只允许字母数字 . _ : -")
 		}
 	}
-	switch r.Op {
-	case OpIssue, OpRevoke, OpUnrevoke, OpReissue:
-	default:
+	if !supportedOperation(r.Op) {
 		return fmt.Errorf("不支持的 op: %q", r.Op)
 	}
 	if err := core.ValidateCNName(r.CN); err != nil {

@@ -155,19 +155,7 @@ func (s *Server) executeLocked(ctx context.Context, req Request) (Response, *Res
 		CN: req.CN, Days: req.Days, Platforms: platforms,
 		Installers: core.InstallerSet{}, P12Profile: profile,
 	}
-	var value *core.CertificateResult
-	switch req.Op {
-	case OpIssue:
-		value, err = core.IssueCertificate(ctx, s.cfg, s.store, s.oss, issueReq)
-	case OpReissue:
-		value, err = core.ReissueCertificate(ctx, s.cfg, s.store, s.oss, s.engine, issueReq)
-	case OpRevoke:
-		value, err = core.RevokeCertificate(ctx, s.cfg, s.store, s.oss, s.engine, req.CN, false)
-	case OpUnrevoke:
-		value, err = core.UnrevokeCertificate(ctx, s.cfg, s.store, s.oss, s.engine, req.CN, false)
-	default:
-		err = fmt.Errorf("unsupported op")
-	}
+	value, err := executeOperation(ctx, s, req, issueReq)
 	if err != nil {
 		code := "runtime"
 		switch core.KindOf(err) {

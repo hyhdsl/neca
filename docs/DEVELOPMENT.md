@@ -185,6 +185,13 @@ docker compose run -T --rm dev make check-docs
 - 审计已支持 <code>origin=cli|web|helper</code>；CLI/Web/helper 已接线。
 - 剩余：<code>lock</code>/<code>lockdown</code>/<code>trash purge</code>/高风险设置的实际 Y/N 调用留到 M10/M11；命令命名空间迁移留到 M9.4。
 
+## 9.2 M9.3 完成
+
+- Web 路由已拆为：public / auth / cert / downloads / API 五组（<code>internal/web/routes.go</code>）。
+- helper 操作改为注册表（<code>internal/helper/operations.go</code>），协议校验与执行共用同一支持列表。
+- 未新增外部行为；helper/web/cli 测试与 vet 通过。
+- 下一步 M9.4：<code>neca cert ...</code> / <code>pki ...</code> 命名空间迁移并移除旧命令。
+
 ## 10. 当前路线
 
 M9 命令/边界重构（v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性与可观测性 → M13 公网访问 → M14 OpenAPI 长期搁置。详见 [MILESTONES.md](MILESTONES.md)。

@@ -66,6 +66,7 @@ Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🐳 [Deploy and roll back](docs/deploy.md) | Docker, permissions, backup and restore |
 | 🧑‍💻 [Development guide](docs/DEVELOPMENT.md) | Current architecture, extension points, testing and docs map |
 | 🧱 [M9 refactor plan](docs/REFACTOR-PLAN.md) | Add/remove/modify plan, extension interfaces and feature ideas |
+| 🔎 [M9.1 command inventory](docs/M9.1-COMMAND-INVENTORY.md) | Current commands, migration table, routes and confirmation matrix |
 | 🗺️ [Milestones](docs/MILESTONES.md) | Goals, M9–M14 and open decisions |
 | 📜 [Historical development doc](docs/neca-development.md) | Historical architecture, CLI contract and acceptance records |
 | 🤖 [AI disclosure](AI-DISCLOSURE.md) | AI scope and acceptance boundaries |

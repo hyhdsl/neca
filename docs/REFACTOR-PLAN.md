@@ -1,6 +1,6 @@
 # neca M9 命令/边界重构计划
 
-> 状态：规划（2026-11-16）；权威里程碑见 [MILESTONES.md](MILESTONES.md)；当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+> 状态：M9.1 盘点完成（2026-11-16），待评审后进入 M9.2；权威里程碑见 [MILESTONES.md](MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 > 范围：命令/控制面与扩展接口；**不重写** PKI 数据格式、strongSwan 配置格式或核心证书算法。
 
 ## 1. 目标

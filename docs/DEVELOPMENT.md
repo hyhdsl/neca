@@ -96,7 +96,7 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 
 CLI 已有注册表（<code>internal/cli/command.go</code>），当前新增命令成本低；Web 路由集中在 <code>Server.Handler</code>，页面/API handler 集中在 <code>pages.go</code>/<code>api.go</code>，缺少 feature flag 时移除功能较费力。
 
-详细的增删改、扩展接口与新功能建议见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md)。
+M9.1 命令盘点与迁移表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)；详细的增删改、扩展接口与新功能建议见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md)。
 
 重构方向：
 

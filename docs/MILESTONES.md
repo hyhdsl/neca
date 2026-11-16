@@ -1,7 +1,7 @@
 # neca 开发目标与里程碑
 
 > 更新：2026-11-16 · 当前基线：v0.4.1（tag 6060c2b）
-> 当前 main：79acbbe；帮助站 neca-help：29faf3d。
+> 当前 main：3b07882；帮助站 neca-help：29faf3d。
 > 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，历史实施记录见 [neca-development.md](neca-development.md)。
 
 ## 1. 当前状态
@@ -82,7 +82,7 @@
 
 **目标**：在加新安全功能前，先统一命令/控制面，避免旧接口和新接口并存。
 
-- 盘点 legacy 脚本命令、当前 CLI 命令、Web 路由、helper 操作。
+- [x] **M9.1 命令盘点与迁移表**：[M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md) 已完成（盘点/路由/helper/迁移/确认矩阵）。
 - 建立命令元数据：名称、别名、来源（backend/web/helper）、是否写操作、确认级别、JSON、审计、废弃状态。
 - 新命令标准：
   - <code>neca cert issue|list|verify|reissue|revoke|unrevoke|trash|export|platform</code>（不再提供直接物理 delete；物理 purge 走 <code>neca trash purge</code>）
@@ -151,13 +151,13 @@
 6. 大重构版本 **v0.5.0**；旧命令不保留；回滚使用 v0.4.1 镜像/配置备份。
 7. 公网访问后置；OpenAPI 长期搁置。
 
-后续新增功能优先级（需你选择）：
+后续新增功能优先级（用户已确认按此顺序）：
 
-- A. 证书到期/状态概览（只读）
-- B. 一键备份/恢复（高价值）
-- C. 审计日志导出/轮转
-- D. CLI shell completion
-- E. 配置 schema 版本/迁移
-- F. 证书导入/链验证（只读）
+1. B. 一键备份/恢复（高价值）
+2. A. 证书到期/状态概览（只读）
+3. E. 配置 schema 版本/迁移
+4. C. 审计日志导出/轮转
+5. F. 证书导入/链验证（只读）
+6. D. CLI shell completion（最后）
 
 详见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md) 第 6 节。

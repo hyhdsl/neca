@@ -152,10 +152,30 @@
 - **M11 出口**：Web 移入回收站、设置页、高风险编辑、保留期与后台清理已完成；物理 purge 仍只能后台。
 - 出口：删除/恢复/清理有测试；私钥访问、保留期和恢复规则明确。
 
-### M12：可维护性与可观测性
+### M12：可维护性与可观测性（进行中）
 
-- 完成 M9 的后续模块化；feature flag；日志/审计保留与轮转；发布/回滚检查清单。
-- 出口：不改变外部行为；新增功能可通过开关回退。
+#### M12.1 审计轮转（已完成）
+
+- ✅ <code>audit.maxBytes</code>（默认 10 MiB）与 <code>audit.keep</code>（默认 5）。
+- ✅ CLI/helper 审计日志与 Web 审计日志共用轮转策略。
+- ✅ 轮转保留权限 0600；不承诺安全擦除。
+
+#### M12.2 诊断（已完成）
+
+- ✅ 新增 <code>neca doctor</code>：检查配置、CA 证书/私钥、索引、CRL、Web 配置、Docker、审计日志与 helper 状态。
+- ✅ 支持 <code>--json</code>；不输出密码、私钥或 Cookie。
+
+#### M12.3 发布检查清单（已完成）
+
+- ✅ 新增 [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md)：发布前、升级演练、发布、发布后、回滚与签字。
+
+#### M12.4 功能开关与后续
+
+- 现有开关：<code>web.exportEnabled</code>、<code>web.allowHighRiskSettings</code>、<code>trash.retention</code>。
+- [ ] 通用 feature flag 映射/回退开关（按需）。
+- 出口：不改变默认行为；新增功能可通过开关回退。
+
+**M12 当前状态**：审计轮转、诊断与发布清单已完成；通用 feature flag 仍待决定。
 
 ### M13：公网访问安全（后置）
 

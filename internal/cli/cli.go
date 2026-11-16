@@ -183,6 +183,7 @@ func newBuiltinRegistry() *Registry {
 	registry.MustRegister(backendCommand(newTrashCommand(), "trash", true))
 	registry.MustRegister(backendCommand(newConfigCommand(), "config", true))
 	registry.MustRegister(backendCommand(newWebCommand(), "web", true))
+	registry.MustRegister(backendCommand(newDoctorCommand(), "meta", false))
 
 	// M3 交互向导。
 	registry.MustRegister(backendCommand(newWizardCommand(registry), "meta", true))

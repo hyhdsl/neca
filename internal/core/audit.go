@@ -47,6 +47,9 @@ func appendAudit(cfg *Config, origin, action, cn, serial, result string) error {
 		os.Getuid(), sanitizeAudit(username), originPart,
 		sanitizeAudit(action), sanitizeAudit(cn), sanitizeAudit(serial), sanitizeAudit(result),
 	)
+	if err := RotateLog(cfg.AuditFile, cfg.AuditMaxBytes, cfg.AuditKeep); err != nil {
+		return runtimef("轮转审计日志", "%s: %v", cfg.AuditFile, err)
+	}
 	file, err := os.OpenFile(cfg.AuditFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return runtimef("写审计日志", "%s: %v", cfg.AuditFile, err)

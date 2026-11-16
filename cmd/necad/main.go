@@ -62,7 +62,7 @@ func main() {
 		log.Fatal(err)
 	}
 	proxySecret := strings.TrimSpace(os.Getenv("NECA_WEB_PROXY_SECRET"))
-	audit, closeAudit, err := openAudit()
+	audit, closeAudit, err := openAudit(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -166,16 +166,16 @@ func readSessionKey() ([]byte, error) {
 	return []byte(raw), nil
 }
 
-func openAudit() (interface{ Write([]byte) (int, error) }, func(), error) {
+func openAudit(cfg *core.Config) (interface{ Write([]byte) (int, error) }, func(), error) {
 	path := strings.TrimSpace(os.Getenv("NECA_WEB_AUDIT_LOG"))
 	if path == "" {
 		return os.Stderr, func() {}, nil
 	}
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
-	if err != nil {
+	writer := core.NewRotatingFileWriter(path, cfg.AuditMaxBytes, cfg.AuditKeep)
+	if _, err := writer.Write(nil); err != nil {
 		return nil, func() {}, fmt.Errorf("打开 Web 审计日志 %s: %w", path, err)
 	}
-	return file, func() { _ = file.Close() }, nil
+	return writer, func() { _ = writer.Close() }, nil
 }
 
 func parseBool(value string) bool {

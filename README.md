@@ -66,6 +66,7 @@ neca web readonly off
 | 🧱 [M9 重构计划](docs/REFACTOR-PLAN.md) | 增删改清单、扩展接口与新功能建议 |
 | 🔎 [M9.1 命令盘点](docs/M9.1-COMMAND-INVENTORY.md) | 当前命令、迁移表、路由与确认矩阵 |
 | 🗺️ [里程碑](docs/MILESTONES.md) | 开发目标、M9–M14 与待决策事项 |
+| ✅ [发布检查清单](docs/RELEASE-CHECKLIST.md) | 发布、升级演练与回滚检查 |
 | 📜 [历史开发文档](docs/neca-development.md) | 历史架构、CLI 契约与验收记录 |
 | 🤖 [AI 披露](AI-DISCLOSURE.md) | AI 参与范围与验收边界 |
 

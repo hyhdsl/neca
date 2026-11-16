@@ -23,7 +23,11 @@ type fileConfig struct {
 	CACN          string `json:"caCn,omitempty"`
 	Language      string `json:"language,omitempty"`
 	AuditLog      string `json:"auditLog,omitempty"`
-	Paths         struct {
+	Audit         struct {
+		MaxBytes int64 `json:"maxBytes,omitempty"`
+		Keep     int   `json:"keep,omitempty"`
+	} `json:"audit"`
+	Paths struct {
 		PKIDir     string `json:"pkiDir,omitempty"`
 		CACert     string `json:"caCert,omitempty"`
 		CAKey      string `json:"caKey,omitempty"`
@@ -97,6 +101,12 @@ func (s JSONSource) Load(ctx context.Context) (map[string]string, error) {
 	set("CA_CN", cfg.CACN)
 	set("NECA_LANG", cfg.Language)
 	set("NECA_AUDIT_LOG", cfg.AuditLog)
+	if cfg.Audit.MaxBytes > 0 {
+		set("NECA_AUDIT_MAX_BYTES", strconv.FormatInt(cfg.Audit.MaxBytes, 10))
+	}
+	if cfg.Audit.Keep > 0 {
+		set("NECA_AUDIT_KEEP", strconv.Itoa(cfg.Audit.Keep))
+	}
 	set("PKI_DIR", cfg.Paths.PKIDir)
 	set("CA_CERT", cfg.Paths.CACert)
 	set("CA_KEY", cfg.Paths.CAKey)
@@ -222,6 +232,8 @@ func ConfigSnapshot(cfg *Config) map[string]any {
 		"p12Profile":       cfg.P12Profile,
 		"installers":       cfg.Installers,
 		"auditFile":        cfg.AuditFile,
+		"auditMaxBytes":    cfg.AuditMaxBytes,
+		"auditKeep":        cfg.AuditKeep,
 		"language":         cfg.Language,
 		"web": map[string]any{
 			"enabled":               cfg.Web.Enabled,
@@ -266,7 +278,7 @@ func ConfigEnvMap(cfg *Config) map[string]string {
 		"NECA_DOWNLOAD_DIR": cfg.DownloadsDir, "NECA_DOWNLOAD_TTL": cfg.DownloadTTL.String(),
 		"NECA_DOWNLOAD_MAX_FILES": strconv.Itoa(cfg.DownloadMaxFiles), "NECA_TRASH_RETENTION": cfg.TrashRetention.String(),
 		"NECA_P12_PROFILE": string(cfg.P12Profile), "NECA_INSTALLERS": cfg.Installers,
-		"NECA_AUDIT_LOG": cfg.AuditFile, "NECA_LANG": cfg.Language,
+		"NECA_AUDIT_LOG": cfg.AuditFile, "NECA_AUDIT_MAX_BYTES": strconv.FormatInt(cfg.AuditMaxBytes, 10), "NECA_AUDIT_KEEP": strconv.Itoa(cfg.AuditKeep), "NECA_LANG": cfg.Language,
 		"NECA_WEB_ENABLED": strconv.FormatBool(cfg.Web.Enabled),
 		"NECA_WEB_LISTEN":  cfg.Web.Listen, "NECA_WEB_READONLY": strconv.FormatBool(cfg.Web.ReadOnly),
 		"NECA_WEB_IDLE_TIMEOUT": cfg.Web.IdleTimeoutRaw, "NECA_WEB_SESSION_EPOCH": strconv.Itoa(cfg.Web.SessionEpoch),
@@ -287,6 +299,8 @@ func ConfigFileJSON(cfg *Config) ([]byte, error) {
 		fc.CACN = cfg.CACN
 		fc.Language = cfg.Language
 		fc.AuditLog = cfg.AuditFile
+		fc.Audit.MaxBytes = cfg.AuditMaxBytes
+		fc.Audit.Keep = cfg.AuditKeep
 		fc.Paths.PKIDir = cfg.PKIDir
 		fc.Paths.CACert = cfg.CACert
 		fc.Paths.CAKey = cfg.CAKey

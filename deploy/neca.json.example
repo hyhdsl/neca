@@ -5,6 +5,10 @@
   "caCn": "ExampleOrg VPN CA",
   "language": "zh-CN",
   "auditLog": "/opt/ipsec/pki/audit.log",
+  "audit": {
+    "maxBytes": 10485760,
+    "keep": 5
+  },
   "paths": {
     "pkiDir": "/opt/ipsec/pki",
     "caCert": "/opt/ipsec/pki/ca.crt",

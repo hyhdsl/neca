@@ -33,6 +33,8 @@ const (
 	defaultDownloadsDir    = "/opt/ipsec/downloads"
 	defaultDownloadTTL     = 30 * time.Minute
 	defaultDownloadMaxFile = 50
+	defaultAuditMaxBytes   = 10 << 20
+	defaultAuditKeep       = 5
 )
 
 // configEnvKeys 是允许从环境变量覆盖的键，名称与旧脚本完全一致。
@@ -42,7 +44,7 @@ var configEnvKeys = []string{
 	"EXPORT_DIR", "CONTAINER", "DOCKER_BIN", "SERVER_ID", "ORG", "CA_CN",
 	"DEFAULT_DAYS", "KEY_BITS", "NECA_RELOAD_MODE", "NECA_LOCK_FILE",
 	"NECA_DOWNLOAD_DIR", "NECA_DOWNLOAD_TTL", "NECA_DOWNLOAD_MAX_FILES",
-	"NECA_P12_PROFILE", "NECA_INSTALLERS", "NECA_AUDIT_LOG", "NECA_LANG",
+	"NECA_P12_PROFILE", "NECA_INSTALLERS", "NECA_AUDIT_LOG", "NECA_AUDIT_MAX_BYTES", "NECA_AUDIT_KEEP", "NECA_LANG",
 	"NECA_WEB_ENABLED", "NECA_WEB_LISTEN", "NECA_WEB_READONLY",
 	"NECA_WEB_IDLE_TIMEOUT", "NECA_WEB_SESSION_EPOCH", "NECA_WEB_EXPORT_ENABLED",
 	"NECA_WEB_ALLOW_HIGH_RISK_SETTINGS", "NECA_TRASH_RETENTION", "NECA_WEB_ADMIN_CNS",
@@ -84,6 +86,8 @@ type Config struct {
 	Installers       string        // none | all | 平台列表
 	TrashRetention   time.Duration // 回收站保留期；0=不限时
 	AuditFile        string        // 追加式审计日志
+	AuditMaxBytes    int64         // 审计日志轮转阈值；0=不轮转
+	AuditKeep        int           // 轮转保留份数
 	Language         string        // 控制台语言偏好
 	ConfigFile       string        // 实际读取的 JSON 配置路径
 	Web              WebConfig     // Web 面板配置；lite 只读取不使用
@@ -320,6 +324,12 @@ func (c *Config) applyDefaults() {
 	if c.AuditFile == "" {
 		c.AuditFile = filepath.Join(c.PKIDir, "audit.log")
 	}
+	if c.AuditMaxBytes == 0 {
+		c.AuditMaxBytes = defaultAuditMaxBytes
+	}
+	if c.AuditKeep <= 0 {
+		c.AuditKeep = defaultAuditKeep
+	}
 	if c.Language == "" {
 		c.Language = "zh-CN"
 	}
@@ -362,6 +372,20 @@ func (c *Config) parseNumbers(values map[string]string) error {
 			return usagef("配置", "NECA_DOWNLOAD_MAX_FILES 必须是正整数: %q", raw)
 		}
 		c.DownloadMaxFiles = n
+	}
+	if raw := values["NECA_AUDIT_MAX_BYTES"]; raw != "" {
+		n, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || n < 0 {
+			return usagef("配置", "NECA_AUDIT_MAX_BYTES 必须是非负整数: %q", raw)
+		}
+		c.AuditMaxBytes = n
+	}
+	if raw := values["NECA_AUDIT_KEEP"]; raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n <= 0 {
+			return usagef("配置", "NECA_AUDIT_KEEP 必须是正整数: %q", raw)
+		}
+		c.AuditKeep = n
 	}
 	if raw := values["NECA_TRASH_RETENTION"]; raw != "" {
 		d, err := time.ParseDuration(raw)

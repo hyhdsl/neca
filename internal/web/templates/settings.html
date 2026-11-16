@@ -1,0 +1,27 @@
+{{define "content"}}
+<section class="panel">
+  <div class="panel-head"><h2>{{.T "web.settings.low_risk_title"}}</h2></div>
+  <p class="muted">{{.T "web.settings.low_risk_desc"}}</p>
+  <dl class="detail-list">
+    <dt>{{.T "web.settings.language"}}</dt><dd>{{.Lang}}</dd>
+    <dt>{{.T "web.settings.theme"}}</dt><dd>{{.T "web.settings.theme_value"}}</dd>
+  </dl>
+</section>
+<section class="panel">
+  <div class="panel-head"><h2>{{.T "web.settings.high_risk_title"}}</h2></div>
+  <p class="muted">{{.T "web.settings.high_risk_desc"}}</p>
+  {{if .Web.AllowHighRiskSettings}}
+  <div class="alert danger" role="alert" data-testid="high-risk-warning">{{.T "web.settings.high_risk_enabled"}}</div>
+  {{else}}
+  <div class="alert warning" role="status" data-testid="high-risk-disabled">{{.T "web.settings.high_risk_disabled"}}</div>
+  {{end}}
+  <dl class="detail-list">
+    <dt>{{.T "web.settings.readonly"}}</dt><dd>{{if .Web.ReadOnly}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
+    <dt>{{.T "web.settings.idle_timeout"}}</dt><dd>{{.Web.IdleTimeoutRaw}}</dd>
+    <dt>{{.T "web.settings.export"}}</dt><dd>{{if .Web.ExportEnabled}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
+    <dt>{{.T "web.settings.session_epoch"}}</dt><dd>{{.Web.SessionEpoch}}</dd>
+    <dt>{{.T "web.settings.allow_high_risk"}}</dt><dd>{{if .Web.AllowHighRiskSettings}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
+  </dl>
+  <p class="muted small">{{.T "web.settings.backend_only"}}</p>
+</section>
+{{end}}

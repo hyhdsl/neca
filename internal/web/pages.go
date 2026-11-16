@@ -146,6 +146,18 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, "downloads", pageData{TitleKey: "web.downloads.title", Nav: "downloads", Downloads: views, Writable: s.writable(r.Context())})
 }
 
+func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	cfg, err := core.LoadConfigReadOnly()
+	if err != nil {
+		s.renderError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.render(w, r, "settings", pageData{
+		TitleKey: "web.settings.title", Nav: "settings", Web: &cfg.Web,
+		ReadOnly: s.readOnly(), Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
+	})
+}
+
 func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {
 	if !s.writable(r.Context()) {
 		s.renderError(w, r, http.StatusForbidden, "Web 面板当前为只读或 root helper 不可用")

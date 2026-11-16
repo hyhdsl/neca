@@ -43,6 +43,7 @@
     "readOnly": true,
     "sessionEpoch": 0,
     "exportEnabled": false,
+    "allowHighRiskSettings": false,
     "idleTimeout": "30m",
     "adminCNs": [],
     "passkey": {

@@ -353,6 +353,7 @@ type pageData struct {
 	Days            int
 	Platforms       string
 	P12Profile      string
+	Web             *core.WebConfig
 }
 
 type dashboardStats struct {

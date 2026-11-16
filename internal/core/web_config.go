@@ -35,14 +35,15 @@ type PasskeyConfig struct {
 // 该结构不包含密码哈希、会话密钥、mTLS 私钥或数据库密码；这些敏感值
 // 通过环境变量/0600 文件注入，避免随配置快照或日志泄露。
 type WebConfig struct {
-	Enabled        bool
-	Listen         string
-	ReadOnly       bool
-	SessionEpoch   int
-	ExportEnabled  bool
-	IdleTimeoutRaw string
-	AdminCNs       []string
-	Passkey        PasskeyConfig
+	Enabled               bool
+	Listen                string
+	ReadOnly              bool
+	SessionEpoch          int
+	ExportEnabled         bool
+	AllowHighRiskSettings bool
+	IdleTimeoutRaw        string
+	AdminCNs              []string
+	Passkey               PasskeyConfig
 }
 
 // defaultWebConfig 返回安全默认值：关闭、只读、仅回环监听。
@@ -87,6 +88,11 @@ func parseWebConfigValues(values map[string]string) WebConfig {
 	if value, ok := values["NECA_WEB_EXPORT_ENABLED"]; ok {
 		if parsed, err := strconv.ParseBool(strings.TrimSpace(value)); err == nil {
 			cfg.ExportEnabled = parsed
+		}
+	}
+	if value, ok := values["NECA_WEB_ALLOW_HIGH_RISK_SETTINGS"]; ok {
+		if parsed, err := strconv.ParseBool(strings.TrimSpace(value)); err == nil {
+			cfg.AllowHighRiskSettings = parsed
 		}
 	}
 	if value := strings.TrimSpace(values["NECA_WEB_IDLE_TIMEOUT"]); value != "" {
@@ -168,14 +174,15 @@ func (w WebConfig) Validate() error {
 
 // webFileConfig 是 JSON 文件中的 web 对象；布尔值用指针区分“未设置”和 false。
 type webFileConfig struct {
-	Enabled       *bool                `json:"enabled,omitempty"`
-	Listen        string               `json:"listen,omitempty"`
-	ReadOnly      *bool                `json:"readOnly,omitempty"`
-	SessionEpoch  int                  `json:"sessionEpoch,omitempty"`
-	ExportEnabled bool                 `json:"exportEnabled,omitempty"`
-	IdleTimeout   string               `json:"idleTimeout,omitempty"`
-	AdminCNs      []string             `json:"adminCNs,omitempty"`
-	Passkey       webPasskeyFileConfig `json:"passkey,omitempty"`
+	Enabled               *bool                `json:"enabled,omitempty"`
+	Listen                string               `json:"listen,omitempty"`
+	ReadOnly              *bool                `json:"readOnly,omitempty"`
+	SessionEpoch          int                  `json:"sessionEpoch,omitempty"`
+	ExportEnabled         bool                 `json:"exportEnabled,omitempty"`
+	AllowHighRiskSettings bool                 `json:"allowHighRiskSettings,omitempty"`
+	IdleTimeout           string               `json:"idleTimeout,omitempty"`
+	AdminCNs              []string             `json:"adminCNs,omitempty"`
+	Passkey               webPasskeyFileConfig `json:"passkey,omitempty"`
 }
 
 type webPasskeyFileConfig struct {
@@ -198,6 +205,7 @@ func webConfigFromFile(file webFileConfig) WebConfig {
 	}
 	cfg.SessionEpoch = file.SessionEpoch
 	cfg.ExportEnabled = file.ExportEnabled
+	cfg.AllowHighRiskSettings = file.AllowHighRiskSettings
 	if strings.TrimSpace(file.IdleTimeout) != "" {
 		cfg.IdleTimeoutRaw = strings.TrimSpace(file.IdleTimeout)
 	}
@@ -222,13 +230,14 @@ func webFileFromConfig(cfg WebConfig) webFileConfig {
 	passkeyEnabled := cfg.Passkey.Enabled
 	adminCNs := append([]string{}, cfg.AdminCNs...)
 	return webFileConfig{
-		Enabled:       &enabled,
-		Listen:        cfg.Listen,
-		ReadOnly:      &readOnly,
-		SessionEpoch:  cfg.SessionEpoch,
-		ExportEnabled: cfg.ExportEnabled,
-		IdleTimeout:   cfg.IdleTimeoutRaw,
-		AdminCNs:      adminCNs,
+		Enabled:               &enabled,
+		Listen:                cfg.Listen,
+		ReadOnly:              &readOnly,
+		SessionEpoch:          cfg.SessionEpoch,
+		ExportEnabled:         cfg.ExportEnabled,
+		AllowHighRiskSettings: cfg.AllowHighRiskSettings,
+		IdleTimeout:           cfg.IdleTimeoutRaw,
+		AdminCNs:              adminCNs,
 		Passkey: webPasskeyFileConfig{
 			Enabled: &passkeyEnabled,
 			RPID:    cfg.Passkey.RPID,

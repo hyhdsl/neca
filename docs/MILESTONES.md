@@ -142,11 +142,13 @@
 - ✅ 新增 helper <code>trash</code> 操作、Web/API 路由与通知文案。
 - Web 仍不提供物理 purge；恢复/清理只在后台 CLI。
 
-#### M11.2 保留期与设置（下一步）
+#### M11.2 设置页与保留期（进行中）
 
-- Web 设置页：低风险偏好（语言/显示）可直接改；高风险安全设置默认只读展示。
-- 后台开关 <code>web.allowHighRiskSettings</code> 默认关闭；开启后 Web 高风险修改仍必须 Y/N 二次确认、重新认证、CSRF、审计；建议白名单仅 readOnly/idleTimeout/导出。
-- 回收站保留期 <code>trash.retention</code>（默认 0=不限时）；恢复已吊销证书保留吊销状态；purge 一次 Y/N（默认 N，<code>--yes</code> 可跳过）且不输入 CN；不承诺安全擦除。
+- ✅ Web 设置页 <code>/settings</code>：语言/主题低风险偏好；高风险设置只读展示。
+- ✅ 后台开关 <code>web.allowHighRiskSettings</code> 默认关闭；设置页显示当前状态。
+- [ ] Web 高风险修改入口（需后台开关、Y/N、重新认证、CSRF、审计）。
+- [ ] 回收站保留期 <code>trash.retention</code>（默认 0=不限时）；自动清理/提示规则。
+- [ ] 恢复已吊销证书保留吊销状态；purge 一次 Y/N（默认 N，<code>--yes</code> 可跳过）且不输入 CN；不承诺安全擦除。
 - 出口：删除/恢复/清理有测试；私钥访问、保留期和恢复规则明确。
 
 ### M12：可维护性与可观测性

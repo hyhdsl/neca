@@ -1,7 +1,7 @@
 # neca 开发目标与里程碑
 
-> 更新：2026-11-16 · 当前基线：v0.4.1（tag 6060c2b）
-> 当前 main：5bcd6ad；帮助站 neca-help：85aa329。
+> 更新：2026-11-16 · 当前发布：v0.5.0（tag 0a3af74）；生产仍为 v0.4.1
+> 当前 main：da11bc0；帮助站 neca-help：0ab67d3。
 > 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，历史实施记录见 [neca-development.md](neca-development.md)。
 
 ## 1. 当前状态
@@ -99,13 +99,37 @@
 - 版本策略：M9 完成后发布 **v0.5.0**（breaking），提供从 v0.4.x 的迁移表与回滚说明。
 - 出口：新增/移除一个命令只改命令定义、路由/helper 用例和测试；不改变 PKI 文件格式。
 
-### M10：安全运维（M9 后）
+### M10：安全运维（当前阶段）
 
-- <code>neca web lock</code>：设置 <code>readOnly=true</code>，递增 <code>web.sessionEpoch</code>，SIGHUP；旧会话全部失效，服务保留。
-- <code>neca web lockdown</code>：只停止明确命名的 Web + helper 服务/容器；不触碰 strongSwan/SSH。
-- <code>neca web export on/off</code>：默认关闭；导出 issued.csv / revoked.csv 两类简易名单；Web/API 守卫；审计。
-- 备份/恢复与回滚演练：PKI、config、web-secrets、clients、meta、downloads。
-- 出口：两种紧急命令可审计、可确认；导出默认关闭；恢复演练通过。
+#### M10.1 配置与会话代际
+
+- 增加 <code>web.sessionEpoch</code>；签名 Cookie 携带 epoch。
+- 配置 schema 向后兼容，SIGHUP 原子重载；缺失默认 0。
+- 单测：旧 Cookie 失效、重启后仍失效。
+
+#### M10.2 <code>neca web lock</code>
+
+- 一次配置写入：<code>readOnly=true</code> + <code>sessionEpoch++</code>，随后 SIGHUP。
+- 旧会话全部失效，服务保留；SIGHUP 失败时报错并建议 <code>lockdown</code>。
+- Y/N 默认 N；<code>--yes</code> 仅后台自动化并审计。
+
+#### M10.3 <code>neca web lockdown</code>
+
+- 只停止明确命名的 Web + helper 服务/容器；禁止反向“停止其他所有服务”。
+- 不触碰 SSH、strongSwan 或 VPN；Y/N 默认 N。
+
+#### M10.4 Web 导出开关
+
+- <code>neca web export on/off</code>；默认关闭。
+- 仅 CSV：<code>issued.csv</code> / <code>revoked.csv</code>；字段 CN/状态/序列号/到期时间/平台。
+- 关闭时 Web/API 同步拒绝；审计/限速。
+
+#### M10.5 备份、恢复与回滚演练
+
+- 备份 PKI、config、web-secrets、clients、meta、downloads。
+- 做 v0.4.1 回滚演练；保留镜像/配置/PKI 备份。
+
+**出口**：两种紧急命令可审计、可确认；导出默认关闭；恢复演练通过；回滚可在 10 分钟内完成。
 
 ### M11：受控 Web 管理
 

@@ -114,19 +114,19 @@ check_same_norm() {
 
 # 1. list
 run_old "$OLD" --list >"$WORK/old.list" 2>"$WORK/old.list.err"
-run_new "$NEW" list >"$WORK/new.list" 2>"$WORK/new.list.err"
+run_new "$NEW" cert list >"$WORK/new.list" 2>"$WORK/new.list.err"
 check_same "list stdout" "$WORK/old.list" "$WORK/new.list"
 check_same "list stderr" "$WORK/old.list.err" "$WORK/new.list.err"
 
 # 2. verify
 run_old "$OLD" --verify >"$WORK/old.verify" 2>"$WORK/old.verify.err"
-run_new "$NEW" verify >"$WORK/new.verify" 2>"$WORK/new.verify.err"
+run_new "$NEW" cert verify >"$WORK/new.verify" 2>"$WORK/new.verify.err"
 check_same "verify stdout" "$WORK/old.verify" "$WORK/new.verify"
 check_same "verify stderr" "$WORK/old.verify.err" "$WORK/new.verify.err"
 
 # 3. export issued / revoked（比较 CSV 内容；路径列先归一化）
 run_old "$OLD" --export-issued --out "$OLD/exports/issued.csv" >"$WORK/old.issued.out" 2>&1
-run_new "$NEW" export issued --out "$NEW/exports/issued.csv" >"$WORK/new.issued.out" 2>&1
+run_new "$NEW" cert export issued --out "$NEW/exports/issued.csv" >"$WORK/new.issued.out" 2>&1
 normalize <"$OLD/exports/issued.csv" >"$WORK/old.issued.csv"
 normalize <"$NEW/exports/issued.csv" >"$WORK/new.issued.csv"
 check_same "export issued CSV" "$WORK/old.issued.csv" "$WORK/new.issued.csv"
@@ -135,7 +135,7 @@ normalize <"$WORK/new.issued.out" >"$WORK/new.issued.norm"
 check_same "export issued 输出" "$WORK/old.issued.norm" "$WORK/new.issued.norm"
 
 run_old "$OLD" --export-revoked --out "$OLD/exports/revoked.csv" >"$WORK/old.revoked.out" 2>&1
-run_new "$NEW" export revoked --out "$NEW/exports/revoked.csv" >"$WORK/new.revoked.out" 2>&1
+run_new "$NEW" cert export revoked --out "$NEW/exports/revoked.csv" >"$WORK/new.revoked.out" 2>&1
 normalize <"$OLD/exports/revoked.csv" >"$WORK/old.revoked.csv"
 normalize <"$NEW/exports/revoked.csv" >"$WORK/new.revoked.csv"
 check_same "export revoked CSV" "$WORK/old.revoked.csv" "$WORK/new.revoked.csv"
@@ -145,7 +145,7 @@ check_same "export revoked 输出" "$WORK/old.revoked.norm" "$WORK/new.revoked.n
 
 # 4. index sync：比较输出、index.txt 与 meta 目录
 run_old "$SOLD" --sync >"$WORK/old.sync" 2>"$WORK/old.sync.err"
-run_new "$SNEW" index sync >"$WORK/new.sync" 2>"$WORK/new.sync.err"
+run_new "$SNEW" pki index sync >"$WORK/new.sync" 2>"$WORK/new.sync.err"
 check_same "index sync stdout" "$WORK/old.sync" "$WORK/new.sync"
 check_same "index sync stderr" "$WORK/old.sync.err" "$WORK/new.sync.err"
 check_same "index.txt" "$SOLD/pki/ca/index.txt" "$SNEW/pki/ca/index.txt"
@@ -158,7 +158,7 @@ fi
 
 # 5. 同步后再跑一次 list，确认补索引后的列表同样一致
 run_old "$SOLD" --list >"$WORK/old.sync.list" 2>&1
-run_new "$SNEW" list >"$WORK/new.sync.list" 2>&1
+run_new "$SNEW" cert list >"$WORK/new.sync.list" 2>&1
 check_same "sync 后 list" "$WORK/old.sync.list" "$WORK/new.sync.list"
 
 # 6. M2 写命令影子对比：revoke/unrevoke/platform set/delete/platform add
@@ -169,7 +169,7 @@ cp -a "$WORK/base" "$WNEW"
 
 # 6.1 revoke TMP01
 run_old "$WOLD" --revoke TMP01 >"$WORK/old.revoke" 2>"$WORK/old.revoke.err"
-run_new "$WNEW" revoke TMP01 >"$WORK/new.revoke" 2>"$WORK/new.revoke.err"
+run_new "$WNEW" cert revoke TMP01 >"$WORK/new.revoke" 2>"$WORK/new.revoke.err"
 check_same_norm "revoke stdout" "$WORK/old.revoke" "$WORK/new.revoke"
 check_same_norm "revoke stderr" "$WORK/old.revoke.err" "$WORK/new.revoke.err"
 awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WOLD/pki/ca/index.txt" >"$WORK/old.revoke.index"
@@ -181,7 +181,7 @@ if [ "$old_crl_count" = "$new_crl_count" ]; then echo "[OK]   revoke CRL 条目�
 
 # 6.2 unrevoke TMP01
 run_old "$WOLD" --unrevoke TMP01 >"$WORK/old.unrevoke" 2>"$WORK/old.unrevoke.err"
-run_new "$WNEW" unrevoke TMP01 >"$WORK/new.unrevoke" 2>"$WORK/new.unrevoke.err"
+run_new "$WNEW" cert unrevoke TMP01 >"$WORK/new.unrevoke" 2>"$WORK/new.unrevoke.err"
 check_same_norm "unrevoke stdout" "$WORK/old.unrevoke" "$WORK/new.unrevoke"
 check_same_norm "unrevoke stderr" "$WORK/old.unrevoke.err" "$WORK/new.unrevoke.err"
 awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WOLD/pki/ca/index.txt" >"$WORK/old.unrevoke.index"
@@ -190,20 +190,20 @@ check_same "unrevoke index" "$WORK/old.unrevoke.index" "$WORK/new.unrevoke.index
 
 # 6.3 platform set TMP02
 run_old "$WOLD" --set-platforms TMP02 --platforms windows,ios >"$WORK/old.set" 2>&1
-run_new "$WNEW" platform set TMP02 --platforms windows,ios >"$WORK/new.set" 2>&1
+run_new "$WNEW" cert platform set TMP02 --platforms windows,ios >"$WORK/new.set" 2>&1
 check_same "platform set stdout" "$WORK/old.set" "$WORK/new.set"
 check_same "platform set meta" "$WOLD/pki/meta/TMP02.env" "$WNEW/pki/meta/TMP02.env"
 
 # 6.4 platform add TMP03 --platforms ios（只比较输出/meta，mobileconfig UUID 随机）
 run_old "$WOLD" --add-platform TMP03 --platforms ios >"$WORK/old.add" 2>&1
-run_new "$WNEW" platform add TMP03 --platforms ios >"$WORK/new.add" 2>&1
+run_new "$WNEW" cert platform add TMP03 --platforms ios >"$WORK/new.add" 2>&1
 check_same_norm "platform add stdout" "$WORK/old.add" "$WORK/new.add"
 check_same "platform add meta" "$WOLD/pki/meta/TMP03.env" "$WNEW/pki/meta/TMP03.env"
 
 # 6.5 delete TMP02（V 状态）
 run_old "$WOLD" --delete TMP02 --yes >"$WORK/old.delete" 2>&1
-run_new "$WNEW" delete TMP02 --yes >"$WORK/new.delete" 2>&1
-check_same_norm "delete stdout" "$WORK/old.delete" "$WORK/new.delete"
+# Old delete and new cert trash intentionally have different wording; compare index/meta only.
+run_new "$WNEW" cert trash TMP02 >"$WORK/new.delete" 2>&1
 awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WOLD/pki/ca/index.txt" >"$WORK/old.delete.index"
 awk -F'\t' '{print $1"\t"$4"\t"$5"\t"$6}' "$WNEW/pki/ca/index.txt" >"$WORK/new.delete.index"
 check_same "delete index" "$WORK/old.delete.index" "$WORK/new.delete.index"
@@ -215,7 +215,7 @@ INEW="$WORK/issue-new"
 cp -a "$WORK/base" "$IOLD"
 cp -a "$WORK/base" "$INEW"
 run_old "$IOLD" --issue TMP20 --platforms windows,android --days 30 >"$WORK/old.issue" 2>"$WORK/old.issue.err"
-run_new "$INEW" issue TMP20 --platforms windows,android --days 30 --installers windows >"$WORK/new.issue" 2>"$WORK/new.issue.err"
+run_new "$INEW" cert issue TMP20 --platforms windows,android --days 30 --installers windows >"$WORK/new.issue" 2>"$WORK/new.issue.err"
 normalize_issue() {
   sed -E -e 's/[0-9A-F]{16,}/SERIAL/g' \
          -e 's/[A-Z][a-z]{2} [ 0-9][0-9] [0-9:]{8} [0-9]{4} GMT/DATE/g' \

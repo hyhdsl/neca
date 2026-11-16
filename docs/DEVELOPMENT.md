@@ -1,13 +1,21 @@
 # neca 开发指南（当前）
 
-> 更新：2026-11-16 · 基线：v0.4.1
-> 这是当前开发入口。里程碑看 [MILESTONES.md](MILESTONES.md)；历史设计/验收记录看 [neca-development.md](neca-development.md)；Web 设计历史看 [web-panel.md](web-panel.md) 与 [web-panel-development.md](web-panel-development.md)。
+> 更新：2026-11-16 · 基线：v0.4.1（tag 6060c2b）  
+> 当前权威里程碑：[MILESTONES.md](MILESTONES.md)。历史设计/验收记录：[neca-development.md](neca-development.md)、[web-panel.md](web-panel.md)、[web-panel-development.md](web-panel-development.md)。  
+> 中文文档为主版本；英文 README/帮助可能滞后。
 
 ## 1. 项目定位
 
 **Neko's Efficient Certificate Administrator（neca，部分场合写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具：CLI 是主入口，Web 默认只读，写操作经 root helper 白名单。
 
-## 2. 代码结构
+## 2. 当前目标
+
+- v0.4.x 保持可运行、默认只读；在大重构完成前不继续堆叠新功能。
+- 重构范围是**命令/控制面**，不是 PKI 数据格式或 strongSwan 配置格式。
+- 重构后统一命令标准，明确 backend CLI、Web、helper 三种来源，旧 legacy 命令进入迁移/废弃路径。
+- 破坏性操作必须有后台确认、审计与恢复路径。
+
+## 3. 代码结构
 
 | 目录 | 职责 |
 |---|---|
@@ -22,48 +30,89 @@
 | <code>internal/web/locales</code> | Web 页面翻译 |
 | <code>deploy/</code> | compose、初始化脚本、环境模板 |
 | <code>docs/</code> | 当前指南、历史设计、部署与帮助源文件 |
+| <code>legacy/</code> | 旧 bash 脚本只读归档；不作为兼容层继续扩展 |
 
-## 3. 添加/移除功能
+## 4. 命令/控制面重构（M9）
 
-### CLI 子命令
+### 4.1 三种来源
 
-CLI 已有注册表（<code>internal/cli/command.go</code>），内置命令在 <code>internal/cli/cli.go</code> 通过 <code>MustRegister</code> 挂载。新增命令通常只需：
+| 来源 | 允许做什么 | 审计 origin |
+|---|---|---|
+| backend CLI | SSH/root 管理：配置、紧急停止、回收站物理清理、备份 | <code>cli</code> |
+| Web | 页面/API 的只读或受限写；只能经 helper 白名单 | <code>web</code> |
+| helper | 结构化 root 操作；不接受任意 shell/路径 | <code>helper</code> |
 
-1. 在对应 <code>commands_*.go</code> 实现构造函数和 <code>Run</code>；
-2. 在 <code>cli.go</code> 注册；
-3. 补命令级测试与帮助文本；
-4. 若涉及写操作，确认 dry-run、JSON、审计和错误映射。
+Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，但入口、权限、确认级别不同。
 
-移除命令则删除注册和实现，并检查帮助、测试和文档引用。CLI 侧扩展成本低。
+### 4.2 命令元数据
 
-### Web 功能
+每个命令至少声明：
 
-当前 <code>Server.Handler</code> 集中注册路由，页面/API handler 主要集中在 <code>pages.go</code>/<code>api.go</code>。新增功能需要同时改：
+- 名称/别名/分组；
+- 来源：<code>backend</code> / <code>web</code> / <code>shared</code>；
+- 是否写操作、是否需要确认；
+- 是否支持 <code>--json</code> / <code>--dry-run</code>；
+- 审计事件与错误码；
+- 废弃状态与替代命令。
 
-- 路由与认证/CSRF/只读 guard；
-- 模板与静态资源；
-- helper 请求（如涉及写）；
-- 审计与测试。
+### 4.3 新命令标准（建议）
 
-结论：CLI 可快速增删；Web 尚缺 feature flag/模块边界，移除功能比新增更费力。建议增量抽取“可选路由组 + 配置开关”，不做一次性大重构。紧急断开、导出开关、回收站都应先定义开关和回退行为。
+- <code>neca cert issue|list|verify|reissue|revoke|unrevoke|delete|export|platform</code>
+- <code>neca pki ...</code>、<code>neca config ...</code>、<code>neca web ...</code>
+- <code>neca trash list|restore|purge</code>
+- 紧急控制：<code>neca web lock</code>、<code>neca web lockdown</code>
+- 导出开关：<code>neca web export on/off</code>
 
-## 4. 安全不变量
+### 4.4 legacy 迁移
+
+<code>legacy/vpn-cert-manager.sh</code> 保留为只读归档，不再新增功能。旧脚本参数到新命令的迁移表：
+
+| 旧脚本 | 新命令 |
+|---|---|
+| <code>--issue CN</code> | <code>neca cert issue CN</code> |
+| <code>--revoke CN</code> | <code>neca cert revoke CN</code> |
+| <code>--unrevoke CN</code> | <code>neca cert unrevoke CN</code> |
+| <code>--reissue CN</code> | <code>neca cert reissue CN</code> |
+| <code>--add-platform</code> / <code>--set-platforms</code> | <code>neca cert platform add/set</code> |
+| <code>--delete CN --yes</code> | <code>neca cert delete CN</code>（后续改为移入回收站，后台 purge） |
+| <code>--export-issued</code> / <code>--export-revoked</code> | <code>neca cert export issued|revoked</code> |
+| <code>--list</code> | <code>neca cert list</code> |
+| <code>--sync</code> | <code>neca pki index sync</code> |
+| <code>--verify</code> | <code>neca cert verify</code> |
+
+旧命令是否保留一个发布周期的警告期，或 v0.5.0 直接移除，需用户决策（见 MILESTONES）。
+
+### 4.5 扩展/移除
+
+CLI 已有注册表（<code>internal/cli/command.go</code>），当前新增命令成本低；Web 路由集中在 <code>Server.Handler</code>，页面/API handler 集中在 <code>pages.go</code>/<code>api.go</code>，缺少 feature flag 时移除功能较费力。
+
+重构方向：
+
+1. 先抽命令定义/来源元数据，不改变业务行为；
+2. 再按功能拆 Web 路由组和 helper 操作；
+3. 加开关与回退路径；
+4. 最后移除旧命令/别名，保持测试与影子对比。
+
+不做一次性重写 core/PKI。
+
+## 5. 安全不变量
 
 - Web 默认 <code>readOnly=true</code>；Web 不得接触 <code>ca.key</code> 或 <code>docker.sock</code>。
 - 写操作只经 helper 白名单；Web 端仍需双重检查。
-- 安全配置（readOnly、adminCNs、passkey、helper、导出开关）只允许后台 CLI 修改。
-- 会话 Cookie 签名、HttpOnly、SameSite；会话密钥至少 32 字节。
-- 删除/紧急停止必须有后台确认、审计与恢复路径；不要用 Web 直接物理删除。
+- 低风险偏好（语言/显示）可 Web 修改；高风险设置默认后台-only，Web 只读展示。
+- 高风险设置是否允许 Web 修改，由后台开关决定；开启时需重新认证、CSRF、审计与确认。
+- 删除先移入回收站；物理 purge 只能后台二次确认。
+- 紧急命令只允许后台 root；<code>lock</code> 保留只读服务，<code>lockdown</code> 停止 Web+helper。
 - 生产默认 OpenSSH 本地转发；公网访问需要单独的 TLS/mTLS 或 Tunnel/Access 设计。
 
-## 5. 配置与部署
+## 6. 配置与部署
 
 - 业务配置：<code>/opt/ipsec/config/neca.json</code>；Web 挂载配置目录以感知 SIGHUP。
 - 只读/空闲超时可通过 SIGHUP 重载；listen/adminCNs/passkey 仍需重启。
 - helper 幂等缓存：<code>/run/neca/web-helper-cache.json</code>（0600，24h TTL）。
 - 部署、权限、备份与回滚：[deploy.md](deploy.md)。
 
-## 6. 构建与测试
+## 7. 构建与测试
 
 ~~~bash
 docker compose run -T --rm dev make all
@@ -72,18 +121,23 @@ docker compose run -T --rm dev make shadow
 docker compose run -T --rm dev make check-docs
 ~~~
 
-提交前至少确认受影响的 Go 包、文档检查；涉及删除/紧急停止时必须有故障注入和恢复测试。
+重构期间额外要求：
 
-## 7. 文档地图
+- 命令迁移表逐条测试；
+- 旧命令/新命令同时存在时，确保不会双写；
+- Web/helper 入口分别做权限和审计测试；
+- 破坏性功能必须有故障注入与恢复演练。
+
+## 8. 文档地图
 
 - 里程碑与决策：[MILESTONES.md](MILESTONES.md)
 - 当前开发指南：本文件
-- 历史架构/CLI/验收：[neca-development.md](neca-development.md)（历史/深度参考）
+- 历史架构/CLI/验收：[neca-development.md](neca-development.md)
 - Web 设计历史：[web-panel.md](web-panel.md)、[web-panel-development.md](web-panel-development.md)
 - 部署与回滚：[deploy.md](deploy.md)
 - 用户帮助：[help/README.md](help/README.md)
 - AI 披露：[AI-DISCLOSURE.md](../AI-DISCLOSURE.md)
 
-## 8. 当前路线
+## 9. 当前路线
 
-按 [MILESTONES.md](MILESTONES.md)：M9 安全与可恢复性（导出开关、紧急断开、备份恢复）→ M10 受控 Web 管理（回收站、设置偏好）→ M11 可维护性 → M12 公网访问 → M13 API/OpenAPI（按需）。
+M9 命令/边界重构（v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性与可观测性 → M13 公网访问 → M14 OpenAPI 长期搁置。详见 [MILESTONES.md](MILESTONES.md)。

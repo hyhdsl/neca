@@ -1,4 +1,4 @@
-# neca
+# Neko's Efficient Certificate Administrator
 
 **README language / 语言：** [简体中文（authoritative）](README.md) · [English (current)](README_EN.md)
 
@@ -65,7 +65,7 @@ Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | Experimental API reference |
 | 🐳 [Deploy and roll back](docs/deploy.md) | Docker, permissions, backup and restore |
 | 🧑‍💻 [Development guide](docs/DEVELOPMENT.md) | Current architecture, extension points, testing and docs map |
-| 🗺️ [Milestones](docs/MILESTONES.md) | Goals, M9–M13 and open decisions |
+| 🗺️ [Milestones](docs/MILESTONES.md) | Goals, M9–M14 and open decisions |
 | 📜 [Historical development doc](docs/neca-development.md) | Historical architecture, CLI contract and acceptance records |
 | 🤖 [AI disclosure](AI-DISCLOSURE.md) | AI scope and acceptance boundaries |
 
@@ -83,7 +83,7 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 - **Current release**: v0.4.1 (tag <code>6060c2b</code>; config-directory mount, SIGHUP, helper cache)
 - **Completed**: M0–M8 (CLI, web, root helper, docs and release automation, operational hardening)
-- **Next**: **M9 security and recoverability** (export switch, backend emergency disconnect, backup/restore drill) → M10 controlled Web management (trash, preferences) → M11 maintainability → M12 public access → M13 API/OpenAPI (as needed)
+- **Next**: **M9 command/control-plane refactor** (unified command standard; backend/Web/helper origins; v0.5.0 breaking) → M10 security operations (lock/lockdown, export switch, backup/restore) → M11 trash/settings → M12 maintainability → M13 public access, M14 OpenAPI long-term deferred
 - **Production**: v0.4.1, web read-only by default; existing PKI format and strongSwan configuration unchanged
 
 ## ⚖️ License and acknowledgements

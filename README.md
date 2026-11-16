@@ -1,4 +1,4 @@
-# neca
+# Neko's Efficient Certificate Administrator
 
 **README 语言 / Language：** [简体中文（当前）](README.md) · [English](README_EN.md)
 
@@ -63,7 +63,7 @@ neca web readonly off
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | 实验性接口说明 |
 | 🐳 [部署与回滚](docs/deploy.md) | Docker、权限、备份与恢复 |
 | 🧑‍💻 [开发指南](docs/DEVELOPMENT.md) | 当前架构、扩展方式、测试与文档地图 |
-| 🗺️ [里程碑](docs/MILESTONES.md) | 开发目标、M9–M13 与待决策事项 |
+| 🗺️ [里程碑](docs/MILESTONES.md) | 开发目标、M9–M14 与待决策事项 |
 | 📜 [历史开发文档](docs/neca-development.md) | 历史架构、CLI 契约与验收记录 |
 | 🤖 [AI 披露](AI-DISCLOSURE.md) | AI 参与范围与验收边界 |
 
@@ -81,7 +81,7 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 - **当前正式版**：v0.4.1（tag <code>6060c2b</code>；配置目录挂载、SIGHUP、helper 缓存）
 - **已完成**：M0–M8（CLI、Web、root helper、文档与发布自动化、运维加固）
-- **下一步**：**M9 安全与可恢复性**（导出开关、后台紧急断开、备份/恢复演练）→ M10 受控 Web 管理（回收站、设置偏好）→ M11 可维护性 → M12 公网访问 → M13 API/OpenAPI（按需）
+- **下一步**：**M9 命令/边界重构**（统一命令标准、区分后台/Web/helper，v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性 → M13 公网访问，M14 OpenAPI 长期搁置
 - **生产环境**：v0.4.1，Web 默认只读；PKI 采用现有格式，未改变 strongSwan 配置
 
 ## ⚖️ 许可与致谢

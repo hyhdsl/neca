@@ -1,7 +1,7 @@
 # neca 开发目标与里程碑
 
 > 更新：2026-11-16 · 当前基线：v0.4.1（tag 6060c2b）
-> 当前 main：e53d165；帮助站 neca-help：14a7c1a。
+> 当前 main：3e82496；帮助站 neca-help：14a7c1a。
 > 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，历史实施记录见 [neca-development.md](neca-development.md)。
 
 ## 1. 当前状态
@@ -29,59 +29,69 @@
 
 | # | 决策 |
 |---|---|
-| 1 | 紧急断开提供两种命令，名称简短且拼写相近。建议 **<code>neca web lock</code>**（只读 + 使全部 Web 会话失效，服务保留）与 **<code>neca web lockdown</code>**（停止 Web + helper 容器）。 |
+| 1 | 紧急断开两者都提供：**<code>neca web lock</code>**（只读 + 使全部 Web 会话失效）与 **<code>neca web lockdown</code>**（停止 Web + helper）。名称简短、拼写相近。 |
 | 2 | Web 只能把证书移入回收站；物理删除只能后台确认。回收站默认**不限时**，保存时长由用户配置；允许恢复已吊销证书；清理必须后台二次确认。 |
 | 3 | 语言/显示等低风险偏好 Web 可直接修改；高风险安全设置默认后台完成；设置页可展示全部；是否允许 Web 修改高风险设置由后台开关决定。 |
-| 4 | Web 导出默认关闭；命令为 **<code>neca web export on/off</code>**。 |
-| 5 | 接受**大重构**：弃用 legacy 脚本保留的旧命令，统一新命令标准，区分后台命令与 Web 命令。范围限定命令/控制面，不重写 PKI 核心。 |
+| 4 | Web 导出默认关闭；命令为 **<code>neca web export on/off</code>**；仅导出 CSV 简易名单。 |
+| 5 | 接受**大重构**：弃用 legacy 脚本旧命令，统一新命令标准，区分后台命令与 Web 命令。范围限定命令/控制面，不重写 PKI 核心。 |
 | 6 | 里程碑顺序重新评估；本文件按大重构优先重排。 |
 | 7 | OpenAPI **长期搁置**，不在当前版本规划内。 |
 | 8 | 正式名确认：**Neko's Efficient Certificate Administrator（neca）**；正式简写 **NECA**；无图像 logo。 |
 
-## 4. 十项建议评估（更新版）
+## 4. 安全细化决策（2026-11-16 补充）
+
+1. **会话失效**：采用持久 <code>web.sessionEpoch</code>（默认 0）。<code>neca web lock</code> 在一次配置写入中设置 <code>readOnly=true</code> 并递增 epoch，随后 SIGHUP；旧 Cookie 的 epoch 不匹配，全部失效。不依赖内存撤销表，不轮换 session.key，不重启 Web。SIGHUP 失败则命令报错并建议改用 <code>lockdown</code>。
+2. **Lockdown 精确控制**：只停止明确命名的 Web/helper 服务或容器；例如 compose 的 <code>web web-helper</code>，或 systemd 的 <code>neca-web.service</code> / <code>neca-web-helper.service</code>。禁止“停掉除 X 之外所有服务”的反向逻辑；不触碰 SSH、strongSwan 或 VPN。
+3. **回收站安全边界**：只保证隔离与防误删；不承诺 SSD、快照、备份介质上的安全擦除。恢复已吊销证书不会自动取消吊销；purge 需要后台二次确认。文档必须明确这一点。
+4. **高风险设置**：后台开关 <code>web.allowHighRiskSettings</code> 默认 false；即使开启，前后台修改都必须 Y/N 二次确认、重新认证、CSRF、审计。建议只允许 <code>readOnly</code> / <code>idleTimeout</code> / 导出开关；<code>adminCNs</code>、passkey、helper 永远后台-only。
+5. **旧命令与回滚**：v0.5.0 直接移除旧命令，不设过渡期；legacy 脚本只读归档，只提供迁移表。回滚使用 v0.4.1 镜像 tar、升级前配置/PKI 备份和旧 compose；验证索引/CRL 哈希后恢复流量。
+6. **Web 导出**：只提供 CSV 简易名单（建议列：CN、状态、序列号、到期时间、平台），不导出 p12/私钥/zip；默认关闭，<code>neca web export on/off</code>。
+
+## 5. 十项建议评估（更新版）
 
 | # | 建议 | 结论与优先级 | 重写/开发难度 | 关键安全点 |
 |---|---|---|---|---|
 | 1 | 帮助场景 + 删除字母 n | 已完成；纯文字品牌 | 低 | 不声称商标注册 |
-| 2 | 后台强制断开 | 已完成决策：<code>lock</code> / <code>lockdown</code>；M10 | 中 | 只停 Web/helper，绝不能误停 SSH/strongSwan；后台 root、审计、确认 |
+| 2 | 后台强制断开 | 已完成决策：lock/lockdown；M10 | 中 | 只停明确 Web/helper 服务；后台 root、审计、确认 |
 | 3 | 删除证书回收站 | M11；Web 仅移入，后台 purge | 高 | 私钥仍在；恢复已吊销证书需保留吊销状态；清理二次确认；禁止 Web 物理删除 |
 | 4 | Web 设置菜单 | M11；低风险偏好即时生效，高风险默认只读 | 中 | 高风险 Web 修改必须由后台开关显式开启；不能绕过 helper 边界 |
-| 5 | Web 导出后台开关 | M10；默认关闭；<code>neca web export on/off</code> | 低–中 | CN/状态敏感；审计/限速；关闭时 UI/API 同步拒绝 |
-| 6 | 大重构/命令统一 | **M9，最高优先级**；命令/控制面重构 | 高 | 破坏性变更；需迁移表、兼容期/警告、测试与回滚；legacy 脚本归档不再扩展 |
+| 5 | Web 导出后台开关 | M10；默认关闭；CSV 名单 | 低–中 | CN/状态敏感；审计/限速；关闭时 UI/API 同步拒绝 |
+| 6 | 大重构/命令统一 | **M9，最高优先级**；命令/控制面重构 | 高 | 破坏性变更；旧命令无过渡期；需迁移表、回滚与测试；legacy 脚本归档 |
 | 7 | 里程碑独立文件 | 本文件完成 | 低 | 只保留一个权威来源 |
 | 8 | 开发文档整合 | 当前指南 [DEVELOPMENT.md](DEVELOPMENT.md) 完成；旧文档历史化 | 低–中 | 历史证据保留，当前状态单一来源 |
-| 9 | OpenAPI | 长期搁置（M14 之外，不排期） | 暂不做 | API 继续标实验性 |
+| 9 | OpenAPI | 长期搁置，不排期 | 暂不做 | API 继续标实验性 |
 | 10 | 正式全名 | 本轮同步 | 低 | 首现全名、正式简写 NECA；无图形 logo |
 
-## 5. 新开发进程
+## 6. 新开发进程
 
 ### M9：命令与边界重构（最高优先级）
 
 **目标**：在加新安全功能前，先统一命令/控制面，避免旧接口和新接口并存。
 
 - 盘点 legacy 脚本命令、当前 CLI 命令、Web 路由、helper 操作。
-- 建立命令元数据：名称、别名、**来源**（backend/web/helper）、是否写操作、确认级别、JSON、审计、废弃状态。
-- 新命令标准建议：
+- 建立命令元数据：名称、别名、来源（backend/web/helper）、是否写操作、确认级别、JSON、审计、废弃状态。
+- 新命令标准：
   - <code>neca cert issue|list|verify|reissue|revoke|unrevoke|delete|export|platform</code>
   - <code>neca pki ...</code>、<code>neca config ...</code>、<code>neca web ...</code>、<code>neca trash ...</code>
 - 后台命令与 Web 命令分离：Web 只能调用 helper 白名单，不执行任意 CLI；审计记录 origin=cli/web/helper。
-- 旧命令/别名：标记 deprecated，输出警告；迁移表完成后移除。legacy 脚本作为只读归档，不再作为兼容层。
+- **旧命令 v0.5.0 直接移除，不设过渡期**；提供迁移表。legacy 脚本作为只读归档，不再作为兼容层。
+- 回滚：保留 v0.4.1 镜像 tar、升级前配置/PKI 备份和旧 compose；回滚步骤写入发布说明与运维文档。
 - 版本策略：M9 完成后发布 **v0.5.0**（breaking），提供从 v0.4.x 的迁移表与回滚说明。
 - 出口：新增/移除一个命令只改命令定义、路由/helper 用例和测试；不改变 PKI 文件格式。
 
 ### M10：安全运维（M9 后）
 
-- <code>neca web lock</code>：强制 readOnly + 使全部 Web 会话失效；服务保留。
-- <code>neca web lockdown</code>：停止 Web + helper；不触碰 strongSwan/SSH。
-- <code>neca web export on/off</code>：默认关闭；Web/API 守卫；审计。
+- <code>neca web lock</code>：设置 <code>readOnly=true</code>，递增 <code>web.sessionEpoch</code>，SIGHUP；旧会话全部失效，服务保留。
+- <code>neca web lockdown</code>：只停止明确命名的 Web + helper 服务/容器；不触碰 strongSwan/SSH。
+- <code>neca web export on/off</code>：默认关闭；只导出 CSV 简易名单；Web/API 守卫；审计。
 - 备份/恢复与回滚演练：PKI、config、web-secrets、clients、meta、downloads。
 - 出口：两种紧急命令可审计、可确认；导出默认关闭；恢复演练通过。
 
 ### M11：受控 Web 管理
 
 - Web 设置页：低风险偏好（语言/显示）可直接改；高风险安全设置默认只读展示。
-- 后台开关决定是否允许 Web 修改高风险设置；开启时需重新认证、CSRF、审计与确认。
-- 证书回收站：Web 仅移入；后台 <code>neca trash list|restore|purge</code>；默认不限时；清理二次确认。
+- 后台开关 <code>web.allowHighRiskSettings</code> 默认关闭；开启后 Web 高风险修改仍必须 Y/N 二次确认、重新认证、CSRF、审计；建议白名单仅 readOnly/idleTimeout/导出。
+- 证书回收站：Web 仅移入；后台 <code>neca trash list|restore|purge</code>；默认不限时；恢复已吊销证书保留吊销状态；purge 后台二次确认；不承诺安全擦除。
 - 出口：删除/恢复/清理有测试；私钥访问、保留期和恢复规则明确。
 
 ### M12：可维护性与可观测性
@@ -97,23 +107,25 @@
 
 - 不排期；只有外部自动化需求明确后再评估。当前 API 继续标实验性。
 
-## 6. 安全与未考虑事项
+## 7. 安全与未考虑事项
 
 - **紧急命令语义**：<code>lock</code> 不等于吊销 VPN 会话；只能保证 Web 会话失效；<code>lockdown</code> 会中断 Web/helper，不影响 SSH/strongSwan，但需确认不会误停。
-- **会话失效**：当前签名 Cookie + 内存撤销表，重启会丢失；<code>lock</code> 需要持久 session epoch 或密钥轮换，且要考虑 Web 挂载/重启。
+- **会话失效**：使用持久 sessionEpoch，避免内存撤销表重启丢失；epoch 必须包含在签名 Cookie 中，并由 SIGHUP 重载。
 - **回收站**：私钥/证书仍在；不承诺 SSD/快照/备份上的安全删除；恢复已吊销证书不能自动取消吊销；清理需二次确认。
 - **高风险设置**：后台开关一旦允许 Web 修改，就降低了 root/helper 边界；必须限制白名单、重新认证、审计、默认关闭。
-- **导出**：默认关闭；开启后仍需审计/限速，避免批量枚举。
-- **大重构**：最大风险是命令兼容性与误删；先做 inventory + deprecation shim，不一次性删除；legacy 脚本保留归档但不扩功能。
+- **导出**：默认关闭；仅 CSV 简易名单；开启后仍需审计/限速，避免批量枚举。
+- **大重构**：最大风险是命令兼容性与误删；旧命令无过渡期，需要迁移表、回滚镜像和测试。
 - **文档**：中文主版本；英文版本另行统一更新。
 - **测试**：每个新功能都要有“关闭/回退”路径；破坏性操作需要故障注入和恢复测试。
 
-## 7. 仍需用户决策
+## 8. 推荐默认与仍需确认
 
-1. 紧急命令名是否采用 **<code>lock</code> / <code>lockdown</code>**？是否都要求 <code>--confirm</code>？
-2. 大重构的新命令命名是否采用 <code>neca cert ...</code> 命名空间？旧命令保留一个版本的警告期，还是 v0.5.0 直接移除？
-3. 高风险设置的后台开关名与白名单：是否只允许 <code>readOnly</code> / <code>idleTimeout</code> / 导出开关，而 <code>adminCNs</code>/passkey/helper 永远后台-only？
-4. 回收站命令名（<code>neca trash list|restore|purge</code>）与保留期配置键；清理二次确认采用输入 CN 还是 <code>--confirm</code>？
-5. 导出格式：CSV 全量、单证书，还是两者？
-6. 大重构完成后版本号用 **v0.5.0** 是否接受？是否需要同时保留旧命令至少一个版本？
-7. 公网访问继续后置；OpenAPI 长期搁置；是否确认？
+按以下默认执行；用户可在下一轮纠正：
+
+1. 紧急命令采用 **<code>lock</code> / <code>lockdown</code>**，都要求 <code>--confirm</code>。
+2. 新命令采用 <code>neca cert ...</code> 命名空间；v0.5.0 直接移除旧命令，不设过渡期。
+3. 高风险设置开关名 <code>web.allowHighRiskSettings</code>；建议白名单仅 readOnly / idleTimeout / 导出；adminCNs、passkey、helper 永远后台-only。
+4. 回收站命令 <code>neca trash list|restore|purge</code>；配置键 <code>trash.retention</code>（默认 0=不限时）；purge 需后台输入 <code>PURGE &lt;CN&gt;</code> 二次确认。
+5. 导出仅 CSV 简易名单，不导出私钥/p12；建议列为 CN、状态、序列号、到期时间、平台。
+6. 大重构完成后版本 **v0.5.0**；旧命令不保留，回滚使用 v0.4.1 镜像/配置备份。
+7. 公网访问继续后置；OpenAPI 长期搁置，不排期。

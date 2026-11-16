@@ -80,7 +80,9 @@ Web 不执行任意 CLI；后台命令与 Web 动作使用同一业务契约，�
 | <code>--sync</code> | <code>neca pki index sync</code> |
 | <code>--verify</code> | <code>neca cert verify</code> |
 
-旧命令是否保留一个发布周期的警告期，或 v0.5.0 直接移除，需用户决策（见 MILESTONES）。
+**v0.5.0 直接移除旧命令，不设过渡期**；legacy 脚本只读归档，只提供迁移表。
+
+**回滚方法**：升级前备份配置/PKI，保留 v0.4.1 镜像 tar 和旧 compose；v0.5.0 出问题时停止新 Web/helper，加载 v0.4.1 镜像、恢复配置备份和 compose，验证索引/CRL 哈希与健康检查后再恢复流量。不得用“反向停止所有服务”方式；只操作明确命名的 Web/helper。
 
 ### 4.5 扩展/移除
 
@@ -100,14 +102,16 @@ CLI 已有注册表（<code>internal/cli/command.go</code>），当前新增命�
 - Web 默认 <code>readOnly=true</code>；Web 不得接触 <code>ca.key</code> 或 <code>docker.sock</code>。
 - 写操作只经 helper 白名单；Web 端仍需双重检查。
 - 低风险偏好（语言/显示）可 Web 修改；高风险设置默认后台-only，Web 只读展示。
-- 高风险设置是否允许 Web 修改，由后台开关决定；开启时需重新认证、CSRF、审计与确认。
-- 删除先移入回收站；物理 purge 只能后台二次确认。
-- 紧急命令只允许后台 root；<code>lock</code> 保留只读服务，<code>lockdown</code> 停止 Web+helper。
+- 高风险设置开关 <code>web.allowHighRiskSettings</code> 默认 false；即使开启，前后台修改都必须 Y/N 二次确认、重新认证、CSRF、审计。建议白名单仅 readOnly/idleTimeout/导出。
+- 删除先移入回收站；物理 purge 只能后台二次确认；不承诺 SSD/快照/备份上的安全擦除；恢复已吊销证书保留吊销状态。
+- 紧急命令只允许后台 root；<code>lock</code> 设置 readOnly + 递增 <code>web.sessionEpoch</code> + SIGHUP，旧会话失效但服务保留；<code>lockdown</code> 只停止明确命名的 Web/helper 服务或容器，不触碰 SSH/strongSwan。
+- Web 导出默认关闭，仅 CSV 简易名单（CN/状态/序列号/到期时间/平台），不导出私钥/p12/zip。
 - 生产默认 OpenSSH 本地转发；公网访问需要单独的 TLS/mTLS 或 Tunnel/Access 设计。
 
 ## 6. 配置与部署
 
 - 业务配置：<code>/opt/ipsec/config/neca.json</code>；Web 挂载配置目录以感知 SIGHUP。
+- 计划新增字段：<code>web.sessionEpoch</code>（lock 使用）、<code>web.allowHighRiskSettings</code>（默认 false）、<code>web.exportEnabled</code>（默认 false）、<code>trash.retention</code>（默认 0=不限时）。
 - 只读/空闲超时可通过 SIGHUP 重载；listen/adminCNs/passkey 仍需重启。
 - helper 幂等缓存：<code>/run/neca/web-helper-cache.json</code>（0600，24h TTL）。
 - 部署、权限、备份与回滚：[deploy.md](deploy.md)。
@@ -123,10 +127,11 @@ docker compose run -T --rm dev make check-docs
 
 重构期间额外要求：
 
-- 命令迁移表逐条测试；
-- 旧命令/新命令同时存在时，确保不会双写；
+- 命令迁移表逐条测试；旧命令不保留，不能出现双写；
 - Web/helper 入口分别做权限和审计测试；
-- 破坏性功能必须有故障注入与恢复演练。
+- 破坏性功能必须有故障注入与恢复演练；
+- lock/lockdown 必须验证只影响明确服务；
+- 回收站/purge 必须验证不承诺安全擦除的文档与行为一致。
 
 ## 8. 文档地图
 

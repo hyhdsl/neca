@@ -201,6 +201,13 @@ docker compose run -T --rm dev make check-docs
 - M9.4 已完成：<code>cert</code>/<code>pki</code>/<code>trash</code> 命名空间；旧命令与 <code>compatArgs</code> 移除；最小回收站已落地。
 - v0.5.0 已发布：命令迁移、最小回收站、帮助站与迁移表完成；M9.4 已无待迁移命令。
 
+## 9.3 v1.0 RC 稳定化
+
+- 候选：v1.0.0-rc.1；当前稳定版 v0.7.0。
+- 生产快照已确认后做升级/回滚演练；只操作 Web/helper，不重启 strongSwan。
+- RC 观察期 1 周；期间只接受修复/文档/安全补丁。
+- 发布门槛见 [STABILITY.md](STABILITY.md) 与 [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md)。
+
 ## 10. 当前路线
 
 M9 命令/边界重构（v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性与可观测性 → M13 公网访问 → M14 OpenAPI 长期搁置。详见 [MILESTONES.md](MILESTONES.md)。

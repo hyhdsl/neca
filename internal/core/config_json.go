@@ -55,6 +55,9 @@ type fileConfig struct {
 		TTL      string `json:"ttl,omitempty"`
 		MaxFiles int    `json:"maxFiles,omitempty"`
 	} `json:"download"`
+	Trash struct {
+		Retention string `json:"retention,omitempty"`
+	} `json:"trash"`
 	Web webFileConfig `json:"web,omitempty"`
 }
 
@@ -113,6 +116,7 @@ func (s JSONSource) Load(ctx context.Context) (map[string]string, error) {
 	set("DOCKER_BIN", cfg.Reload.DockerBin)
 	set("NECA_DOWNLOAD_DIR", cfg.Download.Dir)
 	set("NECA_DOWNLOAD_TTL", cfg.Download.TTL)
+	set("NECA_TRASH_RETENTION", cfg.Trash.Retention)
 	set("NECA_P12_PROFILE", cfg.Defaults.P12Profile)
 	set("NECA_INSTALLERS", cfg.Defaults.Installers)
 	if cfg.Web.Enabled != nil {
@@ -214,6 +218,7 @@ func ConfigSnapshot(cfg *Config) map[string]any {
 		"downloadsDir":     cfg.DownloadsDir,
 		"downloadTTL":      cfg.DownloadTTL.String(),
 		"downloadMaxFiles": cfg.DownloadMaxFiles,
+		"trashRetention":   cfg.TrashRetention.String(),
 		"p12Profile":       cfg.P12Profile,
 		"installers":       cfg.Installers,
 		"auditFile":        cfg.AuditFile,
@@ -259,8 +264,8 @@ func ConfigEnvMap(cfg *Config) map[string]string {
 		"DEFAULT_DAYS": strconv.Itoa(cfg.DefaultDays), "KEY_BITS": strconv.Itoa(cfg.KeyBits),
 		"NECA_RELOAD_MODE": cfg.ReloadMode, "NECA_LOCK_FILE": cfg.LockFile,
 		"NECA_DOWNLOAD_DIR": cfg.DownloadsDir, "NECA_DOWNLOAD_TTL": cfg.DownloadTTL.String(),
-		"NECA_DOWNLOAD_MAX_FILES": strconv.Itoa(cfg.DownloadMaxFiles),
-		"NECA_P12_PROFILE":        string(cfg.P12Profile), "NECA_INSTALLERS": cfg.Installers,
+		"NECA_DOWNLOAD_MAX_FILES": strconv.Itoa(cfg.DownloadMaxFiles), "NECA_TRASH_RETENTION": cfg.TrashRetention.String(),
+		"NECA_P12_PROFILE": string(cfg.P12Profile), "NECA_INSTALLERS": cfg.Installers,
 		"NECA_AUDIT_LOG": cfg.AuditFile, "NECA_LANG": cfg.Language,
 		"NECA_WEB_ENABLED": strconv.FormatBool(cfg.Web.Enabled),
 		"NECA_WEB_LISTEN":  cfg.Web.Listen, "NECA_WEB_READONLY": strconv.FormatBool(cfg.Web.ReadOnly),
@@ -306,6 +311,9 @@ func ConfigFileJSON(cfg *Config) ([]byte, error) {
 		fc.Download.Dir = cfg.DownloadsDir
 		fc.Download.TTL = cfg.DownloadTTL.String()
 		fc.Download.MaxFiles = cfg.DownloadMaxFiles
+		if cfg.TrashRetention > 0 {
+			fc.Trash.Retention = cfg.TrashRetention.String()
+		}
 		fc.Web = webFileFromConfig(cfg.Web)
 	}
 	data, err := json.MarshalIndent(fc, "", "  ")

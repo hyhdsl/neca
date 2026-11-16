@@ -45,7 +45,7 @@ var configEnvKeys = []string{
 	"NECA_P12_PROFILE", "NECA_INSTALLERS", "NECA_AUDIT_LOG", "NECA_LANG",
 	"NECA_WEB_ENABLED", "NECA_WEB_LISTEN", "NECA_WEB_READONLY",
 	"NECA_WEB_IDLE_TIMEOUT", "NECA_WEB_SESSION_EPOCH", "NECA_WEB_EXPORT_ENABLED",
-	"NECA_WEB_ALLOW_HIGH_RISK_SETTINGS", "NECA_WEB_ADMIN_CNS",
+	"NECA_WEB_ALLOW_HIGH_RISK_SETTINGS", "NECA_TRASH_RETENTION", "NECA_WEB_ADMIN_CNS",
 	"NECA_WEB_PASSKEY_ENABLED", "NECA_WEB_PASSKEY_RPID", "NECA_WEB_PASSKEY_RPNAME",
 }
 
@@ -82,6 +82,7 @@ type Config struct {
 	DownloadMaxFiles int           // zip 数量上限
 	P12Profile       P12Profile    // compat | modern
 	Installers       string        // none | all | 平台列表
+	TrashRetention   time.Duration // 回收站保留期；0=不限时
 	AuditFile        string        // 追加式审计日志
 	Language         string        // 控制台语言偏好
 	ConfigFile       string        // 实际读取的 JSON 配置路径
@@ -361,6 +362,13 @@ func (c *Config) parseNumbers(values map[string]string) error {
 			return usagef("配置", "NECA_DOWNLOAD_MAX_FILES 必须是正整数: %q", raw)
 		}
 		c.DownloadMaxFiles = n
+	}
+	if raw := values["NECA_TRASH_RETENTION"]; raw != "" {
+		d, err := time.ParseDuration(raw)
+		if err != nil || d < 0 {
+			return usagef("配置", "NECA_TRASH_RETENTION 非法: %q", raw)
+		}
+		c.TrashRetention = d
 	}
 	if raw := values["NECA_P12_PROFILE"]; raw != "" {
 		profile, err := ParseP12Profile(raw)

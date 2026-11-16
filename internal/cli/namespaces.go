@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hyhdsl/neca/internal/core"
 )
@@ -184,9 +185,9 @@ func runTrashRestore(env Env) int {
 }
 
 func runTrashPurge(env Env) int {
-	pos, _, _, err := parseFlags(env.Args, nil, nil)
-	if err != nil || len(pos) != 1 {
-		return usageFail(env, "用法: trash purge <ID>")
+	pos, _, bools, err := parseFlags(env.Args, nil, []string{"expired"})
+	if err != nil {
+		return usageFail(env, "用法: trash purge <ID> | --expired")
 	}
 	deps, err := newCoreDeps()
 	if err != nil {
@@ -194,6 +195,45 @@ func runTrashPurge(env Env) int {
 	}
 	if env.JSON && !env.Yes {
 		return usageFail(env, "trash purge --json 需要 --yes")
+	}
+	if bools["expired"] {
+		if len(pos) != 0 {
+			return usageFail(env, "用法: trash purge --expired")
+		}
+		ids, err := core.ExpiredTrashIDs(deps.cfg, time.Now())
+		if err != nil {
+			return fail(env, err)
+		}
+		if len(ids) == 0 {
+			if env.JSON {
+				return emitJSON(env, "trash purge", "", nil, map[string]any{"purged": []string{}})
+			}
+			fmt.Fprintf(env.Stdout, "没有超过保留期（%s）的条目\n", deps.cfg.TrashRetention)
+			return ExitOK
+		}
+		confirmer := TerminalConfirmer{In: env.Stdin, Out: env.Stdout, AssumeYes: env.Yes}
+		ok, err := confirmer.Confirm(context.Background(), ConfirmRequest{Action: "trash purge --expired", Subject: fmt.Sprintf("%d 个条目", len(ids)), Default: false})
+		if err != nil {
+			return fail(env, err)
+		}
+		if !ok {
+			fmt.Fprintln(env.Stdout, "已取消")
+			return ExitOK
+		}
+		for _, id := range ids {
+			if err := core.PurgeTrash(deps.cfg, id); err != nil {
+				return fail(env, err)
+			}
+			_ = core.AppendAuditWithOrigin(deps.cfg, string(env.Origin), "trash-purge", id, "", "expired")
+		}
+		if env.JSON {
+			return emitJSON(env, "trash purge", "", nil, map[string]any{"purged": ids})
+		}
+		fmt.Fprintf(env.Stdout, "[OK]   已清理 %d 个过期条目\n", len(ids))
+		return ExitOK
+	}
+	if len(pos) != 1 {
+		return usageFail(env, "用法: trash purge <ID> | --expired")
 	}
 	confirmer := TerminalConfirmer{In: env.Stdin, Out: env.Stdout, AssumeYes: env.Yes}
 	ok, err := confirmer.Confirm(context.Background(), ConfirmRequest{Action: "trash purge", Subject: pos[0], Default: false})

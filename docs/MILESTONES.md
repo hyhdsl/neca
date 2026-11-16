@@ -147,8 +147,8 @@
 - ✅ Web 设置页 <code>/settings</code>：语言/主题低风险偏好；高风险设置只读展示。
 - ✅ 后台开关 <code>web.allowHighRiskSettings</code> 默认关闭；设置页显示当前状态。
 - [ ] Web 高风险修改入口（需后台开关、Y/N、重新认证、CSRF、审计）。
-- [ ] 回收站保留期 <code>trash.retention</code>（默认 0=不限时）；自动清理/提示规则。
-- [ ] 恢复已吊销证书保留吊销状态；purge 一次 Y/N（默认 N，<code>--yes</code> 可跳过）且不输入 CN；不承诺安全擦除。
+- ✅ 回收站保留期 <code>trash.retention</code>（默认 0=不限时）；<code>trash purge --expired</code> 清理过期条目。
+- [x] 设置页展示保留期；恢复已吊销证书保留吊销状态；单条 purge 一次 Y/N（默认 N，<code>--yes</code> 可跳过）且不输入 CN；不承诺安全擦除。
 - 出口：删除/恢复/清理有测试；私钥访问、保留期和恢复规则明确。
 
 ### M12：可维护性与可观测性

@@ -73,6 +73,7 @@
   "web.settings.idle_timeout": "Idle timeout",
   "web.settings.export": "CSV export",
   "web.settings.session_epoch": "Session epoch",
+  "web.settings.trash_retention": "Recycle-bin retention",
   "web.settings.allow_high_risk": "Allow Web edits of high-risk settings",
   "web.settings.yes": "Yes",
   "web.settings.no": "No",

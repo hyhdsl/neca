@@ -140,6 +140,41 @@ func ListTrash(cfg *Config) ([]TrashEntry, error) {
 	return entries, nil
 }
 
+// ExpiredTrashIDs returns entries older than cfg.TrashRetention, newest-first.
+// Retention 0 means unlimited; no entries are expired.
+func ExpiredTrashIDs(cfg *Config, now time.Time) ([]string, error) {
+	if cfg == nil || cfg.TrashRetention <= 0 {
+		return nil, nil
+	}
+	entries, err := ListTrash(cfg)
+	if err != nil {
+		return nil, err
+	}
+	cutoff := now.UTC().Add(-cfg.TrashRetention)
+	ids := make([]string, 0)
+	for _, entry := range entries {
+		if entry.CreatedAt.Before(cutoff) {
+			ids = append(ids, entry.ID)
+		}
+	}
+	return ids, nil
+}
+
+// PurgeExpiredTrash permanently removes entries past the configured retention.
+// Callers must confirm with the operator first; secure erasure is not promised.
+func PurgeExpiredTrash(cfg *Config, now time.Time) ([]string, error) {
+	ids, err := ExpiredTrashIDs(cfg, now)
+	if err != nil {
+		return nil, err
+	}
+	for _, id := range ids {
+		if err := PurgeTrash(cfg, id); err != nil {
+			return nil, err
+		}
+	}
+	return ids, nil
+}
+
 // RestoreTrash restores files and index rows from one entry.
 func RestoreTrash(ctx context.Context, cfg *Config, store *FileIndexStore, oss *OpenSSL, engine *Engine, id string) (*TrashEntry, error) {
 	var restored *TrashEntry

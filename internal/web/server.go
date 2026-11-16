@@ -354,6 +354,7 @@ type pageData struct {
 	Platforms       string
 	P12Profile      string
 	Web             *core.WebConfig
+	TrashRetention  string
 }
 
 type dashboardStats struct {

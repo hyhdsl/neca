@@ -152,8 +152,12 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 		s.renderError(w, r, http.StatusInternalServerError, err.Error())
 		return
 	}
+	retention := "不限时"
+	if cfg.TrashRetention > 0 {
+		retention = cfg.TrashRetention.String()
+	}
 	s.render(w, r, "settings", pageData{
-		TitleKey: "web.settings.title", Nav: "settings", Web: &cfg.Web,
+		TitleKey: "web.settings.title", Nav: "settings", Web: &cfg.Web, TrashRetention: retention,
 		ReadOnly: s.readOnly(), Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 	})
 }

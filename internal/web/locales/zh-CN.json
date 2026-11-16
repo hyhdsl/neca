@@ -73,6 +73,7 @@
   "web.settings.idle_timeout": "空闲超时",
   "web.settings.export": "CSV 导出",
   "web.settings.session_epoch": "会话代际",
+  "web.settings.trash_retention": "回收站保留期",
   "web.settings.allow_high_risk": "允许 Web 修改高风险设置",
   "web.settings.yes": "是",
   "web.settings.no": "否",

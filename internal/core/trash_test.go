@@ -34,6 +34,32 @@ func TestTrashListAndPurge(t *testing.T) {
 	}
 }
 
+func TestExpiredTrashIDs(t *testing.T) {
+	cfg := &Config{PKIDir: t.TempDir(), TrashRetention: time.Hour}
+	now := time.Now().UTC()
+	for id, created := range map[string]time.Time{
+		"old": now.Add(-2 * time.Hour),
+		"new": now.Add(-30 * time.Minute),
+	} {
+		dir := filepath.Join(TrashDir(cfg), id)
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		data, _ := json.Marshal(TrashEntry{ID: id, CN: id, CreatedAt: created})
+		if err := os.WriteFile(filepath.Join(dir, "entry.json"), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ids, err := ExpiredTrashIDs(cfg, now)
+	if err != nil || len(ids) != 1 || ids[0] != "old" {
+		t.Fatalf("expired = %v, %v; want [old]", ids, err)
+	}
+	cfg.TrashRetention = 0
+	if ids, err := ExpiredTrashIDs(cfg, now); err != nil || len(ids) != 0 {
+		t.Fatalf("unlimited retention = %v, %v", ids, err)
+	}
+}
+
 func TestMoveTrashFilesRoundTrip(t *testing.T) {
 	cfg := &Config{PKIDir: t.TempDir()}
 	source := filepath.Join(cfg.PKIDir, "TMP01.crt")

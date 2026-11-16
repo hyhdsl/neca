@@ -20,6 +20,7 @@
     <dt>{{.T "web.settings.idle_timeout"}}</dt><dd>{{.Web.IdleTimeoutRaw}}</dd>
     <dt>{{.T "web.settings.export"}}</dt><dd>{{if .Web.ExportEnabled}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
     <dt>{{.T "web.settings.session_epoch"}}</dt><dd>{{.Web.SessionEpoch}}</dd>
+    <dt>{{.T "web.settings.trash_retention"}}</dt><dd>{{.TrashRetention}}</dd>
     <dt>{{.T "web.settings.allow_high_risk"}}</dt><dd>{{if .Web.AllowHighRiskSettings}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
   </dl>
   <p class="muted small">{{.T "web.settings.backend_only"}}</p>

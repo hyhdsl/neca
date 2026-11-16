@@ -18,7 +18,7 @@
 
 **Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
-🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.5.0](https://github.com/hyhdsl/neca/releases/tag/v0.5.0)
+🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.7.0](https://github.com/hyhdsl/neca/releases/tag/v0.7.0)
 
 ## ✨ Features
 
@@ -34,7 +34,7 @@
 Pin the version, dry-run first, then issue:
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v0.5.0
+docker pull ghcr.io/hyhdsl/neca:v0.7.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -84,7 +84,7 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 ## 📌 Status
 
-- **Current release**: v0.5.0; **v1.0.0-rc.1 candidate** is in stabilization (not a stable release)
+- **Current stable**: v0.7.0; **v1.0.0-rc.1** is published as a pre-release candidate (not stable)
 - **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
 - **Next**: v1.0.0-rc.1 upgrade/rollback validation → v1.0.0; M13 public access later, M14 OpenAPI long-term deferred
 - **Production**: v0.4.1 still runs; migrate commands and back up config/PKI before upgrading to v0.5.0

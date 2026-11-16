@@ -1,7 +1,7 @@
 # neca 开发目标与里程碑
 
-> 更新：2026-11-16 · 当前基线：v0.4.1（tag 6060c2b）  
-> 当前 main：e53d165；帮助站 neca-help：14a7c1a。  
+> 更新：2026-11-16 · 当前基线：v0.4.1（tag 6060c2b）
+> 当前 main：e53d165；帮助站 neca-help：14a7c1a。
 > 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，历史实施记录见 [neca-development.md](neca-development.md)。
 
 ## 1. 当前状态

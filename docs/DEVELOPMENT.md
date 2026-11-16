@@ -1,7 +1,7 @@
 # neca 开发指南（当前）
 
-> 更新：2026-11-16 · 基线：v0.4.1（tag 6060c2b）  
-> 当前权威里程碑：[MILESTONES.md](MILESTONES.md)。历史设计/验收记录：[neca-development.md](neca-development.md)、[web-panel.md](web-panel.md)、[web-panel-development.md](web-panel-development.md)。  
+> 更新：2026-11-16 · 基线：v0.4.1（tag 6060c2b）
+> 当前权威里程碑：[MILESTONES.md](MILESTONES.md)。历史设计/验收记录：[neca-development.md](neca-development.md)、[web-panel.md](web-panel.md)、[web-panel-development.md](web-panel-development.md)。
 > 中文文档为主版本；英文 README/帮助可能滞后。
 
 ## 1. 项目定位

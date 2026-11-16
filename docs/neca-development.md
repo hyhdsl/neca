@@ -844,7 +844,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | Docker 开发环境 | ✅ 可用：镜像源已配、`golang:1.25-bookworm` 已拉取 |
 | DSH GitHub 集成 | ✅ `dsh-github-flow@0.7.1` 已装，`gh` 已 OAuth 登录 |
 | CI/CD 工作流 | ✅ `ci.yml`、`release.yml`、`docker.yml` 均已落地；完成 v0.4.1 多架构发布与 GHCR 推送 |
-| 服务器 | ✅ v0.4.1 已部署（lite + neca-web + helper）；Web 监听 127.0.0.1:18080、默认只读；索引哈希 `redacted…redacted`、CRL `redacted…redacted` 与部署前一致，strongSwan 未重启；SIGHUP 与 helper 缓存已验证 |
+| 服务器 | ✅ 已部署 lite + neca-web + helper；Web 默认只读；索引/CRL 与部署前一致，strongSwan 未重启；SIGHUP 与 helper 缓存已验证（具体环境信息不记录） |
 | 文档/发布 | ✅ M7：`make check-docs` 接入 CI/`make all`；`publish-help` 默认 dry-run、`publish-help-apply` 推送；本地脚本已完成一次实际发布 |
 | Web 运维 | ✅ M8 main：SIGHUP 重载 readOnly/idleTimeout；helper 幂等缓存落盘；访问仍以 OpenSSH 为主，公网 TLS/mTLS 未启用 |
 
@@ -883,7 +883,7 @@ gh auth login --hostname github.com --git-protocol https --web
 
 - v0.2.0 在服务器完成全量验收（2026-11-15，快照 15:12:34 之后）：最终 **96 项通过 / 0 失败**。
 - 覆盖：config/language、dry-run、五平台 issue、installers、compat/modern p12、zip/manifest/no key、downloads TTL/clean、verify、platform add/set、package、export、revoke/unrevoke/幂等/reload、reissue/archive/delete、吊销证书删除拒绝与 purge、JSON 错误、help/version/wizard/wrapper。
-- 测试后：索引哈希 `redacted…redacted`、CRL 5 条、证书 8 个、meta 3 个、clients 3 个、archive/downloads 为空；测试 CN、配置、CSV、审计与下载残留清零；strongSwan 容器 healthy 且未重启，既有 IKE SA 保留。
+- 测试后：索引/CRL 与测试前基线一致；测试 CN、配置、CSV、审计与下载残留清零；strongSwan 容器 healthy 且未重启，既有 IKE SA 保留。
 - 筹备时生产仍为 `neca:v0.2.0`；v0.3.0 发布后已升级为 `ghcr.io/hyhdsl/neca:v0.3.0` 与 `neca-web:v0.3.0`。
 
 ### 20.2 M6a 只读 Web MVP（已完成）

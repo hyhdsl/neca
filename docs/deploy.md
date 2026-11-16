@@ -153,14 +153,14 @@ docker compose -f docker-compose.neca.yml --profile web logs -f web
 ```
 
 Web 默认监听 `127.0.0.1:18080`，compose 使用 host network 但不发布端口。
-本次生产环境 18080 已被 other service 占用，`web.listen` 使用 18080；下面以生产端口
-为例。若使用默认端口，将命令中的 18080 换成 18080。推荐通过系统原生 OpenSSH
-本地转发访问：
+推荐通过系统原生 OpenSSH 本地转发访问：
 
 ```bash
 ssh -L 18080:127.0.0.1:18080 root@<SERVER>
 # 然后浏览器打开 http://127.0.0.1:18080
 ```
+
+若修改过 `web.listen`，请把示例中的 18080 换成实际端口。
 
 如果必须在浏览器直接访问，使用系统原生 IKEv2 连接 VPN，由反向代理终止
 TLS 并校验证书；不要使用 Tailscale/WireGuard 等第三方 VPN 客户端。

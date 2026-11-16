@@ -419,34 +419,14 @@ type PasskeyAuthenticator interface {
 
 ## 20. 正式部署记录（2026-11-15）
 
-- 服务器：Debian 12，Docker Compose，已有 strongSwan 容器；部署前已做快照与
-  配置/PKI 备份；正式版 v0.3.0 已发布并部署；
-- 镜像：正式版 `ghcr.io/hyhdsl/neca:v0.3.0`、`ghcr.io/hyhdsl/neca-web:v0.3.0`
-  （commit `824d642`）；服务器已切换到正式版；
-- 端口：`18080` 已被 other service 占用，Web 改用 `127.0.0.1:18080`；host network，
-  不发布公网端口，通过 OpenSSH 本地转发访问；
-- Web：UID/GID 10001、只读根文件系统、无 docker.sock/ca.key；只挂载配置、
-  索引、meta、clients、downloads、CRL、web-secrets 单文件；
-- helper：独立 root 容器，`web-write` profile，socket `0660 root:neca-web`；
-- 验证：登录 303、未登录 API 401、capabilities readOnly/writable 切换、
-  不存在 CN 的 revoke 返回 409（证明 Web→helper→core 链路，不修改 PKI）；
-- 浏览器验收（2026-11-15）：Edge + Playwright/Axe，检查登录、概览、证书列表、
-  证书详情、移动端、浅色/深色、中文/英文切换和可写表单；axe 无 serious/critical
-  违规；移动端无横向溢出；主题切换可持久化；
-- 正式 v0.3.0 发布后，preview.3 按策略转为 source-only；`neca:latest` 与
-  `neca-web:latest` 指向 v0.3.0；
-- 部署后 `index.txt` SHA-256 `redacted…redacted`、CRL `redacted…redacted`
-  与部署前一致；strongSwan 容器仍 healthy 且未重启；
-- 已完成可写链路验证后恢复默认 `web.readOnly=true`；如启用写操作：
-  `neca web readonly off` 并重启 `neca-web`；
-- 初始管理员密码由部署流程生成/交付；首次登录后建议删除临时密码文件；
-  需要重置时重新生成 `web-secrets/password.hash`；
-- 正式发布：`v0.3.0`（commit `824d642`），GitHub Release 含 CLI/necad/helper
-  amd64/arm64 二进制与 checksums；GHCR `neca:latest`、`neca-web:latest` 均指向
-  v0.3.0；
-- 旧预览包策略：新预览/正式版发布后，旧预览只保留 GitHub 自动源代码归档，
-  删除二进制/容器资产；preview.1–preview.3 均已转为 source-only，对应旧
-  GHCR 镜像已删除。后续使用 `scripts/archive-preview-release.sh <tag>` 处理。
+- 已在 Linux + Docker Compose 环境完成部署；部署前做了快照与配置/PKI 备份。
+- Web 通过 OpenSSH 本地转发访问，不发布公网端口；默认只读。
+- Web 容器不挂载 `ca.key` 或 `docker.sock`；helper 使用独立 root 容器与白名单。
+- 已完成登录、只读 API、capabilities 切换、Web→helper→core 链路和浏览器验收；
+  验收后恢复默认只读。
+- 初始管理员密码由部署流程交付；首次登录后建议删除临时密码文件。
+- 正式版与预览版按发布策略处理；旧预览保留源代码归档，不保留二进制/容器资产。
+- 具体服务器、端口、哈希与内部环境信息不写入仓库。
 
 ## 21. Web 多语言（2026-11-15，已完成）
 

@@ -441,14 +441,8 @@ DB 增加 `users`、`roles`、`cert_owner`，引入申请-审批-签发流程。
 
 ---
 
-## 18. 附录：环境快照（2026-11-15）
+## 18. 附录：环境说明（已脱敏）
 
-| 项 | 值 |
-|---|---|
-| 服务器 | Debian 12 bookworm，x86_64，glibc 2.36，systemd，内存 1676 MB（可用 419 MB），磁盘可用 21 GB |
-| 依赖 | bash 5.2.15、OpenSSL 3.0.15、python3 3.11.2（PEP 668）、pip 23.0.1、sqlite 3.40.1、docker、column、curl |
-| 容器 | ipsec-vpn（strongSwan / swanctl 5.9.8）、existing-service、other service、existing-service、existing-service 等共 6 个 |
-| 挂载 | /opt/ipsec/swanctl 到 /etc/swanctl（rw），charon-logging.conf（ro） |
-| 数据 | pki/ 下 3 张有效证书加 5 条已吊销索引；clients/ 下 3 个客户包；CRL 5 条 |
-| 有效期 | CA 到 2036-11-11；CRL nextUpdate 2036-11-11 |
-| 本机 | Windows 11，git 2.56，Docker Desktop（CLI 不在 PATH），WSL 无发行版，无 gcc、无 Go、无真实 Python |
+- 目标环境为 Linux + systemd + Docker，包含 strongSwan 与若干现有服务。
+- 具体主机名、端口、容器清单、资源规格、证书数量、哈希与内部网络信息不在文档中记录。
+- 需要复现时，按部署文档准备独立测试环境，不要直接照搬生产配置。

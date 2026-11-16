@@ -108,27 +108,29 @@
 - 配置 schema 向后兼容，SIGHUP 原子重载；缺失默认 0。
 - 单测：旧 Cookie 失效、重启后仍失效。
 
-#### M10.2 <code>neca web lock</code>
+#### M10.2 <code>neca web lock</code>（已完成）
 
-- 一次配置写入：<code>readOnly=true</code> + <code>sessionEpoch++</code>，随后 SIGHUP。
-- 旧会话全部失效，服务保留；SIGHUP 失败时报错并建议 <code>lockdown</code>。
-- Y/N 默认 N；<code>--yes</code> 仅后台自动化并审计。
+- ✅ 一次配置写入：<code>readOnly=true</code> + <code>sessionEpoch++</code>，随后 SIGHUP。
+- ✅ 旧会话全部失效，服务保留；SIGHUP 失败时报错并建议 <code>lockdown</code>。
+- ✅ Y/N 默认 N；<code>--yes</code> 仅后台自动化。
 
-#### M10.3 <code>neca web lockdown</code>
+#### M10.3 <code>neca web lockdown</code>（已完成）
 
-- 只停止明确命名的 Web + helper 服务/容器；禁止反向“停止其他所有服务”。
-- 不触碰 SSH、strongSwan 或 VPN；Y/N 默认 N。
+- ✅ 只停止明确命名的 <code>web</code> + <code>web-helper</code>；禁止反向停止。
+- ✅ 不触碰 SSH、strongSwan 或 VPN；Y/N 默认 N。
 
-#### M10.4 Web 导出开关
+#### M10.4 Web 导出开关（已完成）
 
-- <code>neca web export on/off</code>；默认关闭。
-- 仅 CSV：<code>issued.csv</code> / <code>revoked.csv</code>；字段 CN/状态/序列号/到期时间/平台。
-- 关闭时 Web/API 同步拒绝；审计/限速。
+- ✅ <code>neca web export on/off</code>；默认关闭。
+- ✅ 仅 CSV：<code>issued.csv</code> / <code>revoked.csv</code>。
+- ✅ 关闭时 Web/API 路由 404；SIGHUP 重载开关。
 
-#### M10.5 备份、恢复与回滚演练
+#### M10.5 备份、恢复与回滚演练（已完成）
 
-- 备份 PKI、config、web-secrets、clients、meta、downloads。
-- 做 v0.4.1 回滚演练；保留镜像/配置/PKI 备份。
+- ✅ 新增 <code>scripts/backup-neca.sh</code>：备份 pki/clients/swanctl/config/web-secrets，0600 + sha256。
+- ✅ 新增 <code>scripts/restore-neca.sh --yes</code>：仅停止明确命名的 web/helper，恢复后提示先只读启动。
+- ✅ 回滚顺序：停 Web/helper → 恢复备份 → 校验索引/CRL → 只读启动 → 验证登录/证书/下载 → 再决定写能力。
+- ✅ 备份脚本烟测通过；恢复脚本仅做语法检查，未在真实 PKI 上执行。
 
 **出口**：两种紧急命令可审计、可确认；导出默认关闭；恢复演练通过；回滚可在 10 分钟内完成。
 

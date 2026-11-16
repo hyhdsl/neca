@@ -125,6 +125,9 @@ func (s JSONSource) Load(ctx context.Context) (map[string]string, error) {
 	if cfg.Web.SessionEpoch != 0 {
 		set("NECA_WEB_SESSION_EPOCH", strconv.Itoa(cfg.Web.SessionEpoch))
 	}
+	if cfg.Web.ExportEnabled {
+		set("NECA_WEB_EXPORT_ENABLED", "true")
+	}
 	set("NECA_WEB_IDLE_TIMEOUT", cfg.Web.IdleTimeout)
 	if len(cfg.Web.AdminCNs) > 0 {
 		set("NECA_WEB_ADMIN_CNS", strings.Join(cfg.Web.AdminCNs, ","))
@@ -213,12 +216,13 @@ func ConfigSnapshot(cfg *Config) map[string]any {
 		"auditFile":        cfg.AuditFile,
 		"language":         cfg.Language,
 		"web": map[string]any{
-			"enabled":      cfg.Web.Enabled,
-			"listen":       cfg.Web.Listen,
-			"readOnly":     cfg.Web.ReadOnly,
-			"sessionEpoch": cfg.Web.SessionEpoch,
-			"idleTimeout":  cfg.Web.IdleTimeoutRaw,
-			"adminCNs":     cfg.Web.AdminCNs,
+			"enabled":       cfg.Web.Enabled,
+			"listen":        cfg.Web.Listen,
+			"readOnly":      cfg.Web.ReadOnly,
+			"sessionEpoch":  cfg.Web.SessionEpoch,
+			"exportEnabled": cfg.Web.ExportEnabled,
+			"idleTimeout":   cfg.Web.IdleTimeoutRaw,
+			"adminCNs":      cfg.Web.AdminCNs,
 			"passkey": map[string]any{
 				"enabled": cfg.Web.Passkey.Enabled,
 				"rpId":    cfg.Web.Passkey.RPID,
@@ -257,6 +261,7 @@ func ConfigEnvMap(cfg *Config) map[string]string {
 		"NECA_WEB_ENABLED": strconv.FormatBool(cfg.Web.Enabled),
 		"NECA_WEB_LISTEN":  cfg.Web.Listen, "NECA_WEB_READONLY": strconv.FormatBool(cfg.Web.ReadOnly),
 		"NECA_WEB_IDLE_TIMEOUT": cfg.Web.IdleTimeoutRaw, "NECA_WEB_SESSION_EPOCH": strconv.Itoa(cfg.Web.SessionEpoch),
+		"NECA_WEB_EXPORT_ENABLED":  strconv.FormatBool(cfg.Web.ExportEnabled),
 		"NECA_WEB_ADMIN_CNS":       strings.Join(cfg.Web.AdminCNs, ","),
 		"NECA_WEB_PASSKEY_ENABLED": strconv.FormatBool(cfg.Web.Passkey.Enabled),
 		"NECA_WEB_PASSKEY_RPID":    cfg.Web.Passkey.RPID, "NECA_WEB_PASSKEY_RPNAME": cfg.Web.Passkey.RPName,

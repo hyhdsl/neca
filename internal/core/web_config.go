@@ -39,6 +39,7 @@ type WebConfig struct {
 	Listen         string
 	ReadOnly       bool
 	SessionEpoch   int
+	ExportEnabled  bool
 	IdleTimeoutRaw string
 	AdminCNs       []string
 	Passkey        PasskeyConfig
@@ -81,6 +82,11 @@ func parseWebConfigValues(values map[string]string) WebConfig {
 	if value := strings.TrimSpace(values["NECA_WEB_SESSION_EPOCH"]); value != "" {
 		if parsed, err := strconv.Atoi(value); err == nil {
 			cfg.SessionEpoch = parsed
+		}
+	}
+	if value, ok := values["NECA_WEB_EXPORT_ENABLED"]; ok {
+		if parsed, err := strconv.ParseBool(strings.TrimSpace(value)); err == nil {
+			cfg.ExportEnabled = parsed
 		}
 	}
 	if value := strings.TrimSpace(values["NECA_WEB_IDLE_TIMEOUT"]); value != "" {
@@ -162,13 +168,14 @@ func (w WebConfig) Validate() error {
 
 // webFileConfig 是 JSON 文件中的 web 对象；布尔值用指针区分“未设置”和 false。
 type webFileConfig struct {
-	Enabled      *bool                `json:"enabled,omitempty"`
-	Listen       string               `json:"listen,omitempty"`
-	ReadOnly     *bool                `json:"readOnly,omitempty"`
-	SessionEpoch int                  `json:"sessionEpoch,omitempty"`
-	IdleTimeout  string               `json:"idleTimeout,omitempty"`
-	AdminCNs     []string             `json:"adminCNs,omitempty"`
-	Passkey      webPasskeyFileConfig `json:"passkey,omitempty"`
+	Enabled       *bool                `json:"enabled,omitempty"`
+	Listen        string               `json:"listen,omitempty"`
+	ReadOnly      *bool                `json:"readOnly,omitempty"`
+	SessionEpoch  int                  `json:"sessionEpoch,omitempty"`
+	ExportEnabled bool                 `json:"exportEnabled,omitempty"`
+	IdleTimeout   string               `json:"idleTimeout,omitempty"`
+	AdminCNs      []string             `json:"adminCNs,omitempty"`
+	Passkey       webPasskeyFileConfig `json:"passkey,omitempty"`
 }
 
 type webPasskeyFileConfig struct {
@@ -190,6 +197,7 @@ func webConfigFromFile(file webFileConfig) WebConfig {
 		cfg.ReadOnly = *file.ReadOnly
 	}
 	cfg.SessionEpoch = file.SessionEpoch
+	cfg.ExportEnabled = file.ExportEnabled
 	if strings.TrimSpace(file.IdleTimeout) != "" {
 		cfg.IdleTimeoutRaw = strings.TrimSpace(file.IdleTimeout)
 	}
@@ -214,12 +222,13 @@ func webFileFromConfig(cfg WebConfig) webFileConfig {
 	passkeyEnabled := cfg.Passkey.Enabled
 	adminCNs := append([]string{}, cfg.AdminCNs...)
 	return webFileConfig{
-		Enabled:      &enabled,
-		Listen:       cfg.Listen,
-		ReadOnly:     &readOnly,
-		SessionEpoch: cfg.SessionEpoch,
-		IdleTimeout:  cfg.IdleTimeoutRaw,
-		AdminCNs:     adminCNs,
+		Enabled:       &enabled,
+		Listen:        cfg.Listen,
+		ReadOnly:      &readOnly,
+		SessionEpoch:  cfg.SessionEpoch,
+		ExportEnabled: cfg.ExportEnabled,
+		IdleTimeout:   cfg.IdleTimeoutRaw,
+		AdminCNs:      adminCNs,
 		Passkey: webPasskeyFileConfig{
 			Enabled: &passkeyEnabled,
 			RPID:    cfg.Passkey.RPID,
@@ -292,6 +301,26 @@ func UpdateWebConfig(path string, mutate func(*WebConfig) error) (*WebConfig, er
 func UpdateWebReadOnly(path string, readOnly bool) (*WebConfig, error) {
 	return UpdateWebConfig(path, func(cfg *WebConfig) error {
 		cfg.ReadOnly = readOnly
+		return nil
+	})
+}
+
+// UpdateWebLock atomically forces readOnly and increments the session epoch.
+func UpdateWebLock(path string) (*WebConfig, error) {
+	return UpdateWebConfig(path, func(cfg *WebConfig) error {
+		if cfg.SessionEpoch >= int(^uint(0)>>1) {
+			return usagef("Web lock", "web.sessionEpoch 已达上限")
+		}
+		cfg.ReadOnly = true
+		cfg.SessionEpoch++
+		return nil
+	})
+}
+
+// UpdateWebExportEnabled toggles the Web CSV export switch.
+func UpdateWebExportEnabled(path string, enabled bool) (*WebConfig, error) {
+	return UpdateWebConfig(path, func(cfg *WebConfig) error {
+		cfg.ExportEnabled = enabled
 		return nil
 	})
 }

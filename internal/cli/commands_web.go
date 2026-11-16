@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -21,7 +23,7 @@ import (
 func newWebCommand() Command {
 	return Command{
 		Name:    "web",
-		Summary: "管理 Web 面板（status/readonly/idle-timeout/hash-password）",
+		Summary: "管理 Web 面板（status/readonly/idle-timeout/export/lock/lockdown/hash-password）",
 		Run: func(env Env) int {
 			if len(env.Args) == 0 || env.Args[0] == "status" {
 				if len(env.Args) > 1 {
@@ -34,13 +36,19 @@ func newWebCommand() Command {
 				return runWebReadOnly(env, env.Args[1:])
 			case "idle-timeout":
 				return runWebIdleTimeout(env, env.Args[1:])
+			case "export":
+				return runWebExport(env, env.Args[1:])
+			case "lock":
+				return runWebLock(env)
+			case "lockdown":
+				return runWebLockdown(env)
 			case "hash-password":
 				if len(env.Args) > 1 {
 					return usageFail(env, "web hash-password 不接受参数，密码从 stdin 读取")
 				}
 				return runWebHashPassword(env)
 			default:
-				return usageFail(env, "未知 web 子命令: %s（可用 status/readonly/idle-timeout/hash-password）", env.Args[0])
+				return usageFail(env, "未知 web 子命令: %s（可用 status/readonly/idle-timeout/export/lock/lockdown/hash-password）", env.Args[0])
 			}
 		},
 	}
@@ -61,6 +69,7 @@ func runWebStatus(env Env) int {
 			"listen":        cfg.Web.Listen,
 			"readOnly":      cfg.Web.ReadOnly,
 			"sessionEpoch":  cfg.Web.SessionEpoch,
+			"exportEnabled": cfg.Web.ExportEnabled,
 			"writable":      !cfg.Web.ReadOnly && helperErr == nil && helperStatus != nil && !helperStatus.ReadOnly,
 			"idleTimeout":   cfg.Web.IdleTimeoutRaw,
 			"absoluteLimit": core.AbsoluteWebSessionTimeout.String(),
@@ -111,7 +120,7 @@ func runWebStatus(env Env) int {
 			mode = "配置可写（helper 不可用）"
 		}
 	}
-	fmt.Fprintf(env.Stdout, "[INFO] 模式: %s（sessionEpoch=%d）\n", mode, cfg.Web.SessionEpoch)
+	fmt.Fprintf(env.Stdout, "[INFO] 模式: %s（sessionEpoch=%d，导出=%v）\n", mode, cfg.Web.SessionEpoch, cfg.Web.ExportEnabled)
 	if idleErr == nil {
 		fmt.Fprintf(env.Stdout, "[INFO] 空闲超时: %s（绝对上限 %s）\n", idle, core.AbsoluteWebSessionTimeout)
 	} else {
@@ -331,6 +340,162 @@ func writeWebReloadHint(env Env, path string) {
 	if !env.Quiet {
 		fmt.Fprintf(env.Stderr, "[INFO] 配置已写入 %s；发送 SIGHUP 使运行中的 necad 重载（docker kill --signal=HUP neca-web）\n", path)
 	}
+}
+
+func runWebLock(env Env) int {
+	if len(env.Args) != 0 {
+		return usageFail(env, "web lock 不接受参数")
+	}
+	if err := requireRoot(); err != nil {
+		return fail(env, err)
+	}
+	cfg, err := core.LoadConfig()
+	if err != nil {
+		return fail(env, err)
+	}
+	ok, err := confirmWebAction(env, "web lock", "强制只读并使全部 Web 会话失效")
+	if err != nil {
+		return fail(env, err)
+	}
+	if !ok {
+		fmt.Fprintln(env.Stdout, "已取消")
+		return ExitOK
+	}
+	updated, err := core.UpdateWebLock(cfg.ConfigFile)
+	if err != nil {
+		return fail(env, err)
+	}
+	appendWebAudit(cfg, "web-lock", fmt.Sprintf("epoch=%d", updated.SessionEpoch-1), fmt.Sprintf("epoch=%d readOnly=true", updated.SessionEpoch))
+	if cfg.Web.Enabled {
+		if err := signalWebReload(cfg); err != nil {
+			return fail(env, fmt.Errorf("配置已写入，但 SIGHUP 失败；请改用 neca web lockdown: %w", err))
+		}
+	}
+	if env.JSON {
+		return emitJSON(env, "web-lock", "", nil, map[string]any{"readOnly": updated.ReadOnly, "sessionEpoch": updated.SessionEpoch, "signaled": cfg.Web.Enabled})
+	}
+	if !cfg.Web.Enabled {
+		fmt.Fprintln(env.Stdout, "[WARN] Web 未启用；未发送 SIGHUP")
+	}
+	fmt.Fprintf(env.Stdout, "[OK]   Web 已锁定：只读，sessionEpoch=%d，旧会话失效\n", updated.SessionEpoch)
+	return ExitOK
+}
+
+func runWebExport(env Env, args []string) int {
+	if len(args) != 1 || (args[0] != "on" && args[0] != "off") {
+		return usageFail(env, "用法: web export on|off")
+	}
+	if err := requireRoot(); err != nil {
+		return fail(env, err)
+	}
+	cfg, err := core.LoadConfig()
+	if err != nil {
+		return fail(env, err)
+	}
+	enabled := args[0] == "on"
+	updated, err := core.UpdateWebExportEnabled(cfg.ConfigFile, enabled)
+	if err != nil {
+		return fail(env, err)
+	}
+	appendWebAudit(cfg, "web-export", fmt.Sprintf("enabled=%v", cfg.Web.ExportEnabled), fmt.Sprintf("enabled=%v", updated.ExportEnabled))
+	if cfg.Web.Enabled {
+		if err := signalWebReload(cfg); err != nil {
+			return fail(env, fmt.Errorf("配置已写入，但 SIGHUP 失败；请重启 neca-web: %w", err))
+		}
+	}
+	if env.JSON {
+		return emitJSON(env, "web-export", "", nil, map[string]any{"exportEnabled": updated.ExportEnabled, "signaled": cfg.Web.Enabled})
+	}
+	if enabled {
+		fmt.Fprintln(env.Stdout, "[OK]   Web CSV 导出已开启")
+	} else {
+		fmt.Fprintln(env.Stdout, "[OK]   Web CSV 导出已关闭")
+	}
+	return ExitOK
+}
+
+func runWebLockdown(env Env) int {
+	if len(env.Args) != 0 {
+		return usageFail(env, "web lockdown 不接受参数")
+	}
+	if err := requireRoot(); err != nil {
+		return fail(env, err)
+	}
+	ok, err := confirmWebAction(env, "web lockdown", "只停止 neca Web 与 helper 服务")
+	if err != nil {
+		return fail(env, err)
+	}
+	if !ok {
+		fmt.Fprintln(env.Stdout, "已取消")
+		return ExitOK
+	}
+	cfg, err := core.LoadConfig()
+	if err != nil {
+		return fail(env, err)
+	}
+	composeFile := webComposeFile()
+	args := lockdownArgs(composeFile)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, webDockerBin(cfg), args...).CombinedOutput()
+	if err != nil {
+		return fail(env, fmt.Errorf("停止 Web/helper 失败（仅目标服务 web、web-helper）: %v: %s", err, strings.TrimSpace(string(out))))
+	}
+	appendWebAudit(cfg, "web-lockdown", "running", "stopped web/web-helper")
+	if env.JSON {
+		return emitJSON(env, "web-lockdown", "", nil, map[string]any{"stopped": []string{"web", "web-helper"}, "composeFile": composeFile})
+	}
+	fmt.Fprintln(env.Stdout, "[OK]   Web 与 helper 已停止（web、web-helper）")
+	return ExitOK
+}
+
+func lockdownArgs(composeFile string) []string {
+	// Only these two explicit services are stopped. Never use a reverse
+	// "stop everything except X" expression; that could take down strongSwan.
+	return []string{
+		"compose", "-f", composeFile,
+		"--profile", "web", "--profile", "web-write",
+		"stop", "web", "web-helper",
+	}
+}
+
+func webDockerBin(cfg *core.Config) string {
+	if configured := strings.TrimSpace(os.Getenv("NECA_DOCKER_BIN")); configured != "" {
+		return configured
+	}
+	if cfg != nil && strings.TrimSpace(cfg.DockerBin) != "" {
+		return cfg.DockerBin
+	}
+	return "docker"
+}
+
+func webComposeFile() string {
+	if file := strings.TrimSpace(os.Getenv("NECA_COMPOSE_FILE")); file != "" {
+		return file
+	}
+	return "/opt/ipsec/docker-compose.neca.yml"
+}
+
+func signalWebReload(cfg *core.Config) error {
+	args := []string{"compose", "-f", webComposeFile(), "--profile", "web", "kill", "--signal=HUP", "web"}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, webDockerBin(cfg), args...).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s: %v: %s", strings.Join(args, " "), err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+func confirmWebAction(env Env, action, subject string) (bool, error) {
+	if env.Yes {
+		return true, nil
+	}
+	if env.JSON {
+		return false, usageError(action + " 在 JSON 模式下需要 --yes")
+	}
+	confirmer := TerminalConfirmer{In: env.Stdin, Out: env.Stdout}
+	return confirmer.Confirm(context.Background(), ConfirmRequest{Action: action, Subject: subject, Default: false})
 }
 
 // usageError 让配置层错误仍按用法错误返回退出码 1。

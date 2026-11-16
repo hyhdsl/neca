@@ -99,6 +99,10 @@ func isWriteCommand(name string, args []string) bool {
 			return len(args) > 1 && (args[1] == "on" || args[1] == "off")
 		case "idle-timeout":
 			return len(args) > 1 && args[1] != "status"
+		case "export":
+			return len(args) > 1 && (args[1] == "on" || args[1] == "off")
+		case "lock", "lockdown":
+			return true
 		default:
 			return false
 		}

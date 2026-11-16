@@ -42,24 +42,25 @@ type Options struct {
 
 // Server 是 Web 面板的 HTTP 服务；写能力由 helper 与 readOnly 双重控制。
 type Server struct {
-	cfg              *core.Config
-	store            *core.FileIndexStore
-	oss              *core.OpenSSL
-	passwordHash     []byte
-	proxySecret      []byte
-	secureCookies    bool
-	allowNonLoopback bool
-	sessions         *sessionManager
-	limiter          *loginLimiter
-	audit            *auditLogger
-	helperClient     *helper.Client
-	translator       *webTranslator
-	translators      map[string]*webTranslator
-	now              func() time.Time
-	templates        map[string]*template.Template
-	static           http.Handler
-	readOnlyFlag     atomic.Bool
-	idleTimeoutNanos atomic.Int64
+	cfg               *core.Config
+	store             *core.FileIndexStore
+	oss               *core.OpenSSL
+	passwordHash      []byte
+	proxySecret       []byte
+	secureCookies     bool
+	allowNonLoopback  bool
+	sessions          *sessionManager
+	limiter           *loginLimiter
+	audit             *auditLogger
+	helperClient      *helper.Client
+	translator        *webTranslator
+	translators       map[string]*webTranslator
+	now               func() time.Time
+	templates         map[string]*template.Template
+	static            http.Handler
+	readOnlyFlag      atomic.Bool
+	exportEnabledFlag atomic.Bool
+	idleTimeoutNanos  atomic.Int64
 }
 
 type sessionContextKey struct{}
@@ -127,6 +128,7 @@ func New(opts Options) (*Server, error) {
 		templates: templates, static: http.FileServer(http.FS(staticFS)),
 	}
 	server.readOnlyFlag.Store(opts.Config.Web.ReadOnly)
+	server.exportEnabledFlag.Store(opts.Config.Web.ExportEnabled)
 	server.idleTimeoutNanos.Store(int64(idle))
 	server.sessions.SetEpoch(int64(opts.Config.Web.SessionEpoch))
 	return server, nil
@@ -134,6 +136,9 @@ func New(opts Options) (*Server, error) {
 
 // readOnly 返回当前生效的只读状态；SIGHUP 重载会原子更新该值。
 func (s *Server) readOnly() bool { return s.readOnlyFlag.Load() }
+
+// exportEnabled 返回当前生效的 CSV 导出开关。
+func (s *Server) exportEnabled() bool { return s.exportEnabledFlag.Load() }
 
 // idleTimeout 返回当前生效的空闲超时；主要用于重载测试与诊断。
 func (s *Server) idleTimeout() time.Duration {
@@ -159,6 +164,7 @@ func (s *Server) Reload(cfg *core.Config) error {
 		return err
 	}
 	s.readOnlyFlag.Store(cfg.Web.ReadOnly)
+	s.exportEnabledFlag.Store(cfg.Web.ExportEnabled)
 	s.idleTimeoutNanos.Store(int64(idle))
 	if s.sessions != nil {
 		s.sessions.SetIdle(idle)
@@ -174,6 +180,7 @@ func (s *Server) Handler() http.Handler {
 	s.registerAuthRoutes(mux)
 	s.registerCertRoutes(mux)
 	s.registerDownloadRoutes(mux)
+	s.registerExportRoutes(mux)
 	s.registerAPIRoutes(mux)
 
 	return s.securityHeaders(s.readOnlyGuard(s.authenticate(mux)))

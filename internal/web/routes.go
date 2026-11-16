@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 
+	"github.com/hyhdsl/neca/internal/core"
 	"github.com/hyhdsl/neca/internal/helper"
 )
 
@@ -32,6 +33,13 @@ func (s *Server) registerCertRoutes(mux *http.ServeMux) {
 
 func (s *Server) registerDownloadRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
+}
+
+func (s *Server) registerExportRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /export/issued.csv", s.handleExport(core.ExportIssued))
+	mux.HandleFunc("GET /export/revoked.csv", s.handleExport(core.ExportRevoked))
+	mux.HandleFunc("GET /api/v1/export/issued.csv", s.handleExport(core.ExportIssued))
+	mux.HandleFunc("GET /api/v1/export/revoked.csv", s.handleExport(core.ExportRevoked))
 }
 
 func (s *Server) registerAPIRoutes(mux *http.ServeMux) {

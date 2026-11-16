@@ -18,7 +18,7 @@ func TestReloadWebRuntimeConfig(t *testing.T) {
 	server.idleTimeoutNanos.Store(int64(30 * time.Minute))
 
 	next := &core.Config{Web: core.WebConfig{
-		Enabled: true, Listen: "127.0.0.1:18080", ReadOnly: false, IdleTimeoutRaw: "10m",
+		Enabled: true, Listen: "127.0.0.1:18080", ReadOnly: false, ExportEnabled: true, IdleTimeoutRaw: "10m",
 	}}
 	if err := server.Reload(next); err != nil {
 		t.Fatalf("Reload: %v", err)
@@ -28,6 +28,9 @@ func TestReloadWebRuntimeConfig(t *testing.T) {
 	}
 	if got := server.idleTimeout(); got != 10*time.Minute {
 		t.Fatalf("idleTimeout = %s, want 10m", got)
+	}
+	if !server.exportEnabled() {
+		t.Fatal("exportEnabled was not reloaded")
 	}
 	if got := time.Duration(server.sessions.idle.Load()); got != 10*time.Minute {
 		t.Fatalf("session idle = %s, want 10m", got)

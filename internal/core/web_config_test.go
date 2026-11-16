@@ -121,6 +121,29 @@ func TestUpdateWebConfigPreservesDocument(t *testing.T) {
 	}
 }
 
+func TestUpdateWebLockAndExport(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "neca.json")
+	original := `{"schemaVersion":1,"web":{"enabled":true,"listen":"127.0.0.1:18080","readOnly":false,"sessionEpoch":2}}`
+	if err := os.WriteFile(path, []byte(original), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	locked, err := UpdateWebLock(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !locked.ReadOnly || locked.SessionEpoch != 3 {
+		t.Fatalf("lock = %+v, want readOnly=true epoch=3", locked)
+	}
+	exported, err := UpdateWebExportEnabled(path, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exported.ExportEnabled {
+		t.Fatalf("export = %+v, want enabled", exported)
+	}
+}
+
 func TestExampleConfigJSONHasSafeWebDefaults(t *testing.T) {
 	data, err := ExampleConfigJSON()
 	if err != nil {

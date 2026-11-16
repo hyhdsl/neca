@@ -125,6 +125,8 @@ M9.1 命令盘点与迁移表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENT
 
 - 业务配置：<code>/opt/ipsec/config/neca.json</code>；Web 挂载配置目录以感知 SIGHUP。
 - 已落地：<code>web.sessionEpoch</code>（签名 Cookie 携带，SIGHUP 重载，旧 Cookie 失效）。
+- 已落地：<code>web lock</code>、<code>web lockdown</code>、<code>web export on/off</code>；导出关闭时返回 404。
+- 备份/恢复：<code>scripts/backup-neca.sh</code>、<code>scripts/restore-neca.sh --yes</code>；备份含 CA 私钥，必须加密。
 - 计划新增：<code>web.allowHighRiskSettings</code>（默认 false）、<code>web.exportEnabled</code>（默认 false）、<code>trash.retention</code>（默认 0=不限时）。
 - 只读/空闲超时可通过 SIGHUP 重载；listen/adminCNs/passkey 仍需重启。
 - helper 幂等缓存：<code>/run/neca/web-helper-cache.json</code>（0600，24h TTL）。

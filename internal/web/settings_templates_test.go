@@ -1,6 +1,13 @@
 package web
 
-import "testing"
+import (
+	"bytes"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/hyhdsl/neca/internal/core"
+)
 
 func TestSettingsTemplatesRegistered(t *testing.T) {
 	templates, err := loadTemplates()
@@ -10,6 +17,36 @@ func TestSettingsTemplatesRegistered(t *testing.T) {
 	for _, name := range []string{"settings", "settings_security", "settings_about"} {
 		if templates[name] == nil {
 			t.Fatalf("template %q is not registered", name)
+		}
+	}
+}
+
+func TestSettingsTemplatesRender(t *testing.T) {
+	templates, err := loadTemplates()
+	if err != nil {
+		t.Fatalf("loadTemplates: %v", err)
+	}
+	translator, err := newWebTranslator("zh-CN")
+	if err != nil {
+		t.Fatal(err)
+	}
+	webConfig := &core.WebConfig{
+		Enabled: true, Listen: "127.0.0.1:18080", IdleTimeoutRaw: "30m",
+		AllowHighRiskSettings: true,
+	}
+	for _, name := range []string{"settings", "settings_security", "settings_about"} {
+		var out bytes.Buffer
+		err := templates[name].ExecuteTemplate(&out, "layout.html", pageData{
+			Title: "设置", Nav: name, Lang: "zh-CN", Tr: translator,
+			Web: webConfig, Writable: true, HelperAvailable: true,
+			TrashEnabled: true, SettingsEnabled: true, TrashRetention: "不限时",
+			Version: "test", Path: "/settings", CSRF: "test", Now: time.Now(),
+		})
+		if err != nil {
+			t.Fatalf("render %s: %v", name, err)
+		}
+		if !strings.Contains(out.String(), "nav-settings-group") {
+			t.Fatalf("render %s did not include settings submenu", name)
 		}
 	}
 }

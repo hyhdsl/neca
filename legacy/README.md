@@ -7,7 +7,7 @@
 | 文件 | 说明 |
 |---|---|
 | `vpn-cert-manager.sh` | 506 行旧脚本，neca 的行为基准；M2 影子测试用它做对照 |
-| [vpn-cert-manager.md](../docs/legacy-vpn-cert-manager.md) | 旧脚本的使用与二次开发说明 |
+| [vpn-cert-manager.md](../docs/development/legacy-vpn-cert-manager.md) | 旧脚本的使用与二次开发说明 |
 
 **为什么不删除**：
 

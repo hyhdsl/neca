@@ -1,6 +1,6 @@
 # neca Web 面板设计评估（M6）
 
-> 状态：**历史 Web 设计评估**；M6 已实现并随 v0.3.0 发布。当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，里程碑见 [MILESTONES.md](MILESTONES.md)。日期：2026-11-15。
+> 状态：**历史 Web 设计评估**；M6 已实现并随 v0.3.0 发布。当前开发入口见 [../development/DEVELOPMENT.md](../development/DEVELOPMENT.md)，里程碑见 [../MILESTONES.md](../MILESTONES.md)。日期：2026-11-15。
 > 本文回答 Web 面板的访问控制、只读开关、证书访问、鉴权、UI 与后续 SQLite 迁移问题。实现以本文确认后的版本为准。
 > 实施规格见 [web-panel-development.md](web-panel-development.md)。
 

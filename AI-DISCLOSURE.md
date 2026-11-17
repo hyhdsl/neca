@@ -45,7 +45,7 @@
 - 发布记录：<https://github.com/hyhdsl/neca/releases>
 - 许可：<https://github.com/hyhdsl/neca/blob/main/LICENSE>
 - 版权与 AI 披露摘要：[NOTICE](NOTICE)
-- 二次开发与 AGPL 义务：[docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
+- 二次开发与 AGPL 义务：[docs/development/SECONDARY-DEVELOPMENT.md](docs/development/SECONDARY-DEVELOPMENT.md)
 
 ## English summary
 

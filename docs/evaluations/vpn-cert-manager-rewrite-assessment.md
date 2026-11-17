@@ -2,7 +2,7 @@
 
 > **决策更新（2026-11-15）**：项目最终选定 **Go**，本文的 Python 推荐已被覆盖。
 > 本文是历史选型评估，不是当前部署依据；v0.3.0 已发布。决策记录、仓库规划与
-> 开发计划见 [neca-development.md](neca-development.md)，用户帮助见
+> 开发计划见 [../development/neca-development.md](../development/neca-development.md)，用户帮助见
 > [帮助中心](https://neca.nekobiglazyer.work)。
 
 > 评估对象：`legacy/vpn-cert-manager.sh`（506 行 bash，当前部署于 `<SERVER_IP>:/opt/ipsec/scripts/`）

@@ -1,11 +1,11 @@
 # neca 开发文档（M0–M8，v0.4.1）
 
-> **历史/深度参考（2026-11-16）**：当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，最新里程碑见 [MILESTONES.md](MILESTONES.md)。本文保留实施与验收证据，不再作为当前状态或里程碑的权威来源。
+> **历史/深度参考（2026-11-16）**：当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，最新里程碑见 [../MILESTONES.md](../MILESTONES.md)。本文保留实施与验收证据，不再作为当前状态或里程碑的权威来源。
 
 > 项目代号：**neca**（CA 管理工具；品牌、域名与服务器标识在仓库中一律使用占位值）
 > 文档版本：2026-11-15 第 8 稿（v0.4.1 发布；M7 文档自动化、M8 Web 运维加固完成，配置目录挂载修正）
 > 本文保留从 v0.1 规划到 v0.4.1 的实施记录；当前发布状态与验收以 §19 为准。
-> 上游评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
+> 上游评估：[../evaluations/vpn-cert-manager-rewrite-assessment.md](../evaluations/vpn-cert-manager-rewrite-assessment.md)
 > 服务端现状：Debian 12 / strongSwan 5.9.8 / OpenSSL 3.0.15 / `/opt/ipsec`（详见评估报告 §2）
 
 ---
@@ -778,7 +778,7 @@ gh auth login --hostname github.com --git-protocol https --web
 | M3 | 向导、`--json`、`--dry-run`、audit、退出码、兼容 flag 双轨；语言包（zh-CN/en-US） | ✅ 已完成（2026-11-15）：JSON/向导/dry-run/audit/兼容 flag/locale 落地；`make check-locales` 通过 | 1.5 人日 |
 | M4 | `swanctl --load-creds` 实验与 `--reload-mode creds` | ✅ 已完成（2026-11-15），详见附录 A 实验结果 | 0.5 人日 |
 | M5 | v0.1.0 发布、服务器部署、旧脚本保留两周；README 警告/LICENSE/NOTICE 生效；首个正式 Release 后转 public | ✅ 2026-11-15：Docker 部署与全功能测试通过；v0.1.0 + GHCR 已发布；仓库已 public；旧脚本保留观察中 | 1 人日 |
-| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a/M6b 已实现、服务器部署和 Playwright/axe 验收完成；**v0.3.0 正式发布**。规格与实施记录见 [web-panel-development.md](web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
+| M6 | 阶段二 Web 面板（只读 + 可选 helper 写能力；`cmd/necad` + `internal/web`；默认 lite + 可选 neca-web 面板包；30 分钟下载 TTL、鉴权/清理、Web 多语言） | M6a/M6b 已实现、服务器部署和 Playwright/axe 验收完成；**v0.3.0 正式发布**。规格与实施记录见 [../evaluations/web-panel-development.md](../evaluations/web-panel-development.md) | M6a 约 5 人日；M6b +3 人日 |
 | M7 | 文档与发布自动化：Markdown 链接/围栏检查、帮助站发布脚本、CI 门禁 | ✅ 2026-11-15：`make check-docs`；`publish-help` 默认 dry-run，`publish-help-apply` 推送；本地脚本发布验证；Actions 自动同步未采用 | 0.5 人日 |
 | M8 | Web 运维加固：SIGHUP 热重载、helper 幂等缓存持久化、访问架构评估 | ✅ 2026-11-15：v0.4.0 首发，v0.4.1 补发配置目录挂载；readOnly/idleTimeout 热重载；helper cache 落盘 `/run/neca`；继续 OpenSSH | 1 人日 |
 | M9（计划） | 稳定性与可恢复性：备份/恢复脚本与演练、健康/日志保留、发布/回滚自动化 | 备份可恢复、发布/回滚有可重复检查清单；不改 PKI 格式 | 2–3 人日 |
@@ -821,7 +821,7 @@ gh auth login --hostname github.com --git-protocol https --web
 6. **Linux/macOS 一键脚本**：已实现，默认关闭；在 Debian/Ubuntu、RHEL 系、macOS 目标版本完成人工验证后再决定是否默认开放；
 7. ~~下载目录与 TTL~~：CLI 与 Web 共用 `NECA_DOWNLOAD_DIR`；已定 30m TTL、登录后按 sidecar ID 鉴权下载、过期返回 410/404；
 8. **社区语言包**：M3 已实现框架；开发期通过 Issue/fork 提供，PR 待开发完成后开放；
-9. ~~阶段二 Web 权限方案~~：已定非 root Web + root helper（§12.2 方案 2），实施见 [web-panel-development.md](web-panel-development.md)；
+9. ~~阶段二 Web 权限方案~~：已定非 root Web + root helper（§12.2 方案 2），实施见 [../evaluations/web-panel-development.md](../evaluations/web-panel-development.md)；
 10. ~~首个正式 Release 后转 public 的检查清单~~：已完成（2026-11-15）；旧脚本继续保留为回退/影子测试基准。
 
 ---
@@ -875,7 +875,7 @@ gh auth login --hostname github.com --git-protocol https --web
 
 ## 20. M6 开发记录（已完成）
 
-> Web 面板的评估见 [web-panel.md](web-panel.md)，开发规格与实施记录见 [web-panel-development.md](web-panel-development.md)。Q1–Q11 已确认；本节保留筹备期记录，最终以开发文档 §18–§20 为准。
+> Web 面板的评估见 [../evaluations/web-panel.md](../evaluations/web-panel.md)，开发规格与实施记录见 [../evaluations/web-panel-development.md](../evaluations/web-panel-development.md)。Q1–Q11 已确认；本节保留筹备期记录，最终以开发文档 §18–§20 为准。
 >
 > **状态（2026-11-15）**：M6a 只读面板、会话/空闲超时、Web 配置 CLI、Passkey 接口占位、lite/neca-web 双镜像与 compose `web` profile 已实现；M6b root helper、写 API/UI、`readonly off` 与 `web-write` profile 已实现，并在服务器完成正式部署。
 
@@ -995,5 +995,5 @@ docker exec ipsec-vpn swanctl --list-crls 2>&1 | head   # 若支持，查看CRL�
 
 - strongSwan swanctl：`https://www.strongswan.org/testing/testresults/`（本机为 5.9.8）
 - OpenSSL 3.0 `ca`、`pkcs12` 手册
-- 现有脚本与说明（已归档）：[legacy/vpn-cert-manager.sh](../legacy/vpn-cert-manager.sh)、[legacy-vpn-cert-manager.md](legacy-vpn-cert-manager.md)
-- 技术选型评估：[vpn-cert-manager-rewrite-assessment.md](vpn-cert-manager-rewrite-assessment.md)
+- 现有脚本与说明（已归档）：[legacy/vpn-cert-manager.sh](../../legacy/vpn-cert-manager.sh)、[legacy-vpn-cert-manager.md](legacy-vpn-cert-manager.md)
+- 技术选型评估：[../evaluations/vpn-cert-manager-rewrite-assessment.md](../evaluations/vpn-cert-manager-rewrite-assessment.md)

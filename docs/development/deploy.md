@@ -16,19 +16,20 @@ lite 容器通过 `/var/run/docker.sock` 调用宿主机 docker，对 strongSwan
 
 ```bash
 make build
-docker build --target lite -t neca:v0.4.1 .
-docker build --target web -t neca-web:v0.4.1 .
-docker save neca:v0.4.1 neca-web:v0.4.1 | gzip > /tmp/neca-v0.4.1.tar.gz
-scp /tmp/neca-v0.4.1.tar.gz root@<SERVER>:/tmp/
+TAG=v1.0.0-rc.7   # 替换为本次发布的 tag
+docker build --target lite -t neca:$TAG .
+docker build --target web -t neca-web:$TAG .
+docker save neca:$TAG neca-web:$TAG | gzip > /tmp/neca-$TAG.tar.gz
+scp /tmp/neca-$TAG.tar.gz root@<SERVER>:/tmp/
 ```
 
 服务器：
 
 ```bash
-docker load < /tmp/neca-v0.4.1.tar.gz
+docker load < /tmp/neca-$TAG.tar.gz
 ```
 
-只装 lite 时只需加载/传输 `neca:v0.4.1`；启用 Web 时两个镜像必须使用同一
+只装 lite 时只需加载/传输 `neca:$TAG`；启用 Web 时两个镜像必须使用同一
 版本标签。
 
 ## 2. 部署文件
@@ -105,7 +106,7 @@ docker compose -f docker-compose.neca.yml run --rm neca issue TEST01 --dry-run
 在服务器以 root 执行：
 
 ```bash
-NECA_IMAGE=neca:v0.4.1 /opt/ipsec/init-web-secrets.sh
+NECA_IMAGE=neca:$TAG /opt/ipsec/init-web-secrets.sh
 ```
 
 脚本创建：

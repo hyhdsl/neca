@@ -1,7 +1,7 @@
 # neca 开发指南（当前）
 
-> 更新：2026-11-16 · 基线：v0.4.1（tag 6060c2b）
-> 当前权威里程碑：[MILESTONES.md](MILESTONES.md)。历史设计/验收记录：[neca-development.md](neca-development.md)、[web-panel.md](web-panel.md)、[web-panel-development.md](web-panel-development.md)。
+> 更新：2026-11-17 · 基线：main daf9e48；稳定版 v0.7.0；候选/生产 v1.0.0-rc.7；本地 CLI 语言/help 修复待提交
+> 当前权威里程碑：[../MILESTONES.md](../MILESTONES.md)。历史设计/验收记录：[neca-development.md](neca-development.md)、[../evaluations/web-panel.md](../evaluations/web-panel.md)、[../evaluations/web-panel-development.md](../evaluations/web-panel-development.md)。
 > 中文文档为主版本；英文 README/帮助可能滞后。
 
 ## 1. 项目定位
@@ -31,6 +31,17 @@
 | <code>deploy/</code> | compose、初始化脚本、环境模板 |
 | <code>docs/</code> | 当前指南、历史设计、部署与帮助源文件 |
 | <code>legacy/</code> | 旧 bash 脚本只读归档；不作为兼容层继续扩展 |
+
+## 3.1 组件职责（权威）
+
+| 组件 | 运行形态 | 核心职责 | 明确不负责/边界 |
+|---|---|---|---|
+| **neca** | 后端 CLI（<code>cmd/neca</code>）；lite 镜像 <code>neca:vX</code>；通常经 SSH/root 或 compose 一次性执行 | 证书生命周期、PKI/索引/CRL、config、trash、doctor、审计；管理 Web 开关（如 <code>neca web readonly on/off</code>）；在 lite 容器中可挂载 docker.sock 调 <code>swanctl</code> | 不是常驻 HTTP 服务；不提供 Web 登录/会话；不替代 root helper 的 Web 写路径 |
+| **necad** | Web 守护进程（<code>cmd/necad</code>）；<code>neca-web</code> 镜像入口；UID 10001 非 root | 提供 Web UI/API、登录/会话/CSRF、只读查询、表单请求；把受控写请求经 Unix socket 发给 helper | 不接触 <code>ca.key</code>、<code>docker.sock</code> 或客户端私钥；不直接执行证书写入；没有 helper 时只能只读 |
+| **neca-web-helper** | root 辅助进程（<code>cmd/neca-web-helper</code>）；由同一 <code>neca-web</code> 镜像以独立容器启动 | 在 <code>/run/neca/web-helper.sock</code> 接收结构化请求；执行白名单操作（issue/reissue/revoke/unrevoke/trash、受限设置保存）；写 PKI/config、审计；需要时调用 docker/swanctl | 不接受任意 shell/路径；不暴露网络端口；必须显式启用 <code>web-write</code> profile；不是 Web 前端 |
+| **neca-web 镜像** | 发布镜像 <code>neca-web:vX</code> | 同时包含 <code>necad</code> 与 <code>neca-web-helper</code> 两个二进制；角色由 entrypoint 决定 | 不是“一个容器同时跑两者”；Web 与 helper 必须拆成两个容器，权限不同 |
+
+**写模式条件**：Web 只读查看不需要 helper；任何 Web 写入必须同时满足 <code>web.readOnly=false</code>、helper 可用且白名单允许；高风险设置还受 <code>web.allowHighRiskSettings</code> 限制。恢复写模式只能由后台 root CLI 执行，Web 自身不能把只读改回可写。
 
 ## 4. 命令/控制面重构（M9）
 
@@ -172,13 +183,13 @@ docker compose run -T --rm dev make check-docs
 
 ## 8. 文档地图
 
-- 里程碑与决策：[MILESTONES.md](MILESTONES.md)
+- 里程碑与决策：[../MILESTONES.md](../MILESTONES.md)
 - 当前开发指南：本文件
 - 历史架构/CLI/验收：[neca-development.md](neca-development.md)
-- Web 设计历史：[web-panel.md](web-panel.md)、[web-panel-development.md](web-panel-development.md)
+- Web 设计历史：[../evaluations/web-panel.md](../evaluations/web-panel.md)、[../evaluations/web-panel-development.md](../evaluations/web-panel-development.md)
 - 部署与回滚：[deploy.md](deploy.md)
-- 用户帮助：[help/README.md](help/README.md)
-- AI 披露：[AI-DISCLOSURE.md](../AI-DISCLOSURE.md)
+- 用户帮助：[../help/README.md](../help/README.md)
+- AI 披露：[../../AI-DISCLOSURE.md](../../AI-DISCLOSURE.md)
 
 ## 9. 扩展接口与新功能
 
@@ -205,11 +216,11 @@ docker compose run -T --rm dev make check-docs
 
 ## 9.3 v1.0 RC 稳定化
 
-- 候选：v1.0.0-rc.1；当前稳定版 v0.7.0。
+- 候选/生产：v1.0.0-rc.7；稳定版 v0.7.0；CLI 语言/help 修复在本地待提交。
 - 生产演练已完成：v0.4.1 → v1.0.0-rc.1 → 回滚 v0.4.1 → 再升级 RC；只操作 Web/helper，strongSwan 未重启。
 - RC 观察期：2026-11-16 至 2026-11-23；期间只接受修复/文档/安全补丁。
 - 发布门槛见 [STABILITY.md](STABILITY.md) 与 [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md)。
 
 ## 10. 当前路线
 
-M9 命令/边界重构（v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性与可观测性 → M13 公网访问 → M14 OpenAPI 长期搁置。详见 [MILESTONES.md](MILESTONES.md)。
+M9 命令/边界重构（v0.5.0 breaking）→ M10 安全运维（lock/lockdown、导出开关、备份恢复）→ M11 回收站/设置 → M12 可维护性与可观测性 → M13 公网访问 → M14 OpenAPI 长期搁置。详见 [../MILESTONES.md](../MILESTONES.md)。

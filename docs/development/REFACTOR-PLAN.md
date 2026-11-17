@@ -1,6 +1,6 @@
 # neca M9 命令/边界重构计划
 
-> 状态：M9.1–M9.5 已完成，v0.5.0 已发布。M9.4 迁移命名空间、移除旧命令并落地最小回收站；M10 安全运维为下一步。权威里程碑见 [MILESTONES.md](MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+> 状态：M9.1–M9.5、M10.1–M10.5 已完成；v0.5.0 已发布。M10 安全运维（lock/lockdown、CSV 导出开关、备份恢复）、M11 回收站/设置、M12 可维护性已完成；当前为 v1.0.0-rc.7 观察期，CLI 语言/help 修复在本地待提交。权威里程碑见 [../MILESTONES.md](../MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 > 范围：命令/控制面与扩展接口；**不重写** PKI 数据格式、strongSwan 配置格式或核心证书算法。
 
 ## 1. 目标
@@ -118,4 +118,4 @@
 - CLI 确认逻辑必须独立为 <code>Confirmer</code> 接口/函数，默认 N；无需确认的功能不注入空壳。
 - CSV 使用 <code>issued.csv</code> / <code>revoked.csv</code>，字段 CN/状态/序列号/到期时间/平台。
 - 新功能顺序：B 备份恢复 → A 到期概览 → E config schema → C 审计导出 → F 证书导入 → D CLI completion。
-- 下一步：M10 安全运维（lock/lockdown、导出开关、备份恢复）。
+- 下一步：M11 完整回收站与设置。

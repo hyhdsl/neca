@@ -1,12 +1,12 @@
 # neca 开发目标与里程碑
 
-> 更新：2026-11-16 · 当前发布：v0.5.0（tag 0a3af74）；生产仍为 v0.4.1
-> 当前 main：da11bc0；帮助站 neca-help：0ab67d3。
-> 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [DEVELOPMENT.md](DEVELOPMENT.md)，历史实施记录见 [neca-development.md](neca-development.md)。
+> 更新：2026-11-17 · 稳定版 v0.7.0；候选/生产 v1.0.0-rc.7；v1.0.0 尚未发布。
+> 当前 main：daf9e48；CLI 语言与全部子命令 `--help` 修复在本地待提交；观察期至 2026-11-23。
+> 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [development/DEVELOPMENT.md](development/DEVELOPMENT.md)，检查方案见 [development/CHECK-PLAN.md](development/CHECK-PLAN.md)，历史实施记录见 [development/neca-development.md](development/neca-development.md)。
 
 ## 1. 当前状态
 
-- M0–M8 已完成；v0.4.1 已发布并部署，Web 默认只读。
+- M0–M12 已完成；v0.7.0 为稳定版，生产运行 v1.0.0-rc.7，Web 默认只读。
 - CLI、只读 Web、受控 root helper、配置目录挂载、SIGHUP、helper 幂等缓存均已落地。
 - 帮助站：根主页（中英切换）、中文 /zh/、英文 /en/、sitemap；已有适用场景。
 - 官方名：**Neko's Efficient Certificate Administrator（neca/NECA）**；不使用图形 logo。
@@ -71,7 +71,7 @@
 | 5 | Web 导出后台开关 | M10；默认关闭；CSV 名单 | 低–中 | CN/状态敏感；审计/限速；关闭时 UI/API 同步拒绝 |
 | 6 | 大重构/命令统一 | **M9，最高优先级**；命令/控制面重构 | 高 | 破坏性变更；旧命令无过渡期；需迁移表、回滚与测试；legacy 脚本归档 |
 | 7 | 里程碑独立文件 | 本文件完成 | 低 | 只保留一个权威来源 |
-| 8 | 开发文档整合 | 当前指南 [DEVELOPMENT.md](DEVELOPMENT.md) 完成；旧文档历史化 | 低–中 | 历史证据保留，当前状态单一来源 |
+| 8 | 开发文档整合 | 当前指南 [development/DEVELOPMENT.md](development/DEVELOPMENT.md) 完成；旧文档历史化 | 低–中 | 历史证据保留，当前状态单一来源 |
 | 9 | OpenAPI | 长期搁置，不排期 | 暂不做 | API 继续标实验性 |
 | 10 | 正式全名 | 本轮同步 | 低 | 首现全名、正式简写 NECA；无图形 logo |
 
@@ -79,11 +79,11 @@
 
 ### M9：命令与边界重构（最高优先级）
 
-详细增删改、接口与扩展点见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md)。
+详细增删改、接口与扩展点见 [development/REFACTOR-PLAN.md](development/REFACTOR-PLAN.md)。
 
 **目标**：在加新安全功能前，先统一命令/控制面，避免旧接口和新接口并存。
 
-- [x] **M9.1 命令盘点与迁移表**：[M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md) 已完成并确认：downloads/package 归属、Y/N 范围、CSV 文件名、确认函数接口。
+- [x] **M9.1 命令盘点与迁移表**：[development/M9.1-COMMAND-INVENTORY.md](development/M9.1-COMMAND-INVENTORY.md) 已完成并确认：downloads/package 归属、Y/N 范围、CSV 文件名、确认函数接口。
 - [x] **M9.2 命令元数据/确认/审计**：Command 元数据、内置命令标注、独立 Confirmer、全局 `--yes`、审计 origin 已落地；受影响包测试通过。Web 高风险确认留到 M11。
 - [x] **M9.3 Web/helper 模块化**：Web 路由拆为 public/auth/cert/download/API 组；helper 操作改为注册表；测试通过。
 - [x] **M9.4 命令迁移**：`cert`/`pki`/`trash` 命名空间；旧顶层命令与 `compatArgs` 移除；最小回收站（trash/restore/purge）与 help/README 更新。
@@ -99,7 +99,7 @@
 - 版本策略：M9 完成后发布 **v0.5.0**（breaking），提供从 v0.4.x 的迁移表与回滚说明。
 - 出口：新增/移除一个命令只改命令定义、路由/helper 用例和测试；不改变 PKI 文件格式。
 
-### M10：安全运维（当前阶段）
+### M10：安全运维（已完成）
 
 #### M10.1 配置与会话代际（已完成）
 
@@ -158,7 +158,7 @@
 - **M11 出口**：Web 移入回收站、设置页、高风险编辑、保留期与后台清理已完成；物理 purge 仍只能后台。
 - 出口：删除/恢复/清理有测试；私钥访问、保留期和恢复规则明确。
 
-### M12：可维护性与可观测性（进行中）
+### M12：可维护性与可观测性（已完成）
 
 #### M12.1 审计轮转（已完成）
 
@@ -173,7 +173,7 @@
 
 #### M12.3 发布检查清单（已完成）
 
-- ✅ 新增 [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md)：发布前、升级演练、发布、发布后、回滚与签字。
+- ✅ 新增 [development/RELEASE-CHECKLIST.md](development/RELEASE-CHECKLIST.md)：发布前、升级演练、发布、发布后、回滚与签字。
 
 #### M12.4 功能开关（已完成）
 
@@ -186,7 +186,7 @@
 
 ### v1.0.0-rc 稳定化（当前）
 
-- 契约与冻结规则：[STABILITY.md](STABILITY.md)。
+- 契约与冻结规则：[development/STABILITY.md](development/STABILITY.md)。
 - 候选流程：v0.6.0（M10/M11）→ v0.7.0（M12）→ v1.0.0-rc.1 → v1.0.0-rc.2（设置页修复）→ v1.0.0-rc.3（可展开子菜单）→ v1.0.0-rc.4（签发/平台 UI）→ v1.0.0-rc.5（一键脚本按次选择）→ v1.0.0-rc.6（高风险设置保存/关于页）→ v1.0.0-rc.7（高风险保存修复）→ v1.0.0。
 - 出口：升级/回滚演练通过、安全复核无高危、CI 全绿、文档完成。
 - 用户已确认：生产快照 `2026-11-16 22:00:53` 后执行升级/回滚演练；RC 观察 **1 周**；清理旧镜像。
@@ -240,4 +240,4 @@
 5. F. 证书导入/链验证（只读）
 6. D. CLI shell completion（最后）
 
-详见 [REFACTOR-PLAN.md](REFACTOR-PLAN.md) 第 6 节。
+详见 [development/REFACTOR-PLAN.md](development/REFACTOR-PLAN.md) 第 6 节。

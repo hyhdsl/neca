@@ -29,7 +29,7 @@ type PasskeyStore interface {
 // PasskeyAuthenticator 是 WebAuthn 流程扩展点。
 //
 // M6a 没有实现；启用前必须补齐 RP ID/Origin 校验、挑战一次性、
-// 克隆检测与恢复流程（见 docs/web-panel.md §6.3）。
+// 克隆检测与恢复流程（见 docs/evaluations/web-panel.md §6.3）。
 type PasskeyAuthenticator interface {
 	BeginRegistration(ctx context.Context, adminID string) (any, error)
 	FinishRegistration(ctx context.Context, adminID string, response []byte) error

@@ -1,22 +1,13 @@
 # neca 文档索引
 
-长期项目文档统一放在 docs/。各组件的目录级 README（legacy/、templates/、testdata/）仍保留在对应目录，方便就地阅读。
+长期项目文档统一放在 docs/。开发文档在 `development/`，评估报告在 `evaluations/`；里程碑仍在 docs 根目录。各组件的目录级 README（legacy/、templates/、testdata/）仍保留在对应目录。
 
 | 文档 | 内容 |
 |---|---|
-| [开发指南（当前）](DEVELOPMENT.md) | 当前架构、CLI/Web 扩展方式、测试、配置与文档地图 |
-| [M9 重构计划](REFACTOR-PLAN.md) | 命令/控制面增删改、扩展接口、新功能建议与实施顺序 |
-| [M9.1 命令盘点](M9.1-COMMAND-INVENTORY.md) | 当前 CLI/legacy/Web/helper 清单、目标命令树、迁移与确认矩阵 |
-| [里程碑与目标](MILESTONES.md) | 重新评估的十项建议、M9–M14 路线、用户决策清单 |
-| [发布检查清单](RELEASE-CHECKLIST.md) | 发布前、升级演练、发布、发布后与回滚 |
-| [v1.0 稳定化契约](STABILITY.md) | 稳定/非稳定范围、RC 流程、冻结规则与发布门槛 |
-| [历史开发文档](neca-development.md) | 历史架构、CLI 契约、CI/CD 与验收记录（深度参考，不再是最新状态来源） |
-| [Web 面板设计评估](web-panel.md) | M6 只读/写边界、权限、VPN/mTLS、UI、SQLite 迁移、lite + neca-web 面板包与仓库边界评估（历史设计） |
-| [Web 面板开发文档](web-panel-development.md) | M6 实施规格与 M6a/M6b 记录：组件、CLI、会话、web-secrets、Docker 与验收（历史实施记录） |
-| [技术选型评估](vpn-cert-manager-rewrite-assessment.md) | Python vs Go 的历史评估（Go 已选型） |
-| [服务器部署](deploy.md) | Docker 部署、配置、备份/回滚与安全说明 |
-| [二次开发与许可](SECONDARY-DEVELOPMENT.md) | AGPL 义务、署名与贡献政策 |
-| [旧 bash 使用说明](legacy-vpn-cert-manager.md) | 上一代脚本归档说明与回退参考 |
+| [里程碑与目标](MILESTONES.md) | M9–M14 路线、用户决策与当前阶段（保留在 docs 根目录） |
+| [开发文档索引](development/README.md) | 当前架构、重构计划、稳定性契约、发布清单、部署、历史开发文档与检查方案 |
+| [检查方案](development/CHECK-PLAN.md) | P0/P1/P2 检查矩阵、门禁与待决策事项 |
+| [评估报告索引](evaluations/README.md) | Web 面板设计/实施与技术选型的历史评估 |
 | [用户帮助中心](help/README.md) | 中文全量 + 英文核心页；含实验性 Web API、部署、安全与 FAQ |
 | [LICENSE](../LICENSE) | GNU AGPL-3.0-only 全文 |
 | [NOTICE](../NOTICE) | 版权、AI 披露与署名 |

@@ -12,9 +12,9 @@
 >
 > **Limitation of liability**: The software is provided “as is”, without express or implied warranties. To the extent permitted by applicable law, the authors and AI-tool providers are not liable for losses caused by use or misuse.
 >
-> **No external PRs during development**: Please fork first; derivative work must comply with AGPL and the [development policy](docs/SECONDARY-DEVELOPMENT.md).
+> **No external PRs during development**: Please fork first; derivative work must comply with AGPL and the [development policy](docs/development/SECONDARY-DEVELOPMENT.md).
 >
-> Related files: [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
+> Related files: [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/development/SECONDARY-DEVELOPMENT.md](docs/development/SECONDARY-DEVELOPMENT.md)
 
 **Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
@@ -41,7 +41,7 @@ neca cert issue alice --platforms windows,android --zip --dry-run
 neca cert issue alice --platforms windows,android --zip
 ~~~
 
-In production, mount <code>/opt/ipsec</code> into the container and run it through the wrapper or compose. See the [deployment guide](docs/deploy.md) for the full procedure.
+In production, mount <code>/opt/ipsec</code> into the container and run it through the wrapper or compose. See the [deployment guide](docs/development/deploy.md) for the full procedure.
 
 ## 🖥️ Web panel
 
@@ -63,13 +63,13 @@ Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🇨🇳 [Chinese help](https://neca.nekobiglazyer.work/zh/) | Installation, certificates, web, API, security, FAQ |
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | Experimental API reference |
-| 🐳 [Deploy and roll back](docs/deploy.md) | Docker, permissions, backup and restore |
-| 🧑‍💻 [Development guide](docs/DEVELOPMENT.md) | Current architecture, extension points, testing and docs map |
-| 🧱 [M9 refactor plan](docs/REFACTOR-PLAN.md) | Add/remove/modify plan, extension interfaces and feature ideas |
-| 🔎 [M9.1 command inventory](docs/M9.1-COMMAND-INVENTORY.md) | Current commands, migration table, routes and confirmation matrix |
+| 🐳 [Deploy and roll back](docs/development/deploy.md) | Docker, permissions, backup and restore |
+| 📁 [Development docs](docs/development/README.md) | Guide, refactor, stability, deployment and check plan |
+| 🧾 [Evaluation reports](docs/evaluations/README.md) | Historical web-panel and technology evaluations |
+| 🧪 [Check plan](docs/development/CHECK-PLAN.md) | P0/P1/P2 checks and open decisions |
 | 🗺️ [Milestones](docs/MILESTONES.md) | Goals, M9–M14 and open decisions |
-| 🧪 [v1.0 stability contract](docs/STABILITY.md) | Stable scope, RC flow, freeze rules and release gates |
-| 📜 [Historical development doc](docs/neca-development.md) | Historical architecture, CLI contract and acceptance records |
+| 🧪 [v1.0 stability contract](docs/development/STABILITY.md) | Stable scope, RC flow, freeze rules and release gates |
+| 📜 [Historical development doc](docs/development/neca-development.md) | Historical architecture, CLI contract and acceptance records |
 | 🤖 [AI disclosure](AI-DISCLOSURE.md) | AI scope and acceptance boundaries |
 
 ## 🛠️ Development
@@ -80,17 +80,17 @@ docker compose run -T --rm dev make shadow   # old-vs-new shadow comparison
 docker compose run -T --rm dev make test     # go test -race ./...
 ~~~
 
-Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <code>make check-ascii</code>. See the [development guide](docs/neca-development.md) for all targets.
+Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <code>make check-ascii</code>. See the [development guide](docs/development/DEVELOPMENT.md) for all targets.
 
 ## 📌 Status
 
-- **Current stable**: v0.7.0; **v1.0.0-rc.1** is published as a pre-release candidate (not stable)
+- **Current stable**: v0.7.0; **v1.0.0-rc.7** is published as a pre-release candidate (not stable)
 - **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
-- **Next**: v1.0.0-rc.1 upgrade/rollback validation → v1.0.0; M13 public access later, M14 OpenAPI long-term deferred
-- **Production**: v1.0.0-rc.1 observation period; v0.4.1 rollback verified; no v1.0.0 release until observation completes
+- **Next**: CLI language/subcommand-help fix is local and uncommitted; RC.8 and v1.0.0 timing pending; M13 public access later, M14 OpenAPI long-term deferred
+- **Production**: v1.0.0-rc.7 observation period; v0.4.1 rollback verified; no v1.0.0 release until observation completes
 
 ## ⚖️ License and acknowledgements
 
-**AGPL-3.0-only**: commercial use is allowed, but distribution or network services must publish the corresponding source under AGPL; keep the original author, repository link and license. See [LICENSE](LICENSE) and the [secondary-development policy](docs/SECONDARY-DEVELOPMENT.md).
+**AGPL-3.0-only**: commercial use is allowed, but distribution or network services must publish the corresponding source under AGPL; keep the original author, repository link and license. See [LICENSE](LICENSE) and the [secondary-development policy](docs/development/SECONDARY-DEVELOPMENT.md).
 
 Thanks to Go, strongSwan, OpenSSL, Docker and all upstream open-source projects.

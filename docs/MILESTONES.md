@@ -1,12 +1,12 @@
 # neca 开发目标与里程碑
 
-> 更新：2026-11-17 · 稳定版 v0.7.0；候选 v1.0.0-rc.8；生产 v1.0.0-rc.7；v1.0.0 尚未发布。
-> 当前 main：88ba180；CLI 语言与全部子命令 `--help` 修复已提交；RC.8 部署待单独确认；观察期至 2026-11-23。
+> 更新：2026-11-17 · 稳定版 v0.7.0；候选/生产 v1.0.0-rc.8；v1.0.0 尚未发布。
+> 当前 main：51eb31e；CLI 语言与全部子命令 `--help` 修复已发布并部署；观察期至 2026-11-23。
 > 本文件是**里程碑、优先级与待决策事项**的唯一权威来源；当前开发入口见 [development/DEVELOPMENT.md](development/DEVELOPMENT.md)，检查方案见 [development/CHECK-PLAN.md](development/CHECK-PLAN.md)，历史实施记录见 [development/neca-development.md](development/neca-development.md)。
 
 ## 1. 当前状态
 
-- M0–M12 已完成；v0.7.0 为稳定版，生产运行 v1.0.0-rc.7，Web 默认只读。
+- M0–M12 已完成；v0.7.0 为稳定版，生产运行 v1.0.0-rc.8，Web 默认只读。
 - CLI、只读 Web、受控 root helper、配置目录挂载、SIGHUP、helper 幂等缓存均已落地。
 - 帮助站：根主页（中英切换）、中文 /zh/、英文 /en/、sitemap；已有适用场景。
 - 官方名：**Neko's Efficient Certificate Administrator（neca/NECA）**；不使用图形 logo。

@@ -125,6 +125,13 @@ h2 { font-size: 1.05rem; margin-bottom: 0; }
 .setting-row h3 { margin: 0 0 4px; font-size: 1rem; }
 .setting-row p { margin: 0; }
 .setting-row .lang-switch { font-size: 0.9rem; }
+.setting-select select, #theme-select { min-width: 160px; }
+.platform-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.platform-option {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px;
+  border: 1px solid var(--border); border-radius: 9px; cursor: pointer;
+}
+.platform-option input { width: auto; min-height: 0; padding: 0; margin: 0; }
 .mode-badge {
   border-radius: 999px; padding: 2px 9px; font-size: 0.75rem; font-weight: 700;
   border: 1px solid var(--border); color: var(--muted);

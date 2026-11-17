@@ -21,6 +21,33 @@ func TestSettingsTemplatesRegistered(t *testing.T) {
 	}
 }
 
+func TestIssuePageNavAndPlatforms(t *testing.T) {
+	templates, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	translator, err := newWebTranslator("zh-CN")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	err = templates["cert_new"].ExecuteTemplate(&out, "layout.html", pageData{
+		Title: "签发", Nav: "issue", Lang: "zh-CN", Tr: translator, Writable: true,
+		Days: 365, PlatformChoices: buildPlatformChoices(core.DefaultPlatforms()), P12Profile: "compat",
+		Version: "test", Path: "/certs/new", CSRF: "test", Now: time.Now(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	html := out.String()
+	if !strings.Contains(html, `data-testid="nav-issue" aria-current="page"`) {
+		t.Fatal("issue nav is not highlighted")
+	}
+	if !strings.Contains(html, `name="platform"`) || !strings.Contains(html, `value="windows"`) {
+		t.Fatal("platform checkboxes are missing")
+	}
+}
+
 func TestSettingsTemplatesRender(t *testing.T) {
 	templates, err := loadTemplates()
 	if err != nil {

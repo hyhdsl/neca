@@ -249,8 +249,8 @@ func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, r, "cert_new", pageData{
-		TitleKey: "web.new.title", Nav: "certs", Writable: true, HelperAvailable: true,
-		Days: s.cfg.DefaultDays, Platforms: "windows,android", P12Profile: string(s.cfg.P12Profile),
+		TitleKey: "web.new.title", Nav: "issue", Writable: true, HelperAvailable: true,
+		Days: s.cfg.DefaultDays, PlatformChoices: buildPlatformChoices(core.DefaultPlatforms()), P12Profile: string(s.cfg.P12Profile),
 	})
 }
 
@@ -265,7 +265,15 @@ func (s *Server) handleNewCert(w http.ResponseWriter, r *http.Request) {
 		s.renderError(w, r, http.StatusBadRequest, "有效期必须是整数天数")
 		return
 	}
-	platforms := splitPlatforms(r.FormValue("platforms"))
+	rawPlatforms := r.Form["platform"]
+	if len(rawPlatforms) == 0 {
+		rawPlatforms = splitPlatforms(r.FormValue("platforms"))
+	}
+	platforms, err := core.NormalizePlatforms(rawPlatforms)
+	if err != nil {
+		s.renderError(w, r, http.StatusBadRequest, "平台选择无效: "+err.Error())
+		return
+	}
 	profile := r.FormValue("p12Profile")
 	response, err := s.executeWrite(r.Context(), helper.Request{
 		RequestID: newWriteRequestID(), Op: helper.OpIssue, CN: cn, Days: days,
@@ -328,6 +336,32 @@ func (s *Server) writable(ctx context.Context) bool {
 
 func (s *Server) helperAvailable(r *http.Request) bool {
 	return s.helperState(r.Context()).Available
+}
+
+type platformChoice struct {
+	Value    string
+	LabelKey string
+	Selected bool
+}
+
+var platformChoiceDefs = []struct{ value, labelKey string }{
+	{core.PlatformWindows, "web.platform.windows"},
+	{core.PlatformLinux, "web.platform.linux"},
+	{core.PlatformMacOS, "web.platform.macos"},
+	{core.PlatformAndroid, "web.platform.android"},
+	{core.PlatformIOS, "web.platform.ios"},
+}
+
+func buildPlatformChoices(selected []string) []platformChoice {
+	chosen := make(map[string]bool, len(selected))
+	for _, value := range selected {
+		chosen[value] = true
+	}
+	choices := make([]platformChoice, 0, len(platformChoiceDefs))
+	for _, def := range platformChoiceDefs {
+		choices = append(choices, platformChoice{Value: def.value, LabelKey: def.labelKey, Selected: chosen[def.value]})
+	}
+	return choices
 }
 
 func splitPlatforms(raw string) []string {

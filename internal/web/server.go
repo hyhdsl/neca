@@ -351,7 +351,7 @@ type pageData struct {
 	CRLRevoked      int
 	Notice          string
 	Days            int
-	Platforms       string
+	PlatformChoices []platformChoice
 	P12Profile      string
 	Web             *core.WebConfig
 	TrashEnabled    bool

@@ -2,23 +2,33 @@
   "use strict";
   var key = "neca-theme";
   var root = document.documentElement;
-  try {
-    var saved = localStorage.getItem(key);
-    if (saved === "light" || saved === "dark") {
-      root.setAttribute("data-theme", saved);
+  function applyTheme(value) {
+    if (value === "light" || value === "dark") {
+      root.setAttribute("data-theme", value);
+    } else {
+      root.setAttribute("data-theme", "auto");
     }
-  } catch (e) {}
-  var button = document.getElementById("theme-toggle");
-  if (button) {
-    button.addEventListener("click", function () {
-      var current = root.getAttribute("data-theme");
-      if (current !== "light" && current !== "dark") {
-        current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      }
-      var next = current === "dark" ? "light" : "dark";
-      root.setAttribute("data-theme", next);
-      try { localStorage.setItem(key, next); } catch (e) {}
-      button.setAttribute("aria-label", next === "dark" ? "切换到浅色主题" : "切换到深色主题");
+  }
+  function saveTheme(value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+  }
+  function readTheme() {
+    try { return localStorage.getItem(key) || "system"; } catch (e) { return "system"; }
+  }
+  var saved = readTheme();
+  applyTheme(saved);
+  var select = document.getElementById("theme-select");
+  if (select) {
+    select.value = saved === "light" || saved === "dark" ? saved : "system";
+    select.addEventListener("change", function () {
+      applyTheme(select.value);
+      saveTheme(select.value);
+    });
+  }
+  var autoSubmit = document.querySelectorAll("[data-auto-submit]");
+  for (var i = 0; i < autoSubmit.length; i++) {
+    autoSubmit[i].addEventListener("change", function () {
+      if (this.form) { this.form.submit(); }
     });
   }
 })();

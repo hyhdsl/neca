@@ -35,8 +35,14 @@
   if (form) {
     var dialog = document.getElementById("high-risk-dialog");
     var save = document.getElementById("high-risk-save");
+    var readonly = form.querySelector('[name="readOnly"]');
+    var readonlyWarning = document.getElementById("readonly-warning");
     var dirty = false;
     function markDirty() { dirty = true; }
+    function updateReadonlyWarning() {
+      if (readonly && readonlyWarning) { readonlyWarning.hidden = readonly.value !== "true"; }
+    }
+    if (readonly) { readonly.addEventListener("change", updateReadonlyWarning); updateReadonlyWarning(); }
     form.addEventListener("input", markDirty);
     form.addEventListener("change", markDirty);
     form.addEventListener("submit", function () { dirty = false; });

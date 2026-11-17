@@ -244,7 +244,11 @@ func (s *Server) handleSettingsHighRisk(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	s.audit.log("settings-high-risk", clientIP(r), "", "readOnly/idleTimeout/export updated")
-	http.Redirect(w, r, "/settings/security?notice=updated", http.StatusSeeOther)
+	notice := "updated"
+	if update.ReadOnly != nil && *update.ReadOnly {
+		notice = "readonly"
+	}
+	http.Redirect(w, r, "/settings/security?notice="+notice, http.StatusSeeOther)
 }
 
 func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {
@@ -426,6 +430,8 @@ func noticeKey(code string) string {
 		return "web.notice.trashed"
 	case "updated":
 		return "web.notice.settings_updated"
+	case "readonly":
+		return "web.notice.settings_readonly"
 	default:
 		return ""
 	}

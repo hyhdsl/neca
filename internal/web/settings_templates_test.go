@@ -88,13 +88,47 @@ func TestSettingsTemplatesRender(t *testing.T) {
 		}
 		switch name {
 		case "settings_security":
-			if !strings.Contains(html, `id="high-risk-dialog"`) || !strings.Contains(html, `id="high-risk-save"`) {
-				t.Fatal("security page is missing save dialog")
+			if !strings.Contains(html, "high-risk-dialog") || !strings.Contains(html, "high-risk-save") || !strings.Contains(html, "readonly-warning") {
+				t.Fatal("security page is missing save dialog or read-only warning")
 			}
 		case "settings_about":
 			if !strings.Contains(html, "github.com/hyhdsl/neca") || !strings.Contains(html, "neca.nekobiglazyer.work") || !strings.Contains(html, "AGPL-3.0-only") {
 				t.Fatal("about page is missing software information")
 			}
 		}
+	}
+}
+func TestSecurityReadOnlyFallback(t *testing.T) {
+	templates, err := loadTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	translator, err := newWebTranslator("zh-CN")
+	if err != nil {
+		t.Fatal(err)
+	}
+	webConfig := &core.WebConfig{
+		Enabled: true, Listen: "127.0.0.1:18080", ReadOnly: true,
+		IdleTimeoutRaw: "30m", AllowHighRiskSettings: true,
+	}
+	var out bytes.Buffer
+	err = templates["settings_security"].ExecuteTemplate(&out, "layout.html", pageData{
+		Title: "安全", Nav: "settings-security", Lang: "zh-CN", Tr: translator,
+		Web: webConfig, Writable: false, HelperAvailable: true,
+		SettingsEnabled: true, IdleTimeoutOptions: []string{"30m"},
+		Version: "test", Path: "/settings/security", CSRF: "test", Now: time.Now(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	html := out.String()
+	if strings.Contains(html, "high-risk-form") {
+		t.Fatal("read-only security page must not expose the edit form")
+	}
+	if !strings.Contains(html, "Web 当前为只读模式") {
+		t.Fatal("read-only fallback explanation is missing")
+	}
+	if !strings.Contains(html, "是") {
+		t.Fatal("read-only current value is missing")
 	}
 }

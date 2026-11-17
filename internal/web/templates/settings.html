@@ -22,7 +22,7 @@
       </div>
       <form method="get" action="/language" class="setting-select">
         <input type="hidden" name="next" value="{{.Path}}">
-        <select name="lang" data-auto-submit data-testid="language-select" aria-label="{{.T "web.action.language"}}">
+        <select id="language-select" name="lang" data-auto-submit data-testid="language-select" aria-label="{{.T "web.action.language"}}">
           <option value="zh-CN" {{if eq .Lang "zh-CN"}}selected{{end}}>中文</option>
           <option value="en-US" {{if eq .Lang "en-US"}}selected{{end}}>English</option>
         </select>

@@ -26,6 +26,7 @@
           <option value="true" {{if .Web.ExportEnabled}}selected{{end}}>{{.T "web.settings.yes"}}</option>
         </select>
       </label>
+      <p id="readonly-warning" class="alert warning" role="status" hidden>{{.T "web.settings.readonly_warning"}}</p>
       <button type="button" id="high-risk-save" class="button primary" data-testid="settings-save">{{.T "web.settings.save"}}</button>
       <dialog id="high-risk-dialog" class="confirm-dialog" aria-labelledby="high-risk-dialog-title">
         <h3 id="high-risk-dialog-title">{{.T "web.settings.save_confirm_title"}}</h3>
@@ -40,7 +41,12 @@
     </form>
     <noscript><p class="alert warning">{{.T "web.settings.js_required"}}</p></noscript>
     {{else}}
-    <div class="alert warning" role="status">{{.T "web.settings.high_risk_unavailable"}}</div>
+    <div class="alert warning" role="status">{{.T "web.settings.high_risk_locked"}}</div>
+    <dl class="detail-list">
+      <dt>{{.T "web.settings.readonly"}}</dt><dd>{{if .Web.ReadOnly}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
+      <dt>{{.T "web.settings.idle_timeout"}}</dt><dd>{{.Web.IdleTimeoutRaw}}</dd>
+      <dt>{{.T "web.settings.export"}}</dt><dd>{{if .Web.ExportEnabled}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
+    </dl>
     {{end}}
   {{else}}
   <div class="alert warning" role="status" data-testid="high-risk-disabled">{{.T "web.settings.high_risk_disabled"}}</div>

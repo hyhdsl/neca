@@ -133,6 +133,7 @@ M9.1 命令盘点与迁移表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENT
 - 备份/恢复：<code>scripts/backup-neca.sh</code>、<code>scripts/restore-neca.sh --yes</code>；备份含 CA 私钥，必须加密。
 - M12 完成：<code>audit.maxBytes</code>/<code>audit.keep</code> 轮转、<code>neca doctor</code> 诊断、[发布检查清单](RELEASE-CHECKLIST.md)、<code>web.features</code> 开关。
 - 功能开关在启动时注册路由；变更后需重启 Web。
+- 高风险设置 POST 必须放行 `readOnlyGuard` 后由 handler 再做 writable/密码/CSRF/确认检查；只读回退页需展示当前值。
 - 计划新增：<code>web.allowHighRiskSettings</code>（默认 false）、<code>web.exportEnabled</code>（默认 false）、<code>trash.retention</code>（默认 0=不限时）。
 - 只读/空闲超时可通过 SIGHUP 重载；listen/adminCNs/passkey 仍需重启。
 - helper 幂等缓存：<code>/run/neca/web-helper-cache.json</code>（0600，24h TTL）。

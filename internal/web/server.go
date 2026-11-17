@@ -228,7 +228,7 @@ func (s *Server) readOnlyGuard(next http.Handler) http.Handler {
 }
 
 func isWriteEndpoint(path string) bool {
-	if path == "/certs/new" || path == "/api/v1/certs" {
+	if path == "/settings/high-risk" || path == "/certs/new" || path == "/api/v1/certs" {
 		return true
 	}
 	if strings.HasPrefix(path, "/api/v1/certs/") {

@@ -117,6 +117,12 @@ func RunWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "[INFO] %s\n", i18n.T("error.help_hint", progName))
 		return ExitUsage
 	}
+	if helpRequested(rest[1:]) {
+		if path := resolveHelpPath(rest); path != "" {
+			env.Action = "help"
+			return printUsage(env, helpTexts[path])
+		}
+	}
 	env.Action = cmd.Name
 	env.CN = guessCN(cmd.Name, rest[1:])
 	env.Args = rest[1:]

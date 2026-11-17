@@ -25,6 +25,9 @@ func newWebCommand() Command {
 		Name:    "web",
 		Summary: "管理 Web 面板（status/readonly/idle-timeout/export/lock/lockdown/hash-password）",
 		Run: func(env Env) int {
+			if len(env.Args) > 0 && (env.Args[0] == "--help" || env.Args[0] == "-h") {
+				return printUsage(env, "web.help")
+			}
 			if len(env.Args) == 0 || env.Args[0] == "status" {
 				if len(env.Args) > 1 {
 					return usageFail(env, "web status 不接受额外参数")

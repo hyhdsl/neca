@@ -19,6 +19,9 @@ func newConfigCommand() Command {
 			if len(env.Args) == 0 {
 				return usageFail(env, "用法: config init|show|validate|export-env")
 			}
+			if env.Args[0] == "--help" || env.Args[0] == "-h" {
+				return printUsage(env, "config.help")
+			}
 			action := env.Args[0]
 			switch action {
 			case "init":

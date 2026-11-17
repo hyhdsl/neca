@@ -21,6 +21,9 @@ func newCertCommand() Command {
 			if len(env.Args) == 0 {
 				return usageFail(env, "用法: cert <list|verify|issue|reissue|revoke|unrevoke|trash|export|platform|package>")
 			}
+			if env.Args[0] == "--help" || env.Args[0] == "-h" {
+				return printUsage(env, "cert.help")
+			}
 			sub := env.Args[0]
 			env.Args = env.Args[1:]
 			env.Action = "cert " + sub
@@ -63,6 +66,9 @@ func newPkiCommand() Command {
 			if len(env.Args) == 0 {
 				return usageFail(env, "用法: pki <index|downloads> ...")
 			}
+			if env.Args[0] == "--help" || env.Args[0] == "-h" {
+				return printUsage(env, "pki.help")
+			}
 			sub := env.Args[0]
 			env.Args = env.Args[1:]
 			env.Action = "pki " + sub
@@ -88,6 +94,9 @@ func newTrashCommand() Command {
 		Run: func(env Env) int {
 			if len(env.Args) == 0 {
 				return usageFail(env, "用法: trash <list|restore|purge> ...")
+			}
+			if env.Args[0] == "--help" || env.Args[0] == "-h" {
+				return printUsage(env, "trash.help")
 			}
 			sub := env.Args[0]
 			env.Args = env.Args[1:]

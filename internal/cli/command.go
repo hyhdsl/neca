@@ -194,6 +194,12 @@ func (r *Registry) Commands() []*Command {
 //
 // 命令列表由注册表生成：新增命令只需注册，帮助自动包含；
 // 全局开关（--version / -V）不属于子命令，单独列在"通用开关"里。
+// printUsage writes a localized usage block and exits successfully.
+func printUsage(env Env, key string) int {
+	fmt.Fprintln(env.Stdout, i18n.T(key))
+	return ExitOK
+}
+
 func (r *Registry) WriteHelp(w io.Writer) {
 	fmt.Fprintf(w, "%s\n\n", i18n.T("app.title"))
 	fmt.Fprintln(w, i18n.T("app.usage"))
@@ -203,7 +209,7 @@ func (r *Registry) WriteHelp(w io.Writer) {
 	for _, cmd := range r.Commands() {
 		name := cmd.Name
 		if len(cmd.Aliases) > 0 {
-			name += "（别名 " + strings.Join(cmd.Aliases, "、") + "）"
+			name += i18n.T("app.alias", strings.Join(cmd.Aliases, ", "))
 		}
 		// 按显示宽度补齐（中文别名占 2 列），不能用 %-28s 的字节宽度。
 		padding := 28 - core.DisplayWidth(name)

@@ -1,6 +1,6 @@
 # neca M9 命令/边界重构计划
 
-> 状态：M9.1–M9.5、M10.1–M10.5 已完成；v0.5.0 已发布。M10 安全运维（lock/lockdown、CSV 导出开关、备份恢复）、M11 回收站/设置、M12 可维护性已完成；当前候选/生产为 v1.0.0-rc.8 观察期；CLI 语言/help 修复已发布并部署。权威里程碑见 [../MILESTONES.md](../MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+> 状态：M9.1–M9.5、M10.1–M10.5 已完成；v0.5.0 已发布。M10 安全运维（lock/lockdown、CSV 导出开关、备份恢复）、M11 回收站/设置、M12 可维护性已完成；当前候选为 v1.0.0-rc.9，生产为 v1.0.0-rc.8 观察期；web lock/lockdown 修复待发布。权威里程碑见 [../MILESTONES.md](../MILESTONES.md)，盘点表见 [M9.1-COMMAND-INVENTORY.md](M9.1-COMMAND-INVENTORY.md)，当前开发指南见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 > 范围：命令/控制面与扩展接口；**不重写** PKI 数据格式、strongSwan 配置格式或核心证书算法。
 
 ## 1. 目标

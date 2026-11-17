@@ -31,4 +31,33 @@
       if (this.form) { this.form.submit(); }
     });
   }
+  var form = document.getElementById("high-risk-form");
+  if (form) {
+    var dialog = document.getElementById("high-risk-dialog");
+    var save = document.getElementById("high-risk-save");
+    var dirty = false;
+    function markDirty() { dirty = true; }
+    form.addEventListener("input", markDirty);
+    form.addEventListener("change", markDirty);
+    form.addEventListener("submit", function () { dirty = false; });
+    if (save && dialog) {
+      save.addEventListener("click", function () {
+        if (typeof dialog.showModal === "function") { dialog.showModal(); }
+        else { dialog.setAttribute("open", ""); }
+      });
+      var closers = dialog.querySelectorAll("[data-dialog-close]");
+      for (var j = 0; j < closers.length; j++) {
+        closers[j].addEventListener("click", function () {
+          if (typeof dialog.close === "function") { dialog.close(); }
+          else { dialog.removeAttribute("open"); }
+        });
+      }
+    }
+    window.addEventListener("beforeunload", function (event) {
+      if (!dirty) { return; }
+      event.preventDefault();
+      event.returnValue = form.getAttribute("data-unsaved-message") || "";
+      return event.returnValue;
+    });
+  }
 })();

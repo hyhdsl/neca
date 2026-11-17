@@ -168,11 +168,15 @@ func (s *Server) renderSettingsPage(w http.ResponseWriter, r *http.Request, temp
 	if cfg.TrashRetention > 0 {
 		retention = cfg.TrashRetention.String()
 	}
-	s.render(w, r, templateName, pageData{
+	data := pageData{
 		TitleKey: titleKey, Nav: nav, Web: &cfg.Web, TrashRetention: retention,
 		ReadOnly: s.readOnly(), Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 		NoticeKey: noticeKey(r.URL.Query().Get("notice")),
-	})
+	}
+	if templateName == "settings_security" {
+		data.IdleTimeoutOptions = buildIdleTimeoutOptions(cfg.Web.IdleTimeoutRaw)
+	}
+	s.render(w, r, templateName, data)
 }
 
 func (s *Server) handleSettingsHighRisk(w http.ResponseWriter, r *http.Request) {
@@ -370,6 +374,19 @@ func buildPlatformChoices(selected []string) []platformChoice {
 		choices = append(choices, platformChoice{Value: def.value, LabelKey: def.labelKey, Selected: chosen[def.value]})
 	}
 	return choices
+}
+
+func buildIdleTimeoutOptions(current string) []string {
+	options := []string{"5m", "15m", "30m", "1h", "2h", "4h", "8h", "12h", "24h"}
+	for _, option := range options {
+		if option == current {
+			return options
+		}
+	}
+	if current != "" {
+		options = append(options, current)
+	}
+	return options
 }
 
 func installerPlatforms(platforms []string) []string {

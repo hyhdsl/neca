@@ -61,7 +61,6 @@
           <h1>{{.Title}}</h1>
           <p class="muted">{{.T "web.app.subtitle"}}</p>
         </div>
-        <a class="button secondary" href="/downloads" data-testid="top-downloads">{{.T "web.action.downloads"}}</a>
       </header>
       {{if .Error}}<div class="alert danger" role="alert" data-testid="page-error">{{.Error}}</div>{{end}}
       {{template "content" .}}

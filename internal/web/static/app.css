@@ -134,6 +134,20 @@ h2 { font-size: 1.05rem; margin-bottom: 0; }
 .platform-option input { width: auto; min-height: 0; padding: 0; margin: 0; }
 .form-grid .check { display: inline-flex; align-items: center; gap: 8px; }
 .form-grid .check input { width: auto; min-height: 0; padding: 0; margin: 0; }
+.settings-form { display: grid; gap: 14px; margin-top: 18px; max-width: 560px; }
+.setting-field { display: grid; gap: 6px; color: var(--muted); font-weight: 600; }
+.setting-field select { width: 100%; }
+.settings-form > button { justify-self: start; }
+.confirm-dialog {
+  width: min(480px, calc(100vw - 32px)); border: 1px solid var(--border); border-radius: 14px;
+  background: var(--surface); color: var(--text); padding: 22px; box-shadow: var(--shadow);
+}
+.confirm-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+.confirm-dialog h3 { margin-top: 0; }
+.confirm-dialog label { display: grid; gap: 6px; margin: 12px 0; }
+.confirm-dialog label.check { display: flex; align-items: center; gap: 8px; }
+.confirm-dialog label.check input { width: auto; min-height: 0; padding: 0; margin: 0; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .mode-badge {
   border-radius: 999px; padding: 2px 9px; font-size: 0.75rem; font-weight: 700;
   border: 1px solid var(--border); color: var(--muted);

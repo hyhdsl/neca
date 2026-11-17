@@ -4,12 +4,10 @@
   <p class="muted">{{.T "web.settings.about_desc"}}</p>
   <dl class="detail-list">
     <dt>{{.T "web.settings.about_version"}}</dt><dd>{{.Version}}</dd>
-    <dt>{{.T "web.settings.about_mode"}}</dt><dd>{{if .Writable}}{{.T "web.settings.about_writable"}}{{else if .ReadOnly}}{{.T "web.settings.about_readonly"}}{{else}}{{.T "web.settings.about_helper_unavailable"}}{{end}}</dd>
-    <dt>{{.T "web.settings.about_helper"}}</dt><dd>{{if .HelperAvailable}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
-    <dt>{{.T "web.settings.about_trash"}}</dt><dd>{{if .TrashEnabled}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
-    <dt>{{.T "web.settings.about_settings"}}</dt><dd>{{if .SettingsEnabled}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
-    <dt>{{.T "web.settings.about_export"}}</dt><dd>{{if .Web.ExportEnabled}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
-    <dt>{{.T "web.settings.about_high_risk"}}</dt><dd>{{if .Web.AllowHighRiskSettings}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
+    <dt>{{.T "web.settings.about_repo"}}</dt><dd><a href="https://github.com/hyhdsl/neca" rel="noopener noreferrer" target="_blank">github.com/hyhdsl/neca</a></dd>
+    <dt>{{.T "web.settings.about_help"}}</dt><dd><a href="https://neca.nekobiglazyer.work" rel="noopener noreferrer" target="_blank">neca.nekobiglazyer.work</a></dd>
+    <dt>{{.T "web.settings.about_license"}}</dt><dd>AGPL-3.0-only</dd>
+    <dt>{{.T "web.settings.about_copyright"}}</dt><dd>{{.T "web.settings.about_copyright_text"}}</dd>
   </dl>
 </section>
 {{end}}

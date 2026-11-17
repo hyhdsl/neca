@@ -70,7 +70,8 @@ func TestSettingsTemplatesRender(t *testing.T) {
 			Title: "设置", Nav: name, Lang: "zh-CN", Tr: translator,
 			Web: webConfig, Writable: true, HelperAvailable: true,
 			TrashEnabled: true, SettingsEnabled: true, TrashRetention: "不限时",
-			Version: "test", Path: "/settings", CSRF: "test", Now: time.Now(),
+			IdleTimeoutOptions: []string{"30m"},
+			Version:            "test", Path: "/settings", CSRF: "test", Now: time.Now(),
 		})
 		if err != nil {
 			t.Fatalf("render %s: %v", name, err)
@@ -81,6 +82,19 @@ func TestSettingsTemplatesRender(t *testing.T) {
 		}
 		if !strings.Contains(html, "<details class=\"nav-group is-active\"") {
 			t.Fatalf("render %s did not open active settings submenu", name)
+		}
+		if strings.Contains(html, "top-downloads") {
+			t.Fatalf("render %s still includes the top download button", name)
+		}
+		switch name {
+		case "settings_security":
+			if !strings.Contains(html, `id="high-risk-dialog"`) || !strings.Contains(html, `id="high-risk-save"`) {
+				t.Fatal("security page is missing save dialog")
+			}
+		case "settings_about":
+			if !strings.Contains(html, "github.com/hyhdsl/neca") || !strings.Contains(html, "neca.nekobiglazyer.work") || !strings.Contains(html, "AGPL-3.0-only") {
+				t.Fatal("about page is missing software information")
+			}
 		}
 	}
 }

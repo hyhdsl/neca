@@ -1,6 +1,6 @@
 # neca 开发指南（当前）
 
-> 更新：2026-11-17 · 基线：main daf9e48；稳定版 v0.7.0；候选/生产 v1.0.0-rc.7；本地 CLI 语言/help 修复待提交
+> 更新：2026-11-17 · 基线：main 88ba180；稳定版 v0.7.0；候选 v1.0.0-rc.8；生产 v1.0.0-rc.7；CLI 语言/help 修复已提交
 > 当前权威里程碑：[../MILESTONES.md](../MILESTONES.md)。历史设计/验收记录：[neca-development.md](neca-development.md)、[../evaluations/web-panel.md](../evaluations/web-panel.md)、[../evaluations/web-panel-development.md](../evaluations/web-panel-development.md)。
 > 中文文档为主版本；英文 README/帮助可能滞后。
 
@@ -216,7 +216,7 @@ docker compose run -T --rm dev make check-docs
 
 ## 9.3 v1.0 RC 稳定化
 
-- 候选/生产：v1.0.0-rc.7；稳定版 v0.7.0；CLI 语言/help 修复在本地待提交。
+- 候选：v1.0.0-rc.8；生产：v1.0.0-rc.7（等待单独部署确认）；稳定版 v0.7.0。
 - 生产演练已完成：v0.4.1 → v1.0.0-rc.1 → 回滚 v0.4.1 → 再升级 RC；只操作 Web/helper，strongSwan 未重启。
 - RC 观察期：2026-11-16 至 2026-11-23；期间只接受修复/文档/安全补丁。
 - 发布门槛见 [STABILITY.md](STABILITY.md) 与 [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md)。

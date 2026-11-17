@@ -16,7 +16,7 @@ lite 容器通过 `/var/run/docker.sock` 调用宿主机 docker，对 strongSwan
 
 ```bash
 make build
-TAG=v1.0.0-rc.7   # 替换为本次发布的 tag
+TAG=v1.0.0-rc.10   # 替换为本次发布的 tag
 docker build --target lite -t neca:$TAG .
 docker build --target web -t neca-web:$TAG .
 docker save neca:$TAG neca-web:$TAG | gzip > /tmp/neca-$TAG.tar.gz

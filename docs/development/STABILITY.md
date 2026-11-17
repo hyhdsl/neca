@@ -1,6 +1,6 @@
 # v1.0.0-rc 稳定化与兼容契约
 
-> 状态：v1.0.0-rc 候选；当前候选 v1.0.0-rc.9；生产 v1.0.0-rc.8，等待单独部署确认。
+> 状态：v1.0.0-rc 候选；当前候选 v1.0.0-rc.10；生产 v1.0.0-rc.8，等待单独部署确认。
 > 目标：在 M12 完成后冻结契约、完成升级/回滚验证，再决定 v1.0.0。
 
 ## 1. 稳定范围
@@ -52,7 +52,7 @@
 ## 6. 本次生产升级/回滚演练
 
 - 生产快照：2026-11-16 22:00:53（已确认）。
-- 候选：<code>v1.0.0-rc.9</code>（web lock/lockdown 紧急控制修复）；上一候选：<code>v1.0.0-rc.8</code>（CLI 语言/help）；升级前生产：<code>v0.4.1</code>。
+- 候选：<code>v1.0.0-rc.10</code>（Web 重载/锁定直接 Docker 命令）；上一候选：<code>v1.0.0-rc.9</code>（分发修复）、<code>v1.0.0-rc.8</code>（CLI 语言/help）；升级前生产：<code>v0.4.1</code>。
 - 演练步骤：备份 config/PKI/web-secrets/clients/meta/downloads → 部署候选 → 验证 healthz/登录/证书列表/下载 → 回滚到 v0.4.1 → 验证索引/CRL/strongSwan 健康。
 - 只操作明确命名的 Web/helper；不重启 strongSwan。
 - 演练结果：2026-11-16 完成升级 → 验证 → 回滚 → 再升级；健康检查、doctor、CLI/Web/helper 与 strongSwan 隔离均通过。

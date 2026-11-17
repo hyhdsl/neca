@@ -1,0 +1,15 @@
+{{define "content"}}
+<section class="panel">
+  <div class="panel-head"><h2>{{.T "web.settings.about_title"}}</h2></div>
+  <p class="muted">{{.T "web.settings.about_desc"}}</p>
+  <dl class="detail-list">
+    <dt>{{.T "web.settings.about_version"}}</dt><dd>{{.Version}}</dd>
+    <dt>{{.T "web.settings.about_mode"}}</dt><dd>{{if .Writable}}{{.T "web.settings.about_writable"}}{{else if .ReadOnly}}{{.T "web.settings.about_readonly"}}{{else}}{{.T "web.settings.about_helper_unavailable"}}{{end}}</dd>
+    <dt>{{.T "web.settings.about_helper"}}</dt><dd>{{if .HelperAvailable}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
+    <dt>{{.T "web.settings.about_trash"}}</dt><dd>{{if .TrashEnabled}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
+    <dt>{{.T "web.settings.about_settings"}}</dt><dd>{{if .SettingsEnabled}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
+    <dt>{{.T "web.settings.about_export"}}</dt><dd>{{if .Web.ExportEnabled}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
+    <dt>{{.T "web.settings.about_high_risk"}}</dt><dd>{{if .Web.AllowHighRiskSettings}}{{.T "web.settings.about_enabled"}}{{else}}{{.T "web.settings.about_disabled"}}{{end}}</dd>
+  </dl>
+</section>
+{{end}}

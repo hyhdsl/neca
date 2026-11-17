@@ -147,6 +147,18 @@ func (s *Server) handleDownloads(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	s.renderSettingsPage(w, r, "settings", "settings", "web.settings.general_title")
+}
+
+func (s *Server) handleSettingsSecurity(w http.ResponseWriter, r *http.Request) {
+	s.renderSettingsPage(w, r, "settings_security", "settings-security", "web.settings.security_title")
+}
+
+func (s *Server) handleSettingsAbout(w http.ResponseWriter, r *http.Request) {
+	s.renderSettingsPage(w, r, "settings_about", "settings-about", "web.settings.about_title")
+}
+
+func (s *Server) renderSettingsPage(w http.ResponseWriter, r *http.Request, templateName, nav, titleKey string) {
 	cfg, err := core.LoadConfigReadOnly()
 	if err != nil {
 		s.renderError(w, r, http.StatusInternalServerError, err.Error())
@@ -156,8 +168,8 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	if cfg.TrashRetention > 0 {
 		retention = cfg.TrashRetention.String()
 	}
-	s.render(w, r, "settings", pageData{
-		TitleKey: "web.settings.title", Nav: "settings", Web: &cfg.Web, TrashRetention: retention,
+	s.render(w, r, templateName, pageData{
+		TitleKey: titleKey, Nav: nav, Web: &cfg.Web, TrashRetention: retention,
 		ReadOnly: s.readOnly(), Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 		NoticeKey: noticeKey(r.URL.Query().Get("notice")),
 	})
@@ -228,7 +240,7 @@ func (s *Server) handleSettingsHighRisk(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	s.audit.log("settings-high-risk", clientIP(r), "", "readOnly/idleTimeout/export updated")
-	http.Redirect(w, r, "/settings?notice=updated", http.StatusSeeOther)
+	http.Redirect(w, r, "/settings/security?notice=updated", http.StatusSeeOther)
 }
 
 func (s *Server) handleNewCertPage(w http.ResponseWriter, r *http.Request) {

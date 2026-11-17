@@ -38,6 +38,8 @@ func (s *Server) registerDownloadRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /downloads", s.handleDownloads)
 	if s.cfg.Web.FeatureEnabled("settings") {
 		mux.HandleFunc("GET /settings", s.handleSettings)
+		mux.HandleFunc("GET /settings/security", s.handleSettingsSecurity)
+		mux.HandleFunc("GET /settings/about", s.handleSettingsAbout)
 		mux.HandleFunc("POST /settings/high-risk", s.handleSettingsHighRisk)
 	}
 }

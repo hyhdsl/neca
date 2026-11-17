@@ -29,19 +29,22 @@
         <a href="/certs" data-testid="nav-certs" {{if eq .Nav "certs"}}aria-current="page"{{end}}>{{.T "web.nav.certs"}}</a>
         {{if .Writable}}<a href="/certs/new" data-testid="nav-issue" {{if eq .Nav "issue"}}aria-current="page"{{end}}>{{.T "web.nav.issue"}}</a>{{end}}
         <a href="/downloads" data-testid="nav-downloads" {{if eq .Nav "downloads"}}aria-current="page"{{end}}>{{.T "web.nav.downloads"}}</a>
-        {{if .SettingsEnabled}}<a href="/settings" data-testid="nav-settings" {{if eq .Nav "settings"}}aria-current="page"{{end}}>{{.T "web.nav.settings"}}</a>{{end}}
+        {{if .SettingsEnabled}}
+        <div class="nav-group {{if hasPrefix .Nav "settings"}}is-active{{end}}" data-testid="nav-settings-group">
+          <a href="/settings" class="nav-parent" data-testid="nav-settings" {{if eq .Nav "settings"}}aria-current="page"{{end}}>{{.T "web.nav.settings"}}</a>
+          <div class="nav-sub" role="group" aria-label="{{.T "web.nav.settings"}}">
+            <a href="/settings" data-testid="nav-settings-general" {{if eq .Nav "settings"}}aria-current="page"{{end}}>{{.T "web.nav.settings.general"}}</a>
+            <a href="/settings/security" data-testid="nav-settings-security" {{if eq .Nav "settings-security"}}aria-current="page"{{end}}>{{.T "web.nav.settings.security"}}</a>
+            <a href="/settings/about" data-testid="nav-settings-about" {{if eq .Nav "settings-about"}}aria-current="page"{{end}}>{{.T "web.nav.settings.about"}}</a>
+          </div>
+        </div>
+        {{end}}
       </nav>
       <div class="sidebar-footer">
         <span class="mode-badge {{if .Writable}}is-writable{{else}}is-readonly{{end}}" data-testid="readonly-badge">
           {{if .Writable}}{{.T "web.mode.writable"}}{{else if .ReadOnly}}{{.T "web.mode.readonly"}}{{else}}{{.T "web.mode.helper_unavailable"}}{{end}}
         </span>
         {{if .UserCN}}<span class="muted small" data-testid="session-cn">{{.UserCN}}</span>{{end}}
-        <button type="button" class="icon-button" id="theme-toggle" data-testid="theme-toggle" aria-label="{{.T "web.action.theme_aria"}}">{{.T "web.action.theme"}}</button>
-        <span class="lang-switch" aria-label="{{.T "web.action.language"}}">
-          <a href="/language?lang=zh-CN&amp;next={{urlquery .Path}}" data-testid="lang-zh">中文</a>
-          <span aria-hidden="true">/</span>
-          <a href="/language?lang=en-US&amp;next={{urlquery .Path}}" data-testid="lang-en">EN</a>
-        </span>
         <form method="post" action="/logout" class="inline-form">
           <input type="hidden" name="csrf_token" value="{{.CSRF}}">
           <button type="submit" class="link-button" data-testid="logout">{{.T "web.action.logout"}}</button>

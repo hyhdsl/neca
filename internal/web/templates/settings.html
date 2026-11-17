@@ -1,44 +1,27 @@
 {{define "content"}}
 {{if .Notice}}<div class="alert ok" role="status" data-testid="settings-notice">{{.Notice}}</div>{{end}}
 <section class="panel">
-  <div class="panel-head"><h2>{{.T "web.settings.low_risk_title"}}</h2></div>
-  <p class="muted">{{.T "web.settings.low_risk_desc"}}</p>
-  <dl class="detail-list">
-    <dt>{{.T "web.settings.language"}}</dt><dd>{{.Lang}}</dd>
-    <dt>{{.T "web.settings.theme"}}</dt><dd>{{.T "web.settings.theme_value"}}</dd>
-  </dl>
-</section>
-<section class="panel">
-  <div class="panel-head"><h2>{{.T "web.settings.high_risk_title"}}</h2></div>
-  <p class="muted">{{.T "web.settings.high_risk_desc"}}</p>
-  {{if .Web.AllowHighRiskSettings}}
-  <div class="alert danger" role="alert" data-testid="high-risk-warning">{{.T "web.settings.high_risk_enabled"}}</div>
-  {{else}}
-  <div class="alert warning" role="status" data-testid="high-risk-disabled">{{.T "web.settings.high_risk_disabled"}}</div>
-  {{end}}
-  <dl class="detail-list">
-    <dt>{{.T "web.settings.readonly"}}</dt><dd>{{if .Web.ReadOnly}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
-    <dt>{{.T "web.settings.idle_timeout"}}</dt><dd>{{.Web.IdleTimeoutRaw}}</dd>
-    <dt>{{.T "web.settings.export"}}</dt><dd>{{if .Web.ExportEnabled}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
-    <dt>{{.T "web.settings.session_epoch"}}</dt><dd>{{.Web.SessionEpoch}}</dd>
-    <dt>{{.T "web.settings.trash_retention"}}</dt><dd>{{.TrashRetention}}</dd>
-    <dt>{{.T "web.settings.allow_high_risk"}}</dt><dd>{{if .Web.AllowHighRiskSettings}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
-  </dl>
-  <p class="muted small">{{.T "web.settings.backend_only"}}</p>
-  {{if and .Web.AllowHighRiskSettings .Writable}}
-  <form method="post" action="/settings/high-risk" class="stack" data-testid="high-risk-form">
-    <input type="hidden" name="csrf_token" value="{{.CSRF}}">
-    <label>{{.T "web.settings.reauth_password"}}<input type="password" name="password" required autocomplete="current-password"></label>
-    <label>{{.T "web.settings.readonly"}}
-      <select name="readOnly"><option value="">{{.T "web.settings.unchanged"}}</option><option value="true">{{.T "web.settings.yes"}}</option><option value="false">{{.T "web.settings.no"}}</option></select>
-    </label>
-    <label>{{.T "web.settings.idle_timeout"}}<input type="text" name="idleTimeout" placeholder="30m"></label>
-    <label>{{.T "web.settings.export"}}
-      <select name="exportEnabled"><option value="">{{.T "web.settings.unchanged"}}</option><option value="true">{{.T "web.settings.yes"}}</option><option value="false">{{.T "web.settings.no"}}</option></select>
-    </label>
-    <label class="check"><input type="checkbox" name="confirm" value="yes" required> {{.T "web.settings.confirm"}}</label>
-    <button type="submit" class="button danger" data-testid="settings-submit">{{.T "web.settings.apply"}}</button>
-  </form>
-  {{end}}
+  <div class="panel-head"><h2>{{.T "web.settings.general_title"}}</h2></div>
+  <p class="muted">{{.T "web.settings.general_desc"}}</p>
+  <div class="settings-list">
+    <div class="setting-row">
+      <div>
+        <h3>{{.T "web.settings.theme"}}</h3>
+        <p class="muted small">{{.T "web.settings.theme_desc"}}</p>
+      </div>
+      <button type="button" class="button secondary" id="theme-toggle" data-testid="theme-toggle" aria-label="{{.T "web.action.theme_aria"}}">{{.T "web.settings.theme_toggle"}}</button>
+    </div>
+    <div class="setting-row">
+      <div>
+        <h3>{{.T "web.settings.language"}}</h3>
+        <p class="muted small">{{.T "web.settings.language_desc"}}</p>
+      </div>
+      <span class="lang-switch" aria-label="{{.T "web.action.language"}}">
+        <a href="/language?lang=zh-CN&amp;next={{urlquery .Path}}" data-testid="lang-zh" {{if eq .Lang "zh-CN"}}aria-current="true"{{end}}>中文</a>
+        <span aria-hidden="true">/</span>
+        <a href="/language?lang=en-US&amp;next={{urlquery .Path}}" data-testid="lang-en" {{if eq .Lang "en-US"}}aria-current="true"{{end}}>English</a>
+      </span>
+    </div>
+  </div>
 </section>
 {{end}}

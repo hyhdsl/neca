@@ -456,7 +456,7 @@ func loadTemplates() (map[string]*template.Template, error) {
 		"join":      strings.Join,
 		"hasPrefix": strings.HasPrefix,
 	}
-	pages := []string{"login", "dashboard", "certs", "cert_new", "cert_detail", "downloads", "error"}
+	pages := []string{"login", "dashboard", "certs", "cert_new", "cert_detail", "downloads", "settings", "settings_security", "settings_about", "error"}
 	out := make(map[string]*template.Template, len(pages))
 	for _, page := range pages {
 		tmpl, err := template.New("layout").Funcs(funcs).ParseFS(assets, "templates/layout.html", "templates/"+page+".html")

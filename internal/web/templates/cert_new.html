@@ -17,6 +17,8 @@
       <label class="platform-option"><input type="checkbox" name="platform" value="{{.Value}}" {{if .Selected}}checked{{end}}> <span>{{$.T .LabelKey}}</span></label>
       {{end}}
     </div>
+    <label for="generateInstallers">{{.T "web.new.installers"}}</label>
+    <label class="check"><input id="generateInstallers" type="checkbox" name="generateInstallers" value="yes" data-testid="issue-installers"> <span class="muted small">{{.T "web.new.installers_hint"}}</span></label>
     <label for="p12Profile">{{.T "web.new.profile"}}</label>
     <select id="p12Profile" name="p12Profile" data-testid="issue-profile">
       <option value="compat" {{if eq .P12Profile "compat"}}selected{{end}}>compat（3DES/SHA1）</option>

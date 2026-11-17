@@ -14,6 +14,7 @@ func TestRequestValidate(t *testing.T) {
 		{RequestID: "req", Op: OpIssue, CN: "../etc"},
 		{RequestID: "req", Op: OpIssue, CN: "TMP01", Days: 4000},
 		{RequestID: "req", Op: OpIssue, CN: "TMP01", Platforms: []string{"solaris"}},
+		{RequestID: "req", Op: OpIssue, CN: "TMP01", Installers: []string{"android"}},
 		{RequestID: "req", Op: OpIssue, CN: "TMP01", P12Profile: "weird"},
 	}
 	for i, req := range tests {

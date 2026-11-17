@@ -52,11 +52,11 @@
 ## 6. 本次生产升级/回滚演练
 
 - 生产快照：2026-11-16 22:00:53（已确认）。
-- 候选：<code>v1.0.0-rc.4</code>（签发高亮、平台勾选框与设置下拉框）；升级前生产：<code>v0.4.1</code>。
+- 候选：<code>v1.0.0-rc.5</code>（一键脚本按次选择）；升级前生产：<code>v0.4.1</code>。
 - 演练步骤：备份 config/PKI/web-secrets/clients/meta/downloads → 部署候选 → 验证 healthz/登录/证书列表/下载 → 回滚到 v0.4.1 → 验证索引/CRL/strongSwan 健康。
 - 只操作明确命名的 Web/helper；不重启 strongSwan。
 - 演练结果：2026-11-16 完成升级 → 验证 → 回滚 → 再升级；健康检查、doctor、CLI/Web/helper 与 strongSwan 隔离均通过。
-- 最终生产状态：v1.0.0-rc.4；回滚目标 v0.4.1 已验证。
+- 最终生产状态：v1.0.0-rc.5；回滚目标 v0.4.1 已验证。
 - 演练结果写入发布检查清单与任务记录。
 
 ## 7. RC 观察期

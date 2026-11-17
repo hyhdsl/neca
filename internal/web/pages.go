@@ -274,10 +274,18 @@ func (s *Server) handleNewCert(w http.ResponseWriter, r *http.Request) {
 		s.renderError(w, r, http.StatusBadRequest, "平台选择无效: "+err.Error())
 		return
 	}
+	installers := []string(nil)
+	if r.FormValue("generateInstallers") == "yes" {
+		installers = installerPlatforms(platforms)
+		if len(installers) == 0 {
+			s.renderError(w, r, http.StatusBadRequest, "所选平台没有可用的一键安装脚本（仅 Windows/Linux/macOS）")
+			return
+		}
+	}
 	profile := r.FormValue("p12Profile")
 	response, err := s.executeWrite(r.Context(), helper.Request{
 		RequestID: newWriteRequestID(), Op: helper.OpIssue, CN: cn, Days: days,
-		Platforms: platforms, P12Profile: profile,
+		Platforms: platforms, Installers: installers, P12Profile: profile,
 	})
 	if err != nil {
 		s.renderWriteError(w, r, err)
@@ -362,6 +370,17 @@ func buildPlatformChoices(selected []string) []platformChoice {
 		choices = append(choices, platformChoice{Value: def.value, LabelKey: def.labelKey, Selected: chosen[def.value]})
 	}
 	return choices
+}
+
+func installerPlatforms(platforms []string) []string {
+	installers := make([]string, 0, len(platforms))
+	for _, platform := range platforms {
+		switch platform {
+		case core.PlatformWindows, core.PlatformLinux, core.PlatformMacOS:
+			installers = append(installers, platform)
+		}
+	}
+	return installers
 }
 
 func splitPlatforms(raw string) []string {

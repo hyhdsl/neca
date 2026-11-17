@@ -46,6 +46,9 @@ func TestIssuePageNavAndPlatforms(t *testing.T) {
 	if !strings.Contains(html, `name="platform"`) || !strings.Contains(html, `value="windows"`) {
 		t.Fatal("platform checkboxes are missing")
 	}
+	if !strings.Contains(html, `name="generateInstallers"`) {
+		t.Fatal("installer opt-in checkbox is missing")
+	}
 }
 
 func TestSettingsTemplatesRender(t *testing.T) {

@@ -195,9 +195,13 @@ func (s *Server) executeLocked(ctx context.Context, req Request) (Response, *Res
 	if err != nil {
 		return helperFailure("bad_request", err.Error()), nil
 	}
+	installers, err := core.ParseInstallers(strings.Join(req.Installers, ","))
+	if err != nil {
+		return helperFailure("bad_request", err.Error()), nil
+	}
 	issueReq := core.IssueRequest{
 		CN: req.CN, Days: req.Days, Platforms: platforms,
-		Installers: core.InstallerSet{}, P12Profile: profile,
+		Installers: installers, P12Profile: profile,
 	}
 	value, err := executeOperation(ctx, s, req, issueReq)
 	if err != nil {

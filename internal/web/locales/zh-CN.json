@@ -128,6 +128,8 @@
   "web.platform.macos": "macOS",
   "web.platform.android": "Android",
   "web.platform.ios": "iOS",
+  "web.new.installers": "一键安装脚本",
+  "web.new.installers_hint": "由用户决定；仅 Windows/Linux/macOS 生成，默认不生成。",
   "web.new.profile": "p12 profile",
   "web.new.submit": "签发",
   "web.new.back": "返回证书列表",

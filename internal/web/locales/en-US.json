@@ -128,6 +128,8 @@
   "web.platform.macos": "macOS",
   "web.platform.android": "Android",
   "web.platform.ios": "iOS",
+  "web.new.installers": "One-click installers",
+  "web.new.installers_hint": "User opt-in; generated only for Windows/Linux/macOS; off by default.",
   "web.new.profile": "p12 profile",
   "web.new.submit": "Issue",
   "web.new.back": "Back to certificates",

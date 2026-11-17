@@ -32,6 +32,7 @@ type Request struct {
 	CN         string   `json:"cn"`
 	Days       int      `json:"days,omitempty"`
 	Platforms  []string `json:"platforms,omitempty"`
+	Installers []string `json:"installers,omitempty"`
 	P12Profile string   `json:"p12Profile,omitempty"`
 }
 
@@ -91,6 +92,11 @@ func (r *Request) Validate() error {
 	}
 	if len(r.Platforms) > 0 {
 		if _, err := core.NormalizePlatforms(r.Platforms); err != nil {
+			return err
+		}
+	}
+	if len(r.Installers) > 0 {
+		if _, err := core.ParseInstallers(strings.Join(r.Installers, ",")); err != nil {
 			return err
 		}
 	}

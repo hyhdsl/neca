@@ -93,6 +93,20 @@ normalize() {
   sed "${args[@]}"
 }
 
+# 剩余天数是按运行时刻计算的动态列；跨 UTC 日期时两侧可能相差 1 天。
+# 只归一化这一列，其余字段仍严格比较。
+normalize_remaining_days() {
+  python3 - <<'PY'
+import csv
+import sys
+rows = list(csv.reader(sys.stdin))
+for row in rows:
+    if len(row) >= 6:
+        row[5] = "REMAINING_DAYS"
+csv.writer(sys.stdout, lineterminator="\n").writerows(rows)
+PY
+}
+
 FAILED=0
 check_same() {
   local label="$1" old_file="$2" new_file="$3"
@@ -127,8 +141,8 @@ check_same "verify stderr" "$WORK/old.verify.err" "$WORK/new.verify.err"
 # 3. export issued / revoked（比较 CSV 内容；路径列先归一化）
 run_old "$OLD" --export-issued --out "$OLD/exports/issued.csv" >"$WORK/old.issued.out" 2>&1
 run_new "$NEW" cert export issued --out "$NEW/exports/issued.csv" >"$WORK/new.issued.out" 2>&1
-normalize <"$OLD/exports/issued.csv" >"$WORK/old.issued.csv"
-normalize <"$NEW/exports/issued.csv" >"$WORK/new.issued.csv"
+normalize <"$OLD/exports/issued.csv" | normalize_remaining_days >"$WORK/old.issued.csv"
+normalize <"$NEW/exports/issued.csv" | normalize_remaining_days >"$WORK/new.issued.csv"
 check_same "export issued CSV" "$WORK/old.issued.csv" "$WORK/new.issued.csv"
 normalize <"$WORK/old.issued.out" >"$WORK/old.issued.norm"
 normalize <"$WORK/new.issued.out" >"$WORK/new.issued.norm"

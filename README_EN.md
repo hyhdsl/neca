@@ -86,8 +86,8 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 - **Current stable**: v0.7.0; **v1.0.0-rc.10** is published as a pre-release candidate (not stable)
 - **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
-- **Next**: RC.10 candidate is published; production remains RC.8 pending separate deployment approval; observation through 2026-11-23; M13 public access later, M14 OpenAPI long-term deferred
-- **Production**: v1.0.0-rc.8 (RC.9 pending deployment); v0.4.1 rollback verified; no v1.0.0 release until observation completes
+- **Next**: RC.10 is deployed; observation through 2026-11-23; M13 public access later, M14 OpenAPI long-term deferred
+- **Production**: v1.0.0-rc.10; v0.4.1 rollback verified; no v1.0.0 release until observation completes
 
 ## ⚖️ License and acknowledgements
 

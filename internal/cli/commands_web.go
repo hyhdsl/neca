@@ -42,8 +42,10 @@ func newWebCommand() Command {
 			case "export":
 				return runWebExport(env, env.Args[1:])
 			case "lock":
+				env.Args = env.Args[1:]
 				return runWebLock(env)
 			case "lockdown":
+				env.Args = env.Args[1:]
 				return runWebLockdown(env)
 			case "hash-password":
 				if len(env.Args) > 1 {

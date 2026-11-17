@@ -459,9 +459,7 @@ func lockdownArgs(composeFile string) []string {
 	// Only these two explicit services are stopped. Never use a reverse
 	// "stop everything except X" expression; that could take down strongSwan.
 	return []string{
-		"compose", "-f", composeFile,
-		"--profile", "web", "--profile", "web-write",
-		"stop", "web", "web-helper",
+		"stop", "neca-web", "neca-web-helper",
 	}
 }
 
@@ -483,7 +481,7 @@ func webComposeFile() string {
 }
 
 func signalWebReload(cfg *core.Config) error {
-	args := []string{"compose", "-f", webComposeFile(), "--profile", "web", "kill", "--signal=HUP", "web"}
+	args := []string{"kill", "--signal=HUP", "neca-web"}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, webDockerBin(cfg), args...).CombinedOutput()

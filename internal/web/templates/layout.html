@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>{{.Title}} · neca</title>
-  <link rel="stylesheet" href="/static/app.css">
-  <script src="/static/app.js" defer></script>
+  <link rel="stylesheet" href="/static/app.css?v={{.Version}}">
+  <script src="/static/app.js?v={{.Version}}" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">{{.T "web.skip"}}</a>
@@ -30,14 +30,17 @@
         {{if .Writable}}<a href="/certs/new" data-testid="nav-issue" {{if eq .Nav "issue"}}aria-current="page"{{end}}>{{.T "web.nav.issue"}}</a>{{end}}
         <a href="/downloads" data-testid="nav-downloads" {{if eq .Nav "downloads"}}aria-current="page"{{end}}>{{.T "web.nav.downloads"}}</a>
         {{if .SettingsEnabled}}
-        <div class="nav-group {{if hasPrefix .Nav "settings"}}is-active{{end}}" data-testid="nav-settings-group">
-          <a href="/settings" class="nav-parent" data-testid="nav-settings" {{if eq .Nav "settings"}}aria-current="page"{{end}}>{{.T "web.nav.settings"}}</a>
+        <details class="nav-group {{if hasPrefix .Nav "settings"}}is-active{{end}}" data-testid="nav-settings-group" {{if hasPrefix .Nav "settings"}}open{{end}}>
+          <summary class="nav-parent" data-testid="nav-settings">
+            <span>{{.T "web.nav.settings"}}</span>
+            <span class="nav-chevron" aria-hidden="true">&gt;</span>
+          </summary>
           <div class="nav-sub" role="group" aria-label="{{.T "web.nav.settings"}}">
             <a href="/settings" data-testid="nav-settings-general" {{if eq .Nav "settings"}}aria-current="page"{{end}}>{{.T "web.nav.settings.general"}}</a>
             <a href="/settings/security" data-testid="nav-settings-security" {{if eq .Nav "settings-security"}}aria-current="page"{{end}}>{{.T "web.nav.settings.security"}}</a>
             <a href="/settings/about" data-testid="nav-settings-about" {{if eq .Nav "settings-about"}}aria-current="page"{{end}}>{{.T "web.nav.settings.about"}}</a>
           </div>
-        </div>
+        </details>
         {{end}}
       </nav>
       <div class="sidebar-footer">

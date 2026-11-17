@@ -98,14 +98,25 @@ h2 { font-size: 1.05rem; margin-bottom: 0; }
 }
 .nav a:hover { background: var(--surface-2); text-decoration: none; }
 .nav a[aria-current="page"] { background: var(--primary-soft); color: var(--nav-active-text); }
-.nav-group { display: grid; gap: 2px; }
-.nav-parent { font-weight: 650; }
-.nav-group.is-active > .nav-parent { color: var(--nav-active-text); }
+.nav-group { display: block; }
+.nav-group > summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  list-style: none; cursor: pointer; padding: 9px 11px; border-radius: 9px;
+  color: var(--text); font-weight: 650;
+}
+.nav-group > summary::-webkit-details-marker { display: none; }
+.nav-group > summary:hover { background: var(--surface-2); }
+.nav-group.is-active > summary { color: var(--nav-active-text); }
+.nav-chevron {
+  color: var(--muted); font-size: 0.8rem; line-height: 1;
+  transition: transform 0.15s ease;
+}
+.nav-group[open] > summary .nav-chevron { transform: rotate(90deg); }
 .nav-sub {
-  display: grid; gap: 2px; margin: 0 0 4px 14px; padding-left: 10px;
+  display: grid; gap: 2px; margin: 0 0 6px 16px; padding-left: 12px;
   border-left: 1px solid var(--border);
 }
-.nav-sub a { padding: 5px 8px; font-size: 0.82rem; color: var(--muted); }
+.nav-sub a { padding: 7px 9px; font-size: 0.84rem; color: var(--muted); }
 .nav-sub a[aria-current="page"] { background: var(--primary-soft); color: var(--nav-active-text); }
 .sidebar-footer { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
 .settings-list { display: grid; margin-top: 10px; }
@@ -207,8 +218,7 @@ input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible
   .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 1px solid var(--border); }
   .sidebar-footer { margin-top: 0; margin-left: auto; }
   .nav { display: flex; flex-wrap: wrap; }
-  .nav-group { display: flex; flex-wrap: wrap; align-items: center; }
-  .nav-sub { display: flex; margin: 0; padding: 0; border-left: 0; }
+  .nav-group { flex: 1 0 100%; }
   .setting-row { flex-direction: column; align-items: flex-start; }
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .detail-grid { grid-template-columns: 1fr; }

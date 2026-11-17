@@ -45,8 +45,12 @@ func TestSettingsTemplatesRender(t *testing.T) {
 		if err != nil {
 			t.Fatalf("render %s: %v", name, err)
 		}
-		if !strings.Contains(out.String(), "nav-settings-group") {
-			t.Fatalf("render %s did not include settings submenu", name)
+		html := out.String()
+		if !strings.Contains(html, "nav-settings-group") || !strings.Contains(html, "<details") || !strings.Contains(html, "nav-chevron") {
+			t.Fatalf("render %s did not include collapsible settings submenu", name)
+		}
+		if !strings.Contains(html, "<details class=\"nav-group is-active\"") {
+			t.Fatalf("render %s did not open active settings submenu", name)
 		}
 	}
 }

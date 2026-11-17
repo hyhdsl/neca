@@ -59,6 +59,7 @@ neca web readonly off
 |---|---|
 | 🌐 [主页](https://neca.nekobiglazyer.work) | 项目介绍与快速入口 |
 | 🇨🇳 [中文帮助](https://neca.nekobiglazyer.work/zh/) | 安装、证书、Web、API、安全、FAQ |
+| ⌨️ [常用命令速查](https://neca.nekobiglazyer.work/zh/#/cheatsheet) | 复制即可使用的常用命令 |
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | 实验性接口说明 |
 | 🐳 [部署与回滚](docs/development/deploy.md) | Docker、权限、备份与恢复 |

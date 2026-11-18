@@ -5,7 +5,7 @@
 > [!IMPORTANT]
 > This English README is a convenience translation. The [Chinese README](README.md) is the **authoritative version**; this translation may lag behind and is not guaranteed to be current. Other language versions will be updated separately on a scheduled basis. Normally, only the Chinese README is kept up to date.
 >
-> Translation status: synchronized with v0.4.1 on 2026-11-15; subsequent Chinese changes may not be reflected immediately.
+> Translation status: synchronized with the v1.0.0-rc.10 documentation on 2026-11-18; the Chinese README remains authoritative.
 
 > [!WARNING]
 > **AI disclosure (read before use)**: Code, debugging, tests, CI/build/deploy scripts, documentation and help-site content are primarily produced by an AI coding assistant; the human maintainer is responsible for requirements, review, functional acceptance and production operations. See [AI-DISCLOSURE.md](AI-DISCLOSURE.md) for the full scope.
@@ -62,6 +62,7 @@ Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🌐 [Home](https://neca.nekobiglazyer.work) | Project overview and quick links |
 | 🇨🇳 [Chinese help](https://neca.nekobiglazyer.work/zh/) | Installation, certificates, web, API, security, FAQ |
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
+| ⌨️ [Command cheat sheet](https://neca.nekobiglazyer.work/en/#/cheatsheet) | Copy-ready common commands |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | Experimental API reference |
 | 🐳 [Deploy and roll back](docs/development/deploy.md) | Docker, permissions, backup and restore |
 | 📁 [Development docs](docs/development/README.md) | Guide, refactor, stability, deployment and check plan |

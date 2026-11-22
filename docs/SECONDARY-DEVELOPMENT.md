@@ -1,6 +1,6 @@
 # 二次开发与再分发要求
 
-> 适用版本：neca v1.0.0-rc（2026-11-17）。开发期 PR 政策仍有效。
+> 适用版本：neca v1.0.0（2026-11-22）。开发期 PR 政策仍有效。
 
 本项目采用 **GNU Affero General Public License v3.0 only（AGPL-3.0-only）**，
 全文见 [LICENSE](../../LICENSE)。AGPL 是 OSI 认可的开源协议，允许商业使用，但分发、

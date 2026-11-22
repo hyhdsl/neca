@@ -1,6 +1,6 @@
 # AI 参与披露
 
-> 适用范围：**neca v0.4.1 及当前 main**（2026-11-15）。本文说明 AI 在本项目中的实际参与范围、人类维护者的职责，以及使用者应如何理解本项目的测试与验收结果。
+> 适用范围：**neca v1.0.0**（2026-11-22）。本文说明 AI 在本项目中的实际参与范围、人类维护者的职责，以及使用者应如何理解本项目的测试与验收结果。
 
 ## 一句话结论
 
@@ -45,7 +45,7 @@
 - 发布记录：<https://github.com/hyhdsl/neca/releases>
 - 许可：<https://github.com/hyhdsl/neca/blob/main/LICENSE>
 - 版权与 AI 披露摘要：[NOTICE](NOTICE)
-- 二次开发与 AGPL 义务：[docs/development/SECONDARY-DEVELOPMENT.md](docs/development/SECONDARY-DEVELOPMENT.md)
+- 二次开发与 AGPL 义务：[docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 
 ## English summary
 

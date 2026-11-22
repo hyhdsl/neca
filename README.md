@@ -10,13 +10,13 @@
 >
 > **责任限制**：软件按“现状”提供，不提供明示或默示担保；在适用法律允许的范围内，作者与 AI 工具提供方不对使用或误用造成的损失承担责任。
 >
-> **开发期暂不接受外部 PR**：请先 fork；二次开发须遵守 AGPL 与 [开发政策](docs/development/SECONDARY-DEVELOPMENT.md)。
+> **开发期暂不接受外部 PR**：请先 fork；二次开发须遵守 AGPL 与 [开发政策](docs/SECONDARY-DEVELOPMENT.md)。
 >
-> 相关文件：[LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/development/SECONDARY-DEVELOPMENT.md](docs/development/SECONDARY-DEVELOPMENT.md)
+> 相关文件：[LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 
 **Neko's Efficient Certificate Administrator（neca，亦写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具。一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
 
-🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v0.7.0](https://github.com/hyhdsl/neca/releases/tag/v0.7.0)
+🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.0.0](https://github.com/hyhdsl/neca/releases/tag/v1.0.0)
 
 ## ✨ 特性
 
@@ -32,14 +32,14 @@
 固定版本标签，先 dry-run，再签发：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v0.7.0
+docker pull ghcr.io/hyhdsl/neca:v1.0.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
 neca cert issue alice --platforms windows,android --zip
 ~~~
 
-生产环境把 <code>/opt/ipsec</code> 挂载给容器，并通过 wrapper 或 compose 运行；完整步骤见 [部署文档](docs/development/deploy.md)。
+生产环境把 <code>/opt/ipsec</code> 挂载给容器，并通过 wrapper 或 compose 运行；完整步骤见 [安装、升级与回滚](https://neca.nekobiglazyer.work/zh/#/install)。
 
 ## 🖥️ Web 面板
 
@@ -62,14 +62,8 @@ neca web readonly off
 | ⌨️ [常用命令速查](https://neca.nekobiglazyer.work/zh/#/cheatsheet) | 复制即可使用的常用命令 |
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | 实验性接口说明 |
-| 🐳 [部署与回滚](docs/development/deploy.md) | Docker、权限、备份与恢复 |
-| 📁 [开发文档索引](docs/development/README.md) | 开发指南、重构、稳定性、部署、检查方案 |
-| 🧾 [评估报告索引](docs/evaluations/README.md) | Web 面板与技术选型的历史评估 |
-| 🧪 [检查方案](docs/development/CHECK-PLAN.md) | P0/P1/P2 检查矩阵与待决策事项 |
-| 🗺️ [里程碑](docs/MILESTONES.md) | 开发目标、M9–M14 与待决策事项 |
-| 🧪 [v1.0 稳定化契约](docs/development/STABILITY.md) | 稳定范围、RC 流程、冻结规则与发布门槛 |
-| ✅ [发布检查清单](docs/development/RELEASE-CHECKLIST.md) | 发布、升级演练与回滚检查 |
-| 📜 [历史开发文档](docs/development/neca-development.md) | 历史架构、CLI 契约与验收记录 |
+| 🐳 [安装、升级与回滚](https://neca.nekobiglazyer.work/zh/#/install) | Docker/二进制安装、升级、回滚 |
+| 🛠️ [开发、许可与反馈](https://neca.nekobiglazyer.work/zh/#/development) | 本地构建、架构、发布流程、贡献 |
 | 🤖 [AI 披露](AI-DISCLOSURE.md) | AI 参与范围与验收边界 |
 
 ## 🛠️ 开发
@@ -80,17 +74,17 @@ docker compose run -T --rm dev make shadow   # 新旧实现影子对比
 docker compose run -T --rm dev make test     # go test -race ./...
 ~~~
 
-常用检查：<code>make check-docs</code>、<code>make check-locales</code>、<code>make check-ascii</code>。详细目标见 [开发文档](docs/development/DEVELOPMENT.md)。
+常用检查：<code>make check-docs</code>、<code>make check-locales</code>、<code>make check-ascii</code>。详细目标与架构说明见 [帮助站开发页](https://neca.nekobiglazyer.work/zh/#/development)。
 
 ## 📌 状态
 
-- **当前稳定版**：v0.7.0；**v1.0.0-rc.10** 已发布为候选（pre-release，未视为正式版）
+- **当前稳定版**：v1.0.0（2026-11-22 发布）
 - **已完成**：M0–M12（CLI、Web、root helper、M9 命令迁移、M10 安全运维、M11 回收站/设置、M12 可维护性/可观测性）
-- **下一步**：RC.10 已部署；观察期至 2026-11-23；M13 公网访问后置，M14 OpenAPI 长期搁置
-- **生产环境**：v1.0.0-rc.10；v0.4.1 回滚已验证；观察期结束前不发布 v1.0.0
+- **下一步**：M13 公网访问后置，M14 OpenAPI 长期搁置
+- **生产环境**：v1.0.0 已部署；v0.4.1 回滚路径已验证；RC 版本仅保留 Git tag 与源码
 
 ## ⚖️ 许可与致谢
 
-**AGPL-3.0-only**：允许商业使用，但分发或网络服务须按 AGPL 公开对应源码；必须保留原作者、仓库链接与许可。详见 [LICENSE](LICENSE) 与 [二次开发政策](docs/development/SECONDARY-DEVELOPMENT.md)。
+**AGPL-3.0-only**：允许商业使用，但分发或网络服务须按 AGPL 公开对应源码；必须保留原作者、仓库链接与许可。详见 [LICENSE](LICENSE) 与 [二次开发政策](docs/SECONDARY-DEVELOPMENT.md)。
 
 感谢 Go、strongSwan、OpenSSL、Docker 及所有上游开源项目。

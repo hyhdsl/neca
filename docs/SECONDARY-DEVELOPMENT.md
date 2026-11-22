@@ -3,7 +3,7 @@
 > 适用版本：neca v1.0.0（2026-11-22）。开发期 PR 政策仍有效。
 
 本项目采用 **GNU Affero General Public License v3.0 only（AGPL-3.0-only）**，
-全文见 [LICENSE](../../LICENSE)。AGPL 是 OSI 认可的开源协议，允许商业使用，但分发、
+全文见 [LICENSE](../LICENSE)。AGPL 是 OSI 认可的开源协议，允许商业使用，但分发、
 修改以及通过网络提供服务时须遵守其源码公开与许可保留要求。
 
 本文件用于说明项目附加的署名与贡献政策；它不是对 AGPL 的替代或限制。若本文件与
@@ -34,7 +34,7 @@ AGPL 第 13 条要求向该服务的用户提供对应源码。
 
 本项目的代码编写、调试、测试、CI/构建脚本、部署脚本与文档主要由 AI 编程助手完成；
 人类维护者负责需求、审查、功能验收与生产操作。完整披露见
-[AI-DISCLOSURE.md](../../AI-DISCLOSURE.md)。
+[AI-DISCLOSURE.md](../AI-DISCLOSURE.md)。
 
 ## 免责
 

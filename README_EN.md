@@ -83,7 +83,7 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 - **Current stable**: v1.0.0 (released 2026-11-22)
 - **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
 - **Next**: M13 public access later, M14 OpenAPI long-term deferred
-- **Production**: v1.0.0 deployed; v0.4.1 rollback path verified; RC versions are kept as Git tags and source only
+- **Production**: v1.0.0 deployed; v1.0.0 rollback path verified; RC versions are kept as Git tags and source only
 
 ## ⚖️ License and acknowledgements
 

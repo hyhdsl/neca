@@ -104,8 +104,10 @@ func (s *FileIndexStore) UpdateLocked(ctx context.Context, fn func(idx *ports.In
 func (s *FileIndexStore) writeAtomic(rows []ports.Row) error {
 	dir := filepath.Dir(s.path)
 	mode := fs.FileMode(0o644)
-	if info, err := os.Stat(s.path); err == nil {
-		mode = info.Mode().Perm()
+	var info fs.FileInfo
+	if fi, err := os.Stat(s.path); err == nil {
+		mode = fi.Mode().Perm()
+		info = fi
 	}
 
 	tmp, err := os.CreateTemp(dir, ".index-*.tmp")
@@ -135,6 +137,11 @@ func (s *FileIndexStore) writeAtomic(rows []ports.Row) error {
 	}
 	if err := tmp.Close(); err != nil {
 		return runtimef("写入索引", "close: %v", err)
+	}
+	if info != nil {
+		if err := preserveIndexOwnership(tmpPath, info); err != nil {
+			return runtimef("写入索引", "chown: %v", err)
+		}
 	}
 	if err := os.Chmod(tmpPath, mode); err != nil {
 		return runtimef("写入索引", "chmod: %v", err)

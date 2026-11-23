@@ -63,9 +63,10 @@ Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🇨🇳 [Chinese help](https://neca.nekobiglazyer.work/zh/) | Installation, certificates, web, API, security, FAQ |
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | ⌨️ [Command cheat sheet](https://neca.nekobiglazyer.work/en/#/cheatsheet) | Copy-ready common commands |
+| ⌨️ [Command reference](https://neca.nekobiglazyer.work/en/#/commands) | Global options, every subcommand, arguments, confirmation and exit codes |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | Experimental API reference |
 | 🐳 [Install, upgrade and rollback](https://neca.nekobiglazyer.work/en/#/install) | Docker/binary install, upgrade, rollback |
-| 🛠️ [Development, license and feedback](https://neca.nekobiglazyer.work/en/#/development) | Local build, architecture, release flow, contribution |
+| 🛠️ [Development, license and feedback (Chinese)](https://neca.nekobiglazyer.work/zh/#/development) | Local build, architecture, release flow, contribution (Chinese-only) |
 | 🤖 [AI disclosure](AI-DISCLOSURE.md) | AI scope and acceptance boundaries |
 
 ## 🛠️ Development

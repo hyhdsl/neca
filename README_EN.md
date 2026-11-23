@@ -5,7 +5,7 @@
 > [!IMPORTANT]
 > This English README is a convenience translation. The [Chinese README](README.md) is the **authoritative version**; this translation may lag behind and is not guaranteed to be current. Other language versions will be updated separately on a scheduled basis. Normally, only the Chinese README is kept up to date.
 >
-> Translation status: synchronized with the v1.0.0 documentation on 2026-11-22; the Chinese README remains authoritative.
+> Translation status: synchronized with the v1.0.1 documentation on 2026-11-23; the Chinese README remains authoritative.
 
 > [!WARNING]
 > **AI disclosure (read before use)**: Code, debugging, tests, CI/build/deploy scripts, documentation and help-site content are primarily produced by an AI coding assistant; the human maintainer is responsible for requirements, review, functional acceptance and production operations. See [AI-DISCLOSURE.md](AI-DISCLOSURE.md) for the full scope.
@@ -18,7 +18,7 @@
 
 **Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
-🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.0.0](https://github.com/hyhdsl/neca/releases/tag/v1.0.0)
+🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.0.1](https://github.com/hyhdsl/neca/releases/tag/v1.0.1)
 
 ## ✨ Features
 
@@ -34,7 +34,7 @@
 Pin the version, dry-run first, then issue:
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.0.0
+docker pull ghcr.io/hyhdsl/neca:v1.0.1
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -81,10 +81,10 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 ## 📌 Status
 
-- **Current stable**: v1.0.0 (released 2026-11-22)
+- **Current stable**: v1.0.1 (released 2026-11-23)
 - **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
 - **Next**: M13 public access later, M14 OpenAPI long-term deferred
-- **Production**: v1.0.0 deployed; v0.4.1 rollback path verified; RC versions are kept as Git tags and source only
+- **Production**: v1.0.0 deployed; v1.0.1 upgrade follows; v0.4.1 rollback path verified; RC versions are kept as Git tags and source only
 
 ## ⚖️ License and acknowledgements
 

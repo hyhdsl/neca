@@ -38,6 +38,28 @@ DOWNLOADS="${ROOT}/downloads"
 install -d -m 0750 -o root -g "${GROUP}" "${DOWNLOADS}"
 chmod 2750 "${DOWNLOADS}"
 
+# 客户端目录含个人证书/包名；组权限供 Web 读取，禁止其他用户遍历。
+CLIENTS="${ROOT}/clients"
+if [[ -d "${CLIENTS}" ]]; then
+  chgrp "${GROUP}" "${CLIENTS}"
+  chmod 2750 "${CLIENTS}"
+fi
+
+# 证书元数据目录由 Web 只读使用；组权限允许 necad 读取，目录本体
+# 不对外开放。
+META_DIR="${ROOT}/pki/meta"
+if [[ -d "${META_DIR}" ]]; then
+  chgrp "${GROUP}" "${META_DIR}"
+  chmod 2750 "${META_DIR}"
+  find "${META_DIR}" -maxdepth 1 -type f -name '*.env' \
+    -exec chgrp "${GROUP}" {} + -exec chmod 0640 {} +
+fi
+
+# 导出 CSV 含证书清单，只允许 root 读取。
+EXPORTS="${ROOT}/exports"
+install -d -m 0700 -o root -g root "${EXPORTS}"
+find "${EXPORTS}" -maxdepth 1 -type f -exec chmod 0600 {} +
+
 # Web 只读挂载 CA 索引；setgid 让 CLI 原子重写 index.txt 时新文件继续继承
 # neca-web 组，否则 Web 会报 permission denied。
 CA_DIR="${ROOT}/pki/ca"

@@ -150,8 +150,8 @@ check_same "export issued 输出" "$WORK/old.issued.norm" "$WORK/new.issued.norm
 
 run_old "$OLD" --export-revoked --out "$OLD/exports/revoked.csv" >"$WORK/old.revoked.out" 2>&1
 run_new "$NEW" cert export revoked --out "$NEW/exports/revoked.csv" >"$WORK/new.revoked.out" 2>&1
-normalize <"$OLD/exports/revoked.csv" >"$WORK/old.revoked.csv"
-normalize <"$NEW/exports/revoked.csv" >"$WORK/new.revoked.csv"
+normalize <"$OLD/exports/revoked.csv" | normalize_remaining_days >"$WORK/old.revoked.csv"
+normalize <"$NEW/exports/revoked.csv" | normalize_remaining_days >"$WORK/new.revoked.csv"
 check_same "export revoked CSV" "$WORK/old.revoked.csv" "$WORK/new.revoked.csv"
 normalize <"$WORK/old.revoked.out" >"$WORK/old.revoked.norm"
 normalize <"$WORK/new.revoked.out" >"$WORK/new.revoked.norm"

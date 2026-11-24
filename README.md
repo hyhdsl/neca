@@ -83,7 +83,7 @@ docker compose run -T --rm dev make test     # go test -race ./...
 - **当前稳定版**：v1.1.1（2026-11-24 发布）
 - **已完成**：M0–M12（CLI、Web、root helper、M9 命令迁移、M10 安全运维、M11 回收站/设置、M12 可维护性/可观测性）
 - **下一步**：M13 公网访问后置，M14 OpenAPI 长期搁置
-- **生产环境**：v1.1.0 已部署（2026-11-24）；v1.1.1 发布后应用权限修复；strongSwan 未重启，Web/helper healthy；v0.4.1 回滚路径已验证；RC 版本仅保留 Git tag 与源码
+- **生产环境**：v1.1.1 已部署（2026-11-24）；到期概览与权限门禁已验证；strongSwan 未重启，Web/helper healthy；v0.4.1 回滚路径已验证；RC 版本仅保留 Git tag 与源码
 
 ## ⚖️ 许可与致谢
 

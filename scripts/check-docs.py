@@ -57,9 +57,13 @@ REQUIRED_EN = [
     "getting-started.md",
     "install.md",
     "certificates.md",
+    "packages.md",
     "web.md",
+    "operations.md",
     "security.md",
+    "troubleshooting.md",
     "faq.md",
+    "development.md",
     "api.md",
 ]
 

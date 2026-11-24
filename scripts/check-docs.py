@@ -36,9 +36,7 @@ REQUIRED_ROOT = [
 ]
 REQUIRED_ZH = [
     "README.md",
-    "SUMMARY.md",
     "_sidebar.md",
-    ".gitbook.yaml",
     "index.html",
     "getting-started.md",
     "install.md",
@@ -54,9 +52,7 @@ REQUIRED_ZH = [
 ]
 REQUIRED_EN = [
     "README.md",
-    "SUMMARY.md",
     "_sidebar.md",
-    ".gitbook.yaml",
     "index.html",
     "getting-started.md",
     "install.md",
@@ -140,9 +136,9 @@ def check_help_structure() -> list[str]:
         errors.append("docs/help/CNAME must be neca.nekobiglazyer.work")
     zh_sidebar = HELP / "zh" / "_sidebar.md"
     en_sidebar = HELP / "en" / "_sidebar.md"
-    if zh_sidebar.exists() and "https://neca.nekobiglazyer.work/en/" not in zh_sidebar.read_text(encoding="utf-8"):
+    if zh_sidebar.exists() and "/en/" not in zh_sidebar.read_text(encoding="utf-8"):
         errors.append("docs/help/zh/_sidebar.md: missing English entry")
-    if en_sidebar.exists() and "https://neca.nekobiglazyer.work/zh/" not in en_sidebar.read_text(encoding="utf-8"):
+    if en_sidebar.exists() and "/zh/" not in en_sidebar.read_text(encoding="utf-8"):
         errors.append("docs/help/en/_sidebar.md: missing Chinese entry")
     sitemap = HELP / "sitemap.xml"
     if sitemap.exists():
@@ -150,6 +146,11 @@ def check_help_structure() -> list[str]:
         for target in ("https://neca.nekobiglazyer.work/", "/zh/", "/en/"):
             if target not in sm:
                 errors.append(f"docs/help/sitemap.xml: missing {target}")
+    for lang in ("zh", "en"):
+        for name in ("SUMMARY.md", ".gitbook.yaml"):
+            artifact = HELP / lang / name
+            if artifact.exists():
+                errors.append(f"remove GitBook artifact: {artifact.relative_to(ROOT)}")
     root_index = HELP / "index.html"
     if root_index.exists():
         root_html = root_index.read_text(encoding="utf-8")

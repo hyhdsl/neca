@@ -419,12 +419,10 @@ func (c *Config) ensureLayout() error {
 			return runtimef("创建目录", "%s: %v", dir, err)
 		}
 	}
-	// 下载目录含 p12/pass，权限收紧到 0700。
+	// 下载目录新建时使用 0700；已存在目录的部署权限（例如 neca-web 组的
+	// 2750）必须保留，不能每次 CLI 启动都重置为 root-only。
 	if err := os.MkdirAll(c.DownloadsDir, 0o700); err != nil {
 		return runtimef("创建目录", "%s: %v", c.DownloadsDir, err)
-	}
-	if err := os.Chmod(c.DownloadsDir, 0o700); err != nil {
-		return runtimef("设置目录权限", "%s: %v", c.DownloadsDir, err)
 	}
 
 	if err := ensureFile(c.IndexFile, ""); err != nil {

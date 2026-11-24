@@ -16,7 +16,7 @@
 
 **Neko's Efficient Certificate Administrator（neca，亦写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具。一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
 
-🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.1.0](https://github.com/hyhdsl/neca/releases/tag/v1.1.0)
+🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.1.1](https://github.com/hyhdsl/neca/releases/tag/v1.1.1)
 
 ## ✨ 特性
 
@@ -33,7 +33,7 @@
 固定版本标签，先 dry-run，再签发：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.1.0
+docker pull ghcr.io/hyhdsl/neca:v1.1.1
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -80,10 +80,10 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 状态
 
-- **当前稳定版**：v1.1.0（2026-11-24 发布）
+- **当前稳定版**：v1.1.1（2026-11-24 发布）
 - **已完成**：M0–M12（CLI、Web、root helper、M9 命令迁移、M10 安全运维、M11 回收站/设置、M12 可维护性/可观测性）
 - **下一步**：M13 公网访问后置，M14 OpenAPI 长期搁置
-- **生产环境**：v1.0.2 已部署（2026-11-24）；v1.1.0 发布后部署；strongSwan 未重启，Web/helper healthy；v0.4.1 回滚路径已验证；RC 版本仅保留 Git tag 与源码
+- **生产环境**：v1.1.0 已部署（2026-11-24）；v1.1.1 发布后应用权限修复；strongSwan 未重启，Web/helper healthy；v0.4.1 回滚路径已验证；RC 版本仅保留 Git tag 与源码
 
 ## ⚖️ 许可与致谢
 

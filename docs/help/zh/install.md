@@ -163,9 +163,15 @@ neca doctor
 升级前备份：
 
 ~~~bash
-tar -C /opt/ipsec -czf /root/ipsec-backup-$(date +%Y%m%d-%H%M%S).tar.gz \
-  pki clients swanctl neca.json web-secrets
+umask 077
+tar -C /opt/ipsec -czf - config pki clients downloads swanctl web-secrets \
+  docker-compose.neca.yml .env neca.env \
+  | gpg --symmetric --cipher-algo AES256 \
+      --output /root/ipsec-backup-$(date +%Y%m%d-%H%M%S).tar.gz.gpg
 ~~~
+
+GPG 口令不要写入命令、Git 或普通文档；恢复与更多细节见
+[部署与日常运维](operations.md#备份与恢复)。
 
 Docker 方式：更新 compose 中的镜像标签后执行：
 

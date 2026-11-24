@@ -31,7 +31,7 @@ LDFLAGS := -s -w \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build build-lite build-web build-native test vet vuln fmt fmt-check check-ascii check-locales check-docs publish-help publish-help-apply dev docker shadow clean
+.PHONY: help all build build-lite build-web build-native test vet vuln fmt fmt-check check-ascii check-locales check-docs check-permissions publish-help publish-help-apply dev docker shadow clean
 
 help: ## 显示可用目标
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -87,6 +87,9 @@ check-locales: ## 校验 CLI/Web 内置语言包 key 集合一致（文档 §8.1
 
 check-docs: ## 校验 Markdown 链接、代码围栏与帮助站结构（M7）
 	python3 scripts/check-docs.py
+
+check-permissions: ## 校验部署目录权限（生产 root；NECA_ROOT 可覆盖）
+	bash scripts/check-deploy-permissions.sh
 
 publish-help: ## 生成 docs/help → neca-help 发布差异（dry-run）
 	bash scripts/publish-help-site.sh

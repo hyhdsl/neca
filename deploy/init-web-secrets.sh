@@ -32,6 +32,12 @@ else
   groupadd --system --gid "${GID}" "${GROUP}"
 fi
 
+# 下载目录必须允许非 root 的 necad 遍历/读取；setgid 让 CLI 生成的 zip
+# 继续继承 neca-web 组。目录本体的写权限仍只给 root。
+DOWNLOADS="${ROOT}/downloads"
+install -d -m 0750 -o root -g "${GROUP}" "${DOWNLOADS}"
+chmod 2750 "${DOWNLOADS}"
+
 # Web 只读挂载 CA 索引；setgid 让 CLI 原子重写 index.txt 时新文件继续继承
 # neca-web 组，否则 Web 会报 permission denied。
 CA_DIR="${ROOT}/pki/ca"

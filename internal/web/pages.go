@@ -81,6 +81,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	downloads, _ := s.downloadViews()
 	stats := dashboardStats{Total: len(list.Certs), CRLRevoked: list.CRLRevoked, Downloads: len(downloads)}
+	expiry := core.BuildExpirySummary(list.Certs, s.now())
 	for _, cert := range list.Certs {
 		switch cert.Status {
 		case "valid":
@@ -95,7 +96,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	s.render(w, r, "dashboard", pageData{
 		TitleKey: "web.dashboard.title", Nav: "dashboard", Stats: stats,
-		Certs: list.Certs, Downloads: downloads, CRLRevoked: list.CRLRevoked,
+		Certs: list.Certs, Downloads: downloads, CRLRevoked: list.CRLRevoked, Expiry: expiry,
 		Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 	})
 }
@@ -108,9 +109,11 @@ func (s *Server) handleCertList(w http.ResponseWriter, r *http.Request) {
 	}
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	status := strings.TrimSpace(r.URL.Query().Get("status"))
+	expiry := strings.TrimSpace(r.URL.Query().Get("expiry"))
 	certs := filterCerts(list.Certs, query, status)
+	certs = filterCertsByExpiry(certs, expiry, s.now())
 	s.render(w, r, "certs", pageData{
-		TitleKey: "web.certs.title", Nav: "certs", Certs: certs, Query: query, Status: status,
+		TitleKey: "web.certs.title", Nav: "certs", Certs: certs, Query: query, Status: status, ExpiryWindow: expiry,
 		CRLRevoked: list.CRLRevoked, Writable: s.writable(r.Context()), HelperAvailable: s.helperAvailable(r),
 	})
 }

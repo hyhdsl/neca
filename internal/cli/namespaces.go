@@ -13,13 +13,13 @@ import (
 func newCertCommand() Command {
 	return Command{
 		Name:    "cert",
-		Summary: "证书管理（list/verify/issue/reissue/revoke/unrevoke/trash/export/platform/package）",
+		Summary: "证书管理（list/expiring/verify/issue/reissue/revoke/unrevoke/trash/export/platform/package）",
 		Group:   "cert",
 		Surface: SurfaceBackend,
 		Write:   true,
 		Run: func(env Env) int {
 			if len(env.Args) == 0 {
-				return usageFail(env, "用法: cert <list|verify|issue|reissue|revoke|unrevoke|trash|export|platform|package>")
+				return usageFail(env, "用法: cert <list|expiring|verify|issue|reissue|revoke|unrevoke|trash|export|platform|package>")
 			}
 			if env.Args[0] == "--help" || env.Args[0] == "-h" {
 				return printUsage(env, "cert.help")
@@ -30,6 +30,8 @@ func newCertCommand() Command {
 			switch sub {
 			case "list":
 				return newListCommand().Run(env)
+			case "expiring":
+				return newExpiringCommand().Run(env)
 			case "verify":
 				return newVerifyCommand().Run(env)
 			case "issue":

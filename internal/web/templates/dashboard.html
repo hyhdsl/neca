@@ -3,6 +3,9 @@
   <article class="stat-card"><span>{{.T "web.dashboard.total"}}</span><strong data-testid="stat-total">{{.Stats.Total}}</strong></article>
   <article class="stat-card is-ok"><span>{{.T "web.dashboard.valid"}}</span><strong data-testid="stat-valid">{{.Stats.Valid}}</strong></article>
   <article class="stat-card is-danger"><span>{{.T "web.dashboard.revoked"}}</span><strong data-testid="stat-revoked">{{.Stats.Revoked}}</strong></article>
+  <a class="stat-card is-warn" href="/certs?expiry=30"><span>{{.T "web.dashboard.expiring30"}}</span><strong data-testid="stat-expiring30">{{.Expiry.Within30}}</strong></a>
+  <a class="stat-card is-warn" href="/certs?expiry=60"><span>{{.T "web.dashboard.expiring60"}}</span><strong data-testid="stat-expiring60">{{.Expiry.Within60}}</strong></a>
+  <a class="stat-card is-warn" href="/certs?expiry=90"><span>{{.T "web.dashboard.expiring90"}}</span><strong data-testid="stat-expiring90">{{.Expiry.Within90}}</strong></a>
   <article class="stat-card"><span>{{.T "web.dashboard.crl"}}</span><strong data-testid="stat-crl">{{.Stats.CRLRevoked}}</strong></article>
 </section>
 <section class="panel">

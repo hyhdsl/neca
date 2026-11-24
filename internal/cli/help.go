@@ -6,6 +6,7 @@ import "strings"
 var helpTexts = map[string]string{
 	"cert":                "help.cert",
 	"cert list":           "help.cert.list",
+	"cert expiring":       "help.cert.expiring",
 	"cert verify":         "help.cert.verify",
 	"cert issue":          "help.cert.issue",
 	"cert reissue":        "help.cert.reissue",

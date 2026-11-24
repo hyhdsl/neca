@@ -3,7 +3,9 @@ package web
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hyhdsl/neca/internal/core"
 )
@@ -48,6 +50,7 @@ func (s *Server) handleAPICerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	certs := filterCerts(list.Certs, r.URL.Query().Get("q"), r.URL.Query().Get("status"))
+	certs = filterCertsByExpiry(certs, r.URL.Query().Get("expiry"), s.now())
 	writeJSON(w, http.StatusOK, map[string]any{"certs": certs, "crlRevoked": list.CRLRevoked})
 }
 
@@ -91,6 +94,25 @@ func writeWebError(w http.ResponseWriter, err error) {
 	default:
 		writeJSONError(w, http.StatusInternalServerError, "internal", err.Error())
 	}
+}
+
+func filterCertsByExpiry(certs []core.WebCert, raw string, now time.Time) []core.WebCert {
+	days, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil || (days != 30 && days != 60 && days != 90) {
+		return certs
+	}
+	expiring := core.ExpiringWithin(certs, now, days)
+	allowed := make(map[string]struct{}, len(expiring))
+	for _, cert := range expiring {
+		allowed[cert.CN+"\x00"+cert.ExpiresAt.String()] = struct{}{}
+	}
+	out := make([]core.WebCert, 0, len(certs))
+	for _, cert := range certs {
+		if _, ok := allowed[cert.CN+"\x00"+cert.ExpiresAt.String()]; ok {
+			out = append(out, cert)
+		}
+	}
+	return out
 }
 
 func filterCerts(certs []core.WebCert, query, status string) []core.WebCert {

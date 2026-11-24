@@ -38,12 +38,20 @@ func localizeLine(line string) string {
 			"序列号", "Serial",
 			"平台", "Platforms",
 			"到期", "Expires",
+			"剩余天数", "Days left",
 			"备注", "Note",
 		).Replace(line)
 	}
 	if strings.HasPrefix(line, "[OK]   p12 检查: ") {
 		if output, ok := localizeP12Check(line); ok {
 			return output
+		}
+	}
+	if strings.HasPrefix(line, "[INFO] ") && strings.Contains(line, " 天内到期: ") {
+		rest := strings.TrimPrefix(line, "[INFO] ")
+		days, count, ok := strings.Cut(rest, " 天内到期: ")
+		if ok {
+			return "[INFO] expiring within " + days + " days: " + count
 		}
 	}
 	if strings.HasPrefix(line, "[WARN] ") {
@@ -159,6 +167,7 @@ func localizeIssued(line string) (string, bool) {
 func replaceCommon(line string) string {
 	replacer := strings.NewReplacer(
 		"[INFO] CRL 吊销条目:", "[INFO] CRL revoked entries:",
+		"[INFO] 已过期证书:", "[INFO] expired certificates:",
 		"[OK]   CRL 已更新:", "[OK]   CRL updated:",
 		"[OK]   已导出已签发证书:", "[OK]   Exported issued certificates:",
 		"[OK]   已导出已吊销证书:", "[OK]   Exported revoked certificates:",

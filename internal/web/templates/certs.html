@@ -15,6 +15,13 @@
       <option value="expired" {{if eq .Status "expired"}}selected{{end}}>{{.T "web.certs.expired"}}</option>
       <option value="unindexed" {{if eq .Status "unindexed"}}selected{{end}}>{{.T "web.certs.unindexed"}}</option>
     </select>
+    <label for="expiry">{{.T "web.certs.expiry"}}</label>
+    <select id="expiry" name="expiry" data-testid="cert-expiry">
+      <option value="" {{if eq .ExpiryWindow ""}}selected{{end}}>{{.T "web.certs.expiry_all"}}</option>
+      <option value="30" {{if eq .ExpiryWindow "30"}}selected{{end}}>{{.T "web.certs.expiry_30"}}</option>
+      <option value="60" {{if eq .ExpiryWindow "60"}}selected{{end}}>{{.T "web.certs.expiry_60"}}</option>
+      <option value="90" {{if eq .ExpiryWindow "90"}}selected{{end}}>{{.T "web.certs.expiry_90"}}</option>
+    </select>
     <button type="submit" class="button secondary" data-testid="cert-filter">{{.T "web.certs.filter"}}</button>
     <a href="/certs" class="link">{{.T "web.certs.clear"}}</a>
   </form>

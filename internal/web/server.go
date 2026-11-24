@@ -345,6 +345,8 @@ type pageData struct {
 	Certs              []core.WebCert
 	Query              string
 	Status             string
+	Expiry             core.ExpirySummary
+	ExpiryWindow       string
 	Cert               *core.WebCert
 	Verify             *core.VerifyReport
 	Downloads          []downloadView

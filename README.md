@@ -16,7 +16,7 @@
 
 **Neko's Efficient Certificate Administrator（neca，亦写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具。一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
 
-🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.0.2](https://github.com/hyhdsl/neca/releases/tag/v1.0.2)
+🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.1.0](https://github.com/hyhdsl/neca/releases/tag/v1.1.0)
 
 ## ✨ 特性
 
@@ -24,6 +24,7 @@
 - 🧾 **完整生命周期**：issue / reissue / revoke / unrevoke / delete，自动维护 CRL。
 - 📦 **平台包**：Windows / Linux / macOS / Android / iOS；可选安装脚本、p12 profile 与 zip 下载。
 - 🐳 **部署简单**：单静态二进制；lite 与 neca-web 双镜像，支持 amd64 / arm64。
+- ⏳ **到期概览**：CLI 与 Web 提供 30/60/90 天只读到期视图，不修改证书或配置。
 - ⚙️ **可运维**：JSON 配置、<code>--json</code> / <code>--dry-run</code>、审计日志、SIGHUP 热重载与 requestId 幂等缓存。
 - 🧩 **可扩展**：<code>internal/core/ports</code> 提供索引存储与配置来源接口。
 
@@ -32,7 +33,7 @@
 固定版本标签，先 dry-run，再签发：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.0.2
+docker pull ghcr.io/hyhdsl/neca:v1.1.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -79,10 +80,10 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 状态
 
-- **当前稳定版**：v1.0.2（2026-11-24 发布）
+- **当前稳定版**：v1.1.0（2026-11-24 发布）
 - **已完成**：M0–M12（CLI、Web、root helper、M9 命令迁移、M10 安全运维、M11 回收站/设置、M12 可维护性/可观测性）
 - **下一步**：M13 公网访问后置，M14 OpenAPI 长期搁置
-- **生产环境**：v1.0.2 已部署（2026-11-24）；strongSwan 未重启，Web/helper healthy；v0.4.1 回滚路径已验证；RC 版本仅保留 Git tag 与源码
+- **生产环境**：v1.0.2 已部署（2026-11-24）；v1.1.0 发布后部署；strongSwan 未重启，Web/helper healthy；v0.4.1 回滚路径已验证；RC 版本仅保留 Git tag 与源码
 
 ## ⚖️ 许可与致谢
 

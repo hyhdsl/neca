@@ -12,6 +12,7 @@
 SHELL := /bin/bash
 
 GO      ?= go
+GOVULNCHECK_VERSION ?= v1.10.0
 MODULE  := github.com/hyhdsl/neca
 DIST    := dist
 
@@ -30,7 +31,7 @@ LDFLAGS := -s -w \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build build-lite build-web build-native test vet fmt fmt-check check-ascii check-locales check-docs publish-help publish-help-apply dev docker shadow clean
+.PHONY: help all build build-lite build-web build-native test vet vuln fmt fmt-check check-ascii check-locales check-docs publish-help publish-help-apply dev docker shadow clean
 
 help: ## 显示可用目标
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -63,6 +64,9 @@ test: ## 运行全部 Go 测试（-race 竞态检测）
 
 vet: ## go vet 静态检查
 	$(GO) vet ./...
+
+vuln: ## 依赖漏洞扫描（govulncheck，固定工具版本）
+	$(GO) run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) ./...
 
 fmt: ## 格式化所有 Go 源码
 	$(GO) fmt ./...

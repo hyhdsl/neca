@@ -23,12 +23,12 @@ func TestStringFormat(t *testing.T) {
 		Version:   "v0.1.0",
 		Commit:    "abc1234",
 		Date:      "2026-11-15T00:00:00Z",
-		GoVersion: "go1.25.14",
+		GoVersion: "go1.26.11",
 		OS:        "linux",
 		Arch:      "amd64",
 	}
 	got := info.String()
-	want := "neca v0.1.0 (commit abc1234, built 2026-11-15T00:00:00Z, go1.25.14 linux/amd64)"
+	want := "neca v0.1.0 (commit abc1234, built 2026-11-15T00:00:00Z, go1.26.11 linux/amd64)"
 	if got != want {
 		t.Fatalf("String() = %q, want %q", got, want)
 	}

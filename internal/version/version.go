@@ -50,7 +50,7 @@ func Get() Info {
 
 // String 渲染一行人类可读的版本摘要，例如：
 //
-//	neca dev (commit none, built unknown, go1.25.14 linux/amd64)
+//	neca dev (commit none, built unknown, go1.26.11 linux/amd64)
 //
 // 格式一旦发布就会被运维脚本 grep，改动前请先更新版本测试。
 func (i Info) String() string {

@@ -5,7 +5,7 @@
 # 本机没有 Go，也没有可用的 WSL 发行版，所以全部 build / vet / test / 交叉编译
 # 都在这个容器里完成，保证与服务器同属 Debian 家族（bookworm），
 # 避免"本机能跑、服务器不能跑"的环境漂移。
-FROM golang:1.25-bookworm
+FROM golang:1.26.11-bookworm
 
 # 容器内需要的外部工具：
 #   openssl         —— 证书签发/吊销/CRL 全部通过 openssl 子进程完成（决策 D4）

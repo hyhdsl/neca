@@ -12,7 +12,7 @@ name: neca-cli
 
 services:
   neca:
-    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v1.1.1}
+    image: ${NECA_IMAGE:-ghcr.io/hyhdsl/neca:v1.1.2}
     container_name: neca-cli
     restart: "no"
     working_dir: /opt/ipsec
@@ -29,7 +29,7 @@ services:
     command: ["list"]
 
   web:
-    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v1.1.1}
+    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v1.1.2}
     container_name: neca-web
     profiles: ["web"]
     restart: unless-stopped
@@ -74,7 +74,7 @@ services:
       retries: 3
 
   web-helper:
-    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v1.1.1}
+    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v1.1.2}
     container_name: neca-web-helper
     profiles: ["web-write"]
     restart: unless-stopped

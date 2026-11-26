@@ -44,6 +44,7 @@ var helpTexts = map[string]string{
 	"config export-env":   "help.config.export-env",
 	"config path":         "help.config.path",
 	"wizard":              "help.wizard",
+	"completion":          "help.completion",
 }
 
 func helpRequested(args []string) bool {

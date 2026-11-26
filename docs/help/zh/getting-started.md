@@ -70,7 +70,7 @@ neca cert issue alice \
 neca cert verify alice
 ~~~
 
-`verify` 检查 p12 的算法、证书数量与密码长度。批量检查：
+`verify` 检查 p12 的算法、证书数量、密码长度与客户端证书链。批量检查：
 
 ~~~bash
 neca cert verify

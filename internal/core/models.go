@@ -19,11 +19,14 @@ type ListResult struct {
 
 // VerifyReport 是单个客户端包的检查结果。
 type VerifyReport struct {
-	CN          string   // 客户端 CN
-	CertCount   int      // p12 内证书数
-	PasswordLen int      // 密码文件字节数（含换行，与旧脚本 wc -c 一致）
-	Warnings    []string // 需要输出到 stderr 的告警
-	OKMessage   string   // 成功行；p12 不存在时为空
+	CN           string   // 客户端 CN
+	CertCount    int      // p12 内证书数
+	PasswordLen  int      // 密码文件字节数（含换行，与旧脚本 wc -c 一致）
+	ChainChecked bool     // 是否实际执行了证书链校验
+	ChainOK      bool     // 证书链是否通过（ChainChecked=true 时有效）
+	ChainMessage string   // 链校验结果或跳过原因
+	Warnings     []string // 需要输出到 stderr 的告警
+	OKMessage    string   // 成功行；p12 不存在时为空
 }
 
 // VerifyResult 是 verify 命令的结构化结果。

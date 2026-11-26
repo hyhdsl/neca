@@ -83,7 +83,8 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 - **Current stable**: v1.0.1 (released 2026-11-23)
 - **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
-- **Next**: M13 public access later, M14 OpenAPI long-term deferred
+- **Next**: v1.2 in progress: CLI shell completion and certificate-chain verification are implemented; M13 public access is shelved; M14 OpenAPI remains long-term deferred
+- **Boundaries**: Passkey has configuration and reserved interfaces only (no login routes yet); the Web API is experimental with no OpenAPI contract
 - **Production**: v1.0.1 deployed; v0.4.1 rollback path verified; RC versions are kept as Git tags and source only
 
 ## ⚖️ License and acknowledgements

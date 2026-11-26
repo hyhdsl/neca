@@ -55,18 +55,19 @@ sources, validate the proxy secret and client CN, and strip forged headers.
 
 - Idle timeout defaults to 30m; absolute limit is 24h.
 - Changing `readOnly` / `idleTimeout` can be reloaded with SIGHUP; listen/adminCNs/passkey still require a restart.
+- Passkey currently has configuration and reserved interfaces only; no login route is registered.
 - Rotating `session.key` invalidates all sessions; do it in a maintenance window.
 - Generate password hashes with `neca web hash-password`; never put plaintext in `neca.env`.
 - If a deployment creates an initial password file, delete or transfer it after first login.
 
-## Recycle bin and secure deletion (planned)
+## Recycle bin and secure deletion (implemented)
 
-- The planned Web delete action only **moves a revoked certificate to the recycle bin**; physical purge is backend-only.
+- The Web delete action only **moves a revoked certificate to the recycle bin**; physical purge is backend-only.
 - The recycle bin is retained indefinitely by default; users can configure a retention period. Restoring a revoked certificate does not automatically undo the revocation.
 - Backend purge requires a second confirmation.
 - **Secure erasure is not promised**: SSDs, filesystem snapshots, backups and object-storage replicas may retain data. The recycle bin is for isolation and mistake prevention only.
 
-## High-risk settings (planned)
+## High-risk settings (implemented)
 
 - High-risk security settings remain backend-only by default; the Web settings page displays them read-only.
 - Even when the backend enables Web editing, high-risk changes require a Y/N confirmation, re-authentication, CSRF protection and audit logging in both surfaces.

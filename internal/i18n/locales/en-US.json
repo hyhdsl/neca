@@ -39,7 +39,7 @@
   "help.cert": "usage: cert <list|expiring|verify|issue|reissue|revoke|unrevoke|trash|export|platform|package>",
   "help.cert.list": "usage: cert list [--json]",
   "help.cert.expiring": "usage: cert expiring [--days N] (default 30 days)",
-  "help.cert.verify": "usage: cert verify <CN|--all>",
+  "help.cert.verify": "usage: cert verify [CN...] (all clients when omitted)",
   "help.cert.issue": "usage: cert issue <CN> [--platforms ...] [--days N] [--installers ...] [--p12-profile ...] [--zip]",
   "help.cert.reissue": "usage: cert reissue <CN> [--platforms ...] [--days N] [--p12-profile ...]",
   "help.cert.revoke": "usage: cert revoke <CN>",
@@ -88,7 +88,7 @@
   "cmd.help.summary": "show this help",
   "cmd.list.summary": "list certificates (status/serial/platform/expiry)",
   "cmd.expiring.summary": "list certificates approaching expiry (default 30 days)",
-  "cmd.verify.summary": "check client p12 (3DES/cert count/password length)",
+  "cmd.verify.summary": "check client p12 (3DES/cert count/password length/chain)",
   "cmd.export.summary": "export certificate CSV (issued | revoked)",
   "cmd.index.summary": "index maintenance (index sync: fill index and metadata)",
   "cmd.issue.summary": "issue a certificate (optional bundles, p12 profile, zip)",
@@ -100,5 +100,7 @@
   "cmd.package.summary": "rebuild platform bundles from an existing certificate (optional zip)",
   "cmd.downloads.summary": "manage downloadable zips (list|clean)",
   "cmd.config.summary": "manage the JSON config file (init/show/validate/export-env)",
+  "cmd.completion.summary": "generate shell completion scripts (bash/zsh/fish/PowerShell)",
+  "help.completion": "usage: completion <bash|zsh|fish|powershell>",
   "cmd.wizard.summary": "enter the interactive wizard"
 }

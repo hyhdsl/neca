@@ -43,6 +43,17 @@ neca cert issue --help
 
 不带参数运行 `neca` 会进入交互向导；`neca wizard` 也可显式进入。向导菜单 0–10 分别对应：退出、签发、吊销、恢复、重签、补平台、导出已签发、导出已吊销、列表、索引同步、移入回收站。每个动作执行前会打印等价 CLI 命令。
 
+### neca completion
+
+~~~bash
+source <(neca completion bash)
+source <(neca completion zsh)   # 需要先启用 compinit
+neca completion fish | source
+neca completion powershell | Out-String | Invoke-Expression
+~~~
+
+生成 bash、zsh、fish、PowerShell 补全脚本，输出到 stdout，不修改 shell 配置。补全覆盖顶层命令、命名空间子命令、别名与主要开关；PowerShell 也可使用简写 `pwsh`。持久安装时按所用 shell 的补全目录保存脚本即可。
+
 ## config
 
 ### config init
@@ -107,7 +118,7 @@ neca cert verify alice
 neca cert verify alice bob
 ~~~
 
-检查客户端 p12：是否只含客户端证书、算法是否符合预期、密码长度是否合规。省略 CN 时检查 `clients/` 下全部客户端。告警写入 stderr，但退出码仍为 0（与历史脚本一致）；它不能替代客户端实机导入测试。
+检查客户端 p12：是否只含客户端证书、算法是否符合预期、密码长度是否合规，并使用 CA 证书校验客户端证书链。省略 CN 时检查 `clients/` 下全部客户端。CA 缺失或链校验失败会写入 stderr 告警，但退出码仍为 0（与历史脚本一致）；它不能替代客户端实机导入测试。`--json` 的每个 report 额外包含 `chainChecked`、`chainOK` 与 `chainMessage`。链校验只验证信任链与有效期，不检查 CRL 吊销状态。
 
 ### cert issue
 

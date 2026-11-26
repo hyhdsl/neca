@@ -18,13 +18,21 @@ import (
 //  3. 未见 3DES -> 告警；
 //  4. 证书数不等于 1 -> 告警；
 //  5. 密码文件长度小于 8 -> 告警；
-//  6. 最后输出固定的 OK 行（即使有告警，与旧脚本一致）。
+//  6. 证书链校验失败或 CA 不可读 -> 告警；
+//  7. 最后输出固定的 OK 行（即使有告警，与旧脚本一致）。
 func VerifyClients(ctx context.Context, cfg *Config, oss *OpenSSL, only []string) (*VerifyResult, error) {
 	cns, err := clientCNs(cfg.ClientsDir, only)
 	if err != nil {
 		return nil, err
 	}
 	result := &VerifyResult{}
+	caCert := cfg.CACert
+	var caErr error
+	if caCert == "" {
+		caErr = fmt.Errorf("CA 证书路径为空")
+	} else if _, err := os.Stat(caCert); err != nil {
+		caErr = err
+	}
 	for _, cn := range cns {
 		p12Path := filepath.Join(cfg.ClientsDir, cn, cn+".p12")
 		passPath := filepath.Join(cfg.ClientsDir, cn, cn+".p12.pass")
@@ -59,16 +67,44 @@ func VerifyClients(ctx context.Context, cfg *Config, oss *OpenSSL, only []string
 			report.Warnings = append(report.Warnings, fmt.Sprintf("%s: p12 密码长度 %d 过短", cn, report.PasswordLen))
 		}
 
+		if caErr != nil {
+			report.ChainMessage = "未校验: " + compactError(caErr)
+			report.Warnings = append(report.Warnings, fmt.Sprintf("%s: 未校验证书链（%s）", cn, report.ChainMessage))
+		} else {
+			report.ChainChecked = true
+			_, chainErr := oss.PKCS12Chain(ctx, p12Path, passPath, caCert)
+			if chainErr != nil {
+				report.ChainMessage = compactError(chainErr)
+				report.Warnings = append(report.Warnings, fmt.Sprintf("%s: 证书链验证失败: %s", cn, report.ChainMessage))
+			} else {
+				report.ChainOK = true
+				report.ChainMessage = "证书链验证通过"
+			}
+		}
+
 		profileLabel := "未知"
 		if strings.Contains(info, "pbeWithSHA1And3-KeyTripleDES-CBC") {
 			profileLabel = "3DES ✓"
 		} else if strings.Contains(lower, "pbes2") || strings.Contains(lower, "aes256") || strings.Contains(lower, "aes128") {
 			profileLabel = "AES ✓"
 		}
-		report.OKMessage = fmt.Sprintf("p12 检查: %s (%s, 证书 %d 张, 密码 %d 位)", cn, profileLabel, count, report.PasswordLen)
+		chainLabel := "证书链未校验"
+		if report.ChainChecked {
+			if report.ChainOK {
+				chainLabel = "证书链 ✓"
+			} else {
+				chainLabel = "证书链 ✗"
+			}
+		}
+		report.OKMessage = fmt.Sprintf("p12 检查: %s (%s, 证书 %d 张, 密码 %d 位, %s)", cn, profileLabel, count, report.PasswordLen, chainLabel)
 		result.Reports = append(result.Reports, report)
 	}
 	return result, nil
+}
+
+// compactError 把多行 OpenSSL 错误压缩成一行，便于 CLI 告警展示。
+func compactError(err error) string {
+	return strings.Join(strings.Fields(err.Error()), " ")
 }
 
 // clientCNs 返回待检查的客户端 CN：指定了 only 则按给定顺序，否则扫描

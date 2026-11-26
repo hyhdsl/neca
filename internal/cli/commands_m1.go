@@ -113,7 +113,7 @@ func newListCommand() Command {
 func newVerifyCommand() Command {
 	return Command{
 		Name:    "verify",
-		Summary: "检查客户端 p12（3DES/证书数/密码长度）",
+		Summary: "检查客户端 p12（3DES/证书数/密码长度/证书链）",
 		Run: func(env Env) int {
 			deps, err := newCoreDeps()
 			if err != nil {
@@ -129,6 +129,7 @@ func newVerifyCommand() Command {
 				for _, report := range result.Reports {
 					reports = append(reports, map[string]any{
 						"cn": report.CN, "ok": report.OKMessage, "warnings": report.Warnings,
+						"chainChecked": report.ChainChecked, "chainOK": report.ChainOK, "chainMessage": report.ChainMessage,
 					})
 					warnings = append(warnings, report.Warnings...)
 				}

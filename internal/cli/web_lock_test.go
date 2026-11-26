@@ -1,3 +1,4 @@
+// 本文件测试 web_lock 相关逻辑。
 package cli
 
 import (

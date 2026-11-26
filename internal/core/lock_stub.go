@@ -1,5 +1,6 @@
 //go:build !unix
 
+// 本文件在非 Unix 平台提供文件锁空实现。
 package core
 
 import "github.com/hyhdsl/neca/internal/core/ports"

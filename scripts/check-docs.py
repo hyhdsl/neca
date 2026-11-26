@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 本脚本校验文档链接、代码围栏和帮助站结构。
 """check-docs.py - M7 documentation gate.
 
 Checks:

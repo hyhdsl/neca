@@ -1,3 +1,4 @@
+// 本文件读写 OpenSSL index.txt。
 package core
 
 import (

@@ -1,5 +1,6 @@
 //go:build unix
 
+// 本文件在 Unix 上调整文件属主和权限。
 package core
 
 import (

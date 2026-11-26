@@ -1,3 +1,4 @@
+// 本文件调用 openssl 命令并解析输出。
 package core
 
 import (

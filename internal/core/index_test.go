@@ -1,3 +1,4 @@
+// 本文件测试 index 相关逻辑。
 package core
 
 import (

@@ -1,3 +1,4 @@
+// 本文件导出有效/吊销证书清单。
 package core
 
 import (

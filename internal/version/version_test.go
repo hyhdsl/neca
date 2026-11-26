@@ -1,3 +1,4 @@
+// 本文件测试 version 相关逻辑。
 package version
 
 import (

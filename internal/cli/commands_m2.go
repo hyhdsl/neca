@@ -1,3 +1,4 @@
+// 本文件实现 M2 阶段的导出、同步与平台维护命令。
 package cli
 
 import (

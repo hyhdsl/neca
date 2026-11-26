@@ -1,3 +1,4 @@
+// 本文件解析和切换 Web 语言。
 package web
 
 import (

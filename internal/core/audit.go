@@ -1,3 +1,4 @@
+// 本文件追加和轮转审计日志。
 package core
 
 import (

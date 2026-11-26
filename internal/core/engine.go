@@ -1,3 +1,4 @@
+// 本文件组装核心业务 Engine 与依赖。
 package core
 
 import (

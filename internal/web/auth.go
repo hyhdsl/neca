@@ -1,3 +1,4 @@
+// 本文件处理登录、密码校验和会话认证。
 package web
 
 import (

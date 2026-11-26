@@ -1,3 +1,4 @@
+// 本文件测试 expiry 相关逻辑。
 package core
 
 import (

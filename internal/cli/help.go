@@ -1,3 +1,4 @@
+// 本文件维护命令帮助文本与帮助路由。
 package cli
 
 import "strings"

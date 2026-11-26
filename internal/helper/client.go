@@ -1,3 +1,4 @@
+// 本文件实现 helper Unix socket 客户端。
 package helper
 
 import (

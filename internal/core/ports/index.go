@@ -1,3 +1,4 @@
+// 本文件定义索引存储端口接口。
 package ports
 
 import (

@@ -1,3 +1,4 @@
+// 本文件生成平台安装包和下载 zip。
 package core
 
 import (

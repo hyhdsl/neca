@@ -1,3 +1,4 @@
+// 本文件导出证书清单 CSV。
 package core
 
 import (

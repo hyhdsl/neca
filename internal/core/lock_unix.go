@@ -1,5 +1,6 @@
 //go:build unix
 
+// 本文件在 Unix 上使用 flock 实现文件锁。
 package core
 
 import (

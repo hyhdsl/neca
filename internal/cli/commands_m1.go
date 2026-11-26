@@ -1,3 +1,4 @@
+// 本文件实现 M1 阶段的证书生命周期命令。
 package cli
 
 import (

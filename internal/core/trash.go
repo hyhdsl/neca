@@ -1,3 +1,4 @@
+// 本文件管理删除证书的回收站。
 package core
 
 import (

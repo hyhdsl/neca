@@ -1,3 +1,4 @@
+// 本文件加载 Web 语言包。
 package web
 
 import (

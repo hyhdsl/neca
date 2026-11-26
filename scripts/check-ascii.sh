@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 本脚本校验 Windows 平台模板为纯 ASCII。
 #
 # check-ascii.sh —— validate that Windows platform templates are pure ASCII.
 #

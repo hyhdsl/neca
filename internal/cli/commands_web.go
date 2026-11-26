@@ -1,3 +1,4 @@
+// 本文件实现 web 子命令及其 helper 客户端逻辑。
 package cli
 
 import (

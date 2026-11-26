@@ -1,3 +1,4 @@
+// 本文件生成、清理和校验 Web 下载包。
 package core
 
 import (

@@ -1,3 +1,4 @@
+// 本文件注册 Web 路由。
 package web
 
 import (

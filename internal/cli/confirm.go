@@ -1,3 +1,4 @@
+// 本文件提供交互式确认与 --yes 处理。
 package cli
 
 import (

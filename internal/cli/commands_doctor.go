@@ -1,3 +1,4 @@
+// 本文件实现 doctor 环境诊断子命令。
 package cli
 
 import (

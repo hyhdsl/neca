@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 本脚本备份 neca 运行状态和密钥材料。
 # neca backup helper. Back up the state needed for rollback.
 # Does not stop services and does not print secrets.
 set -euo pipefail

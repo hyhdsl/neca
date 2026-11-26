@@ -1,3 +1,4 @@
+// 本文件写入 Web 审计日志。
 package web
 
 import (

@@ -1,3 +1,4 @@
+// 本文件定义错误分类和用户提示。
 package core
 
 import (

@@ -1,3 +1,4 @@
+// 本文件注册 cert、config、web、platform 等命令命名空间。
 package cli
 
 import (

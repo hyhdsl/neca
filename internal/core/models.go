@@ -1,3 +1,4 @@
+// 本文件定义核心数据模型。
 package core
 
 // CertInfo 是证书列表中的一行，CLI 与未来 Web/JSON 共用同一结构。

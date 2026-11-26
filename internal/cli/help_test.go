@@ -1,3 +1,4 @@
+// 本文件测试 help 相关逻辑。
 package cli
 
 import (

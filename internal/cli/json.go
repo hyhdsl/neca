@@ -1,3 +1,4 @@
+// 本文件提供统一 JSON 输出与错误编码。
 package cli
 
 import (

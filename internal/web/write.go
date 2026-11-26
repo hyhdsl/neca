@@ -1,3 +1,4 @@
+// 本文件将 Web 写操作转发给 helper。
 package web
 
 import (

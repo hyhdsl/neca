@@ -1,3 +1,4 @@
+// 本文件同步索引、meta 与客户端证书文件。
 package core
 
 import (

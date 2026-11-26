@@ -1,3 +1,4 @@
+// 本文件实现 CLI 命令结构、参数解析与执行入口。
 package cli
 
 import (

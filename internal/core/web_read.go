@@ -1,3 +1,4 @@
+// 本文件提供 Web 端只读证书数据。
 package core
 
 import (

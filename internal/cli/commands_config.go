@@ -1,3 +1,4 @@
+// 本文件实现 config 子命令的读取、校验与展示。
 package cli
 
 import (

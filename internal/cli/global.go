@@ -1,3 +1,4 @@
+// 本文件解析全局开关并构建 CLI 运行环境。
 package cli
 
 import (

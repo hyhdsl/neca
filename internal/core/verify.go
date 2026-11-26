@@ -1,3 +1,4 @@
+// 本文件验证证书、密钥和文件完整性。
 package core
 
 import (

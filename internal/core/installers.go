@@ -1,3 +1,4 @@
+// 本文件生成各平台安装脚本。
 package core
 
 import (

@@ -1,3 +1,4 @@
+// 本文件持久化 helper 设置。
 package helper
 
 import (

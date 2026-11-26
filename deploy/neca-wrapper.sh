@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 本脚本以固定 compose 配置运行 neca 容器。
 # neca CLI wrapper: run the pinned Docker image with the production compose file.
 set -euo pipefail
 

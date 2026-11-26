@@ -1,3 +1,4 @@
+// 本文件定义跨平台文件锁的公共接口。
 package core
 
 // withPkiLock 在 PKI 全局锁内执行 fn；锁冲突返回包装了 ports.ErrIndexLocked 的错误。

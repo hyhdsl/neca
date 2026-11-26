@@ -1,3 +1,4 @@
+// 本文件测试 localize 相关逻辑。
 package cli
 
 import (

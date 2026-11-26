@@ -1,5 +1,6 @@
 //go:build !unix
 
+// 本文件在非 Unix 平台提供属主调整占位实现。
 package core
 
 import (

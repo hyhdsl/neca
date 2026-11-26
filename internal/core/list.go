@@ -1,3 +1,4 @@
+// 本文件查询、过滤和排序证书列表。
 package core
 
 import (

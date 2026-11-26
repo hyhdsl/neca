@@ -1,3 +1,4 @@
+// 本文件实现 cert expiring 到期概览子命令。
 package cli
 
 import (

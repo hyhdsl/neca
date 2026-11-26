@@ -1,3 +1,4 @@
+// 本文件测试 protocol 相关逻辑。
 package helper
 
 import "testing"

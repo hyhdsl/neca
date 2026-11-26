@@ -1,3 +1,4 @@
+// 本文件启动 necad Web 服务进程。
 package main
 
 import (

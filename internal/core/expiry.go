@@ -1,3 +1,4 @@
+// 本文件计算证书到期窗口与汇总。
 package core
 
 import (

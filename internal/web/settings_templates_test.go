@@ -1,3 +1,4 @@
+// 本文件测试 settings_templates 相关逻辑。
 package web
 
 import (

@@ -1,3 +1,4 @@
+// 本文件测试 lockdown 相关逻辑。
 package cli
 
 import "testing"

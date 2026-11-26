@@ -1,3 +1,4 @@
+// 本文件实现 WebAuthn/passkey 登录支持。
 package web
 
 import (

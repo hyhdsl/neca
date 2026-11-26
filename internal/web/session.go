@@ -1,3 +1,4 @@
+// 本文件管理会话 Cookie 与过期。
 package web
 
 import (

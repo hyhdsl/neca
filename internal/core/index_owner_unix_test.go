@@ -1,5 +1,6 @@
 //go:build !windows
 
+// 本文件测试 index_owner_unix 相关逻辑。
 package core
 
 import (

@@ -1,3 +1,4 @@
+// 本文件管理 HTTP 服务生命周期和热重载。
 package web
 
 import (

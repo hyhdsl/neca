@@ -1,3 +1,4 @@
+// 本文件读写 JSON 配置并保持兼容字段。
 package core
 
 import (

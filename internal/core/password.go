@@ -1,3 +1,4 @@
+// 本文件生成和校验随机密码。
 package core
 
 import (

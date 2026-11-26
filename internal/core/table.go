@@ -1,3 +1,4 @@
+// 本文件渲染终端表格。
 package core
 
 import (

@@ -1,3 +1,4 @@
+// 本文件测试 wizard_i18n 相关逻辑。
 package cli
 
 import (

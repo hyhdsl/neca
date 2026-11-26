@@ -1,3 +1,4 @@
+// 本文件原子写入证书、密钥和配置文件。
 package core
 
 import (

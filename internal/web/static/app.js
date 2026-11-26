@@ -1,3 +1,4 @@
+// 本文件实现 Web 面板的浏览器端主题与交互。
 (function () {
   "use strict";
   var key = "neca-theme";

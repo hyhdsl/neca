@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 本脚本检查生产部署的目录权限和属主。
 # Verify the documented neca deployment modes on a Linux host.
 # Run as root on the host that contains NECA_ROOT (default /opt/ipsec).
 set -u

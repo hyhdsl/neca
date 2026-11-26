@@ -1,3 +1,4 @@
+// 本文件测试 reload 相关逻辑。
 package web
 
 import (

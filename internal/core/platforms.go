@@ -1,3 +1,4 @@
+// 本文件解析平台标识和安装器组合。
 package core
 
 import (

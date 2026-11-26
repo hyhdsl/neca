@@ -1,3 +1,4 @@
+// 本文件读取和解析 Web 证书元数据。
 package core
 
 import (

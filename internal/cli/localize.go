@@ -1,3 +1,4 @@
+// 本文件将 CLI 文本本地化并处理语言回退。
 package cli
 
 import (

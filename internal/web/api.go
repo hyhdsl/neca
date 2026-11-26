@@ -1,3 +1,4 @@
+// 本文件实现 Web JSON API。
 package web
 
 import (

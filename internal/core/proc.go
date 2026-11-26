@@ -1,3 +1,4 @@
+// 本文件运行外部命令并捕获输出。
 package core
 
 import (

@@ -1,5 +1,6 @@
 //go:build !windows
 
+// 本文件在 Unix 上维护索引文件属主。
 package core
 
 import (

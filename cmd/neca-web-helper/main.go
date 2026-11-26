@@ -1,3 +1,4 @@
+// 本文件启动 neca Web 的 root helper 进程，提供受控写操作代理。
 package main
 
 import (

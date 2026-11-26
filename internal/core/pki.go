@@ -1,3 +1,4 @@
+// 本文件实现证书签发、吊销、重签和 CRL 维护。
 package core
 
 import (

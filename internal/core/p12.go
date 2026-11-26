@@ -1,3 +1,4 @@
+// 本文件生成和校验 PKCS#12 文件。
 package core
 
 import "fmt"

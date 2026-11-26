@@ -1,3 +1,4 @@
+// 本文件实现 helper Unix socket 服务端和白名单。
 package helper
 
 import (

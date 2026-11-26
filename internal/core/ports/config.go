@@ -1,3 +1,4 @@
+// 本文件定义配置来源端口接口。
 package ports
 
 import (

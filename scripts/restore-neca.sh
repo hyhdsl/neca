@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 本脚本恢复 neca 备份并重启 Web 服务。
 # neca restore helper. Requires an explicit --yes and an archive created by
 # backup-neca.sh. It stops only the explicit web/helper compose services.
 set -euo pipefail

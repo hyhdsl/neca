@@ -1,3 +1,4 @@
+// 本文件读写 Web 配置及只读设置。
 package core
 
 import (

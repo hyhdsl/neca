@@ -1,3 +1,4 @@
+// 本文件提供 HTTP 请求/响应辅助函数。
 package web
 
 import (

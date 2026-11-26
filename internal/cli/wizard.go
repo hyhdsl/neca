@@ -1,3 +1,4 @@
+// 本文件提供交互式证书签发向导。
 package cli
 
 import (

@@ -1,3 +1,4 @@
+// 本文件测试 commands_m2 相关逻辑。
 package cli
 
 import "testing"

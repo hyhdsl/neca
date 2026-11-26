@@ -1,3 +1,4 @@
+// 本文件读写证书 meta 文件。
 package core
 
 import (

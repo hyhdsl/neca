@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# 本脚本将 docs/help 发布到帮助站仓库。
 # publish-help-site.sh — publish docs/help to the neca-help GitHub Pages repository.
 #
 # Default is dry-run. Use --yes to commit and push.

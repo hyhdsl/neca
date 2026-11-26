@@ -1,3 +1,4 @@
+// 本文件准备页面数据并渲染模板。
 package web
 
 import (

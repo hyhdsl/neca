@@ -1,3 +1,4 @@
+// 本文件定义 helper 请求和响应协议。
 package helper
 
 import (

@@ -1,3 +1,4 @@
+// 本文件实现 helper 允许的写操作。
 package helper
 
 import (

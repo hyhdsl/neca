@@ -1,3 +1,4 @@
+// 本文件加载环境/文件配置并初始化目录骨架。
 package core
 
 import (

@@ -3,7 +3,15 @@
 <section class="panel">
   <div class="panel-head">
     <h2>{{.T "web.certs.title"}}</h2>
-    {{if .Writable}}<a class="button primary" href="/certs/new" data-testid="new-cert-link">{{.T "web.certs.new"}}</a>{{end}}
+    {{if or .ExportEnabled .Writable}}
+    <div class="panel-actions">
+      {{if .ExportEnabled}}
+      <a class="button secondary" href="/export/issued.csv" data-testid="export-issued">{{.T "web.certs.export_issued"}}</a>
+      <a class="button secondary" href="/export/revoked.csv" data-testid="export-revoked">{{.T "web.certs.export_revoked"}}</a>
+      {{end}}
+      {{if .Writable}}<a class="button primary" href="/certs/new" data-testid="new-cert-link">{{.T "web.certs.new"}}</a>{{end}}
+    </div>
+    {{end}}
   </div>
   <form method="get" action="/certs" class="filters" role="search">
     <label for="q">{{.T "web.certs.search"}}</label>

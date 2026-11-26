@@ -48,6 +48,8 @@
   "web.certs.new": "Issue certificate",
   "web.certs.empty": "No matching certificates.",
   "web.certs.crl": "CRL revoked entries",
+  "web.certs.export_issued": "Export issued CSV",
+  "web.certs.export_revoked": "Export revoked CSV",
   "web.table.cn": "CN",
   "web.table.status": "Status",
   "web.table.serial": "Serial",

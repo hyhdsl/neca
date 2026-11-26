@@ -326,6 +326,7 @@ type pageData struct {
 	Nav                string
 	ReadOnly           bool
 	Writable           bool
+	ExportEnabled      bool
 	HelperAvailable    bool
 	UserCN             string
 	ClientCN           string
@@ -381,6 +382,7 @@ func (s *Server) renderStatus(w http.ResponseWriter, r *http.Request, status int
 	data.ReadOnly = s.readOnly()
 	data.TrashEnabled = s.cfg.Web.FeatureEnabled("trash")
 	data.SettingsEnabled = s.cfg.Web.FeatureEnabled("settings")
+	data.ExportEnabled = s.exportEnabled()
 	data.Version = version.Get().Version
 	data.Path = r.URL.RequestURI()
 	tr := s.translatorFor(r)

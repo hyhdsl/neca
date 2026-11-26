@@ -48,6 +48,8 @@
   "web.certs.new": "签发证书",
   "web.certs.empty": "没有匹配的证书。",
   "web.certs.crl": "CRL 吊销条目",
+  "web.certs.export_issued": "导出已签发 CSV",
+  "web.certs.export_revoked": "导出已吊销 CSV",
   "web.table.cn": "CN",
   "web.table.status": "状态",
   "web.table.serial": "序列号",

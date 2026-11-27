@@ -1,0 +1,47 @@
+name: "✨ Feature request / 功能建议"
+description: "Suggest a focused feature or improvement / 提出聚焦的功能或改进建议"
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请说明使用场景和边界，而不是只描述实现方式。 / Describe the use case and boundaries, not only the implementation.
+        该项目当前以 CLI、只读 Web 和受控 root helper 为核心；M13/OpenAPI/Passkey 等事项可能仍在搁置或评估中。
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case / 问题或使用场景
+      description: "What are you trying to accomplish? / 你想完成什么？"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / 建议行为
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / 已考虑的替代方案
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / 区域
+      options:
+        - CLI
+        - Web panel / Web 面板
+        - Root helper / root helper
+        - Certificate or PKI / 证书或 PKI
+        - Documentation / 文档
+        - Other / 其他
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist / 检查项
+      options:
+        - label: "I searched existing issues and the roadmap. / 我已搜索现有 Issue 和路线图。"
+          required: true
+        - label: "I did not include secrets or private environment data. / 我未包含凭据或私有环境信息。"
+          required: true

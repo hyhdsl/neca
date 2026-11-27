@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "Documentation / 帮助中心"
+    url: "https://neca.nekobiglazyer.work/"
+    about: "Installation, certificate lifecycle, Web, API, security and FAQ / 安装、证书生命周期、Web、API、安全与 FAQ"
+  - name: "Private security report / 私密安全报告"
+    url: "https://github.com/hyhdsl/neca/security/advisories/new"
+    about: "Do not report vulnerabilities or secrets in a public issue / 请勿在公开 Issue 中报告漏洞或凭据"
+  - name: "Contributing policy / 贡献政策"
+    url: "https://github.com/hyhdsl/neca/blob/main/docs/SECONDARY-DEVELOPMENT.md"
+    about: "Contribution, license and secondary-development policy / 贡献、许可与二次开发政策"

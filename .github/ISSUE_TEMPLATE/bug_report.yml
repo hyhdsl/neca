@@ -1,0 +1,70 @@
+name: "🐛 Bug report / 缺陷报告"
+description: "Report a reproducible bug in neca / 报告可复现的 neca 缺陷"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。提交前请先搜索现有 Issue，并移除日志中的私钥、密码、Cookie、主机名等敏感信息。
+        Thank you. Search existing issues first, and remove private keys, passwords, cookies, hostnames and other sensitive data from logs.
+  - type: input
+    id: version
+    attributes:
+      label: neca version / 版本
+      description: "Run `neca version` and paste the version line. / 请运行 `neca version` 并粘贴版本行。"
+      placeholder: "v1.2.0 (commit ..., built ...)"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / 区域
+      options:
+        - CLI
+        - Web panel / Web 面板
+        - Root helper / root helper
+        - Certificate or PKI / 证书或 PKI
+        - Installation or Docker / 安装或 Docker
+        - Documentation / 文档
+        - Other / 其他
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened? / 发生了什么？
+      description: "Describe the actual result and impact. / 描述实际结果和影响。"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      description: "Use placeholders such as `<CN>` and `<PATH>`; do not paste secrets. / 使用 `<CN>`、`<PATH>` 等占位符，不要粘贴凭据。"
+      placeholder: |
+        1. Run ...
+        2. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result / 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / 相关日志
+      description: "Redact secrets and environment-specific identifiers. / 请脱敏凭据和环境标识。"
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist / 检查项
+      options:
+        - label: "I searched existing issues. / 我已搜索现有 Issue。"
+          required: true
+        - label: "I removed secrets and private environment data from this report. / 我已移除报告中的凭据和私有环境信息。"
+          required: true

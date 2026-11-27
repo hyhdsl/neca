@@ -69,8 +69,8 @@ func (o *OpenSSL) GenerateCRL(ctx context.Context, confPath, crlPath string) err
 	if err := os.Chmod(tmpPath, 0o644); err != nil {
 		return runtimef("生成 CRL", "chmod: %v", err)
 	}
-	if err := os.Rename(tmpPath, crlPath); err != nil {
-		return runtimef("生成 CRL", "rename: %v", err)
+	if err := replaceFile(tmpPath, crlPath); err != nil {
+		return runtimef("生成 CRL", "替换: %v", err)
 	}
 	return nil
 }

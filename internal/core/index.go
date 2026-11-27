@@ -147,10 +147,10 @@ func (s *FileIndexStore) writeAtomic(rows []ports.Row) error {
 	if err := os.Chmod(tmpPath, mode); err != nil {
 		return runtimef("写入索引", "chmod: %v", err)
 	}
-	if err := os.Rename(tmpPath, s.path); err != nil {
-		return runtimef("写入索引", "rename: %v", err)
+	if err := replaceFile(tmpPath, s.path); err != nil {
+		return runtimef("写入索引", "替换: %v", err)
 	}
-	// 目录 fsync 失败不致命：数据已 rename 成功，最坏情况是掉电后丢失本次写入。
+	// 目录 fsync 失败不致命：数据已写入，最坏情况是掉电后丢失本次写入。
 	if dirFile, err := os.Open(dir); err == nil {
 		_ = dirFile.Sync()
 		_ = dirFile.Close()

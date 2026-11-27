@@ -34,6 +34,8 @@ func (testRunner) Run(ctx context.Context, timeout time.Duration, name string, a
 		switch {
 		case strings.Contains(flags, "-serial"):
 			return core.Result{Stdout: "serial=ABC123\n"}, nil
+		case strings.Contains(flags, "-startdate"):
+			return core.Result{Stdout: "notBefore=Nov 14 20:06:48 2026 GMT\n"}, nil
 		case strings.Contains(flags, "-enddate"):
 			return core.Result{Stdout: "notAfter=Nov 14 20:06:48 2027 GMT\n"}, nil
 		case strings.Contains(flags, "-fingerprint"):

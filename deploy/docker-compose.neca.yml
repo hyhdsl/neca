@@ -93,6 +93,8 @@ services:
       NECA_WEB_HELPER_SOCKET: /run/neca/web-helper.sock
       NECA_WEB_HELPER_GID: "10001"
       NECA_WEB_HELPER_CACHE_FILE: /run/neca/web-helper-cache.json
+      # Web 以单文件 bind mount 读取 index/CRL；helper 必须原位写回以保持 Web 可见。
+      NECA_INDEX_INPLACE: "1"
     volumes:
       - /opt/ipsec:/opt/ipsec
       - /var/run/docker.sock:/var/run/docker.sock

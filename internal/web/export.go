@@ -23,7 +23,7 @@ func (s *Server) handleExport(kind core.ExportKind) http.HandlerFunc {
 		path := tmp.Name()
 		_ = tmp.Close()
 		defer os.Remove(path)
-		if _, err := core.ExportCerts(r.Context(), s.cfg, s.store, s.oss, kind, path); err != nil {
+		if _, err := core.ExportWebCerts(r.Context(), s.cfg, s.store, s.oss, kind, path); err != nil {
 			http.Error(w, "export failed", http.StatusInternalServerError)
 			return
 		}

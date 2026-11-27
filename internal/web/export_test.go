@@ -21,6 +21,25 @@ func TestExportDisabledIsHidden(t *testing.T) {
 	}
 }
 
+func TestWebExportIncludesClientCertificate(t *testing.T) {
+	h := newWebHarness(t)
+	defer h.close()
+	h.login(t)
+	h.server.exportEnabledFlag.Store(true)
+	resp := h.do(t, http.MethodGet, "/export/issued.csv", nil)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("export status = %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(body), "TMP01") {
+		t.Fatalf("export body does not include client cert: %q", string(body))
+	}
+}
+
 func TestCertPageShowsExportLinksWhenEnabled(t *testing.T) {
 	h := newWebHarness(t)
 	defer h.close()

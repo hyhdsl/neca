@@ -4,6 +4,7 @@
 
 - [中文文档](https://neca.nekobiglazyer.work/zh/)
 - [English docs](https://neca.nekobiglazyer.work/en/)
+- [繁體中文文件](https://neca.nekobiglazyer.work/zh-TW/)
 - [项目仓库](https://github.com/hyhdsl/neca)
 - [v1.2.0 Release](https://github.com/hyhdsl/neca/releases/tag/v1.2.0)
 

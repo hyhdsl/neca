@@ -52,7 +52,7 @@ func init() {
 	current = defaultLanguage
 }
 
-// NormalizeLanguage 把常见写法归一为 zh-CN / en-US。
+// NormalizeLanguage 把常见写法归一为 zh-CN / zh-TW / en-US。
 func NormalizeLanguage(raw string) (string, error) {
 	raw = strings.TrimSpace(strings.ToLower(raw))
 	if raw == "" {
@@ -60,6 +60,8 @@ func NormalizeLanguage(raw string) (string, error) {
 	}
 	raw = strings.ReplaceAll(raw, "_", "-")
 	switch {
+	case raw == "zh-tw" || strings.HasPrefix(raw, "zh-hant"):
+		return "zh-TW", nil
 	case raw == "zh" || strings.HasPrefix(raw, "zh-"):
 		return "zh-CN", nil
 	case raw == "en" || strings.HasPrefix(raw, "en-"):

@@ -103,7 +103,7 @@ func New(opts Options) (*Server, error) {
 		return nil, err
 	}
 	translators := map[string]*webTranslator{}
-	for _, lang := range []string{"zh-CN", "en-US"} {
+	for _, lang := range []string{"zh-CN", "zh-TW", "en-US"} {
 		translator, err := newWebTranslator(lang)
 		if err != nil {
 			return nil, err

@@ -1,6 +1,6 @@
 # Neko's Efficient Certificate Administrator
 
-**README 语言 / Language：** [简体中文（当前）](README.md) · [English](README_EN.md)
+**README 语言 / Language：** [简体中文（当前）](README.md) · [繁體中文](README_zh-TW.md) · [English](README_EN.md)
 
 > [!NOTE]
 > 本文件为**中文主版本**。其他语言版本将另行安排时间统一更新，可能滞后；日常只维护中文版本。英文翻译：[README_EN.md](README_EN.md)。

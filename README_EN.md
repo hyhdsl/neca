@@ -1,6 +1,6 @@
 # Neko's Efficient Certificate Administrator
 
-**README language / 语言：** [简体中文（authoritative）](README.md) · [English (current)](README_EN.md)
+**README language / 语言：** [简体中文（authoritative）](README.md) · [繁體中文](README_zh-TW.md) · [English (current)](README_EN.md)
 
 > [!IMPORTANT]
 > This English README is a convenience translation. The [Chinese README](README.md) is the **authoritative version**; this translation may lag behind and is not guaranteed to be current. Other language versions will be updated separately on a scheduled basis. Normally, only the Chinese README is kept up to date.

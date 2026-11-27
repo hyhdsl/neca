@@ -1,5 +1,6 @@
 - [🏠 Home](/ ':ignore :target=_self')
 - [中文](/zh/ ':ignore :target=_self')
+- [繁體中文](/zh-TW/ ':ignore :target=_self')
 - [🏠 Help Center](README.md)
 - [⚡ Quick start](getting-started.md)
 - [📦 Install, upgrade and rollback](install.md)

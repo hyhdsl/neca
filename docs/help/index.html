@@ -8,6 +8,7 @@
   <title>neca · Neko's Efficient Certificate Administrator</title>
   <link rel="alternate" hreflang="zh-CN" href="https://neca.nekobiglazyer.work/">
   <link rel="alternate" hreflang="en" href="https://neca.nekobiglazyer.work/?lang=en">
+  <link rel="alternate" hreflang="zh-Hant-TW" href="https://neca.nekobiglazyer.work/?lang=zh-TW">
   <link rel="stylesheet" href="home.css">
 </head>
 <body>
@@ -18,7 +19,11 @@
       <a href="#quickstart" data-i18n="nav.quickstart">快速开始</a>
       <a href="/zh/" data-doc-link="/zh/" data-i18n="nav.docs">文档</a>
       <a href="https://github.com/hyhdsl/neca" rel="noopener" data-i18n="nav.github">GitHub</a>
-      <button class="lang-toggle" id="langToggle" type="button" aria-label="Switch to English">EN</button>
+      <select class="lang-toggle" id="langSelect" aria-label="Language">
+        <option value="zh">简体中文</option>
+        <option value="zh-TW">繁體中文</option>
+        <option value="en">English</option>
+      </select>
     </nav>
     <a class="nav-cta" href="/zh/#/getting-started" data-doc-link="/zh/#/getting-started" data-i18n="nav.cta">开始使用</a>
   </header>
@@ -178,6 +183,49 @@ team-01   valid    linux, ios
           "footer.release": "v1.2.0 Release",
           "footer.github": "GitHub"
         },
+        zhTW: {
+          "nav.features": "功能",
+          "nav.quickstart": "快速開始",
+          "nav.docs": "文件",
+          "nav.github": "GitHub",
+          "nav.cta": "開始使用",
+          "hero.title": "憑證管理<br><em>回歸簡單。</em>",
+          "hero.lead": "Neko's Efficient Certificate Administrator（neca）是面向 strongSwan IKEv2 的輕量憑證管理工具。一個 CLI、一個選用的唯讀 Web 面板，以及一條受控的 root helper 寫入邊界。",
+          "hero.start": "閱讀快速開始",
+          "hero.source": "查看原始碼 ↗",
+          "hero.point.go": "Go · 單一靜態二進位檔",
+          "hero.point.docker": "Docker · amd64 / arm64",
+          "hero.point.safe": "預設唯讀 · helper 受控寫入",
+          "hero.panel": "Web 面板",
+          "hero.readonly": "預設唯讀",
+          "hero.helper": "寫入由 root helper 白名單執行",
+          "features.kicker": "WHY NECA",
+          "features.title": "把憑證生命週期收進一個工具",
+          "features.lead": "不引入第二份狀態儲存，不把 CA 私鑰交給 Web 程式。",
+          "feature.issue.title": "一條命令完成簽發",
+          "feature.issue.body": "簽發 / 重新簽發 / 撤銷 / 取消撤銷 / 刪除，涵蓋憑證、平台套件與 CRL。",
+          "feature.web.title": "預設唯讀的 Web",
+          "feature.web.body": "檢視憑證、驗證 p12、受保護下載；需要寫入時再明確啟用 helper。",
+          "feature.boundary.title": "清晰的權限邊界",
+          "feature.boundary.body": "Web 容器非 root，無 ca.key、無 docker.sock；寫入只走 Unix socket 白名單。",
+          "feature.ops.title": "為維運而設計",
+          "feature.ops.body": "JSON 設定、稽核日誌、SIGHUP 熱重載、可持久化的 requestId 冪等快取。",
+          "quick.kicker": "QUICK START",
+          "quick.title": "從容器到第一張憑證",
+          "quick.lead": "固定版本標籤，先 dry-run，再簽發。部署環境透過 OpenSSH 本機轉送存取 Web。",
+          "quick.link": "閱讀部署說明 →",
+          "quick.terminal": "終端機",
+          "stats.current": "目前正式版",
+          "stats.milestones": "核心能力與維運強化",
+          "stats.license": "開源授權",
+          "stats.arch": "多架構映像",
+          "footer.tagline": "strongSwan IKEv2 憑證管理 · 預設唯讀 Web · 受控 root helper",
+          "footer.docs": "繁體中文文件",
+          "footer.english": "English",
+          "footer.api": "API",
+          "footer.release": "v1.2.0 Release",
+          "footer.github": "GitHub"
+        },
         en: {
           "nav.features": "Features",
           "nav.quickstart": "Quick start",
@@ -222,10 +270,10 @@ team-01   valid    linux, ios
           "footer.github": "GitHub"
         }
       };
-      var toggle = document.getElementById("langToggle");
+      var select = document.getElementById("langSelect");
       function apply(lang) {
         var dict = copy[lang] || copy.zh;
-        document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+        document.documentElement.lang = lang === "en" ? "en" : (lang === "zh-TW" ? "zh-Hant-TW" : "zh-CN");
         Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
           var value = dict[el.getAttribute("data-i18n")];
           if (value) el.textContent = value;
@@ -236,31 +284,32 @@ team-01   valid    linux, ios
         });
         Array.prototype.forEach.call(document.querySelectorAll("[data-doc-link]"), function (el) {
           var base = el.getAttribute("data-doc-link");
-          var target = lang === "en" ? base.replace(/^\/zh\//, "/en/") : base;
-          if (lang === "zh" && base === "/en/") target = "/en/";
+          var target = base;
+          if (lang === "en") target = base.replace(/^\/zh\//, "/en/");
+          else if (lang === "zh-TW") target = base.replace(/^\/zh\//, "/zh-TW/");
+          else if (base === "/en/") target = "/zh/";
           el.setAttribute("href", target);
         });
         document.title = "neca · Neko's Efficient Certificate Administrator";
         var desc = document.querySelector('meta[name="description"]');
         if (desc) desc.setAttribute("content", lang === "en"
           ? "Neko's Efficient Certificate Administrator (neca): a lightweight strongSwan IKEv2 certificate manager with a CLI, read-only web panel and controlled root helper."
-          : "Neko's Efficient Certificate Administrator（neca）：面向 strongSwan IKEv2 的证书管理工具。CLI、只读 Web 面板、受控 root helper。");
-        toggle.textContent = lang === "en" ? "中文" : "EN";
-        toggle.setAttribute("aria-label", lang === "en" ? "Switch to Chinese" : "Switch to English");
+          : (lang === "zh-TW"
+            ? "Neko's Efficient Certificate Administrator（neca）：面向 strongSwan IKEv2 的憑證管理工具。CLI、唯讀 Web 面板、受控 root helper。"
+            : "Neko's Efficient Certificate Administrator（neca）：面向 strongSwan IKEv2 的证书管理工具。CLI、只读 Web 面板、受控 root helper。"));
+        if (select) select.value = lang;
         try { localStorage.setItem("neca_home_lang", lang); } catch (e) {}
         var url = new URL(window.location.href);
-        if (lang === "en") url.searchParams.set("lang", "en");
-        else url.searchParams.delete("lang");
+        if (lang === "zh") url.searchParams.delete("lang");
+        else url.searchParams.set("lang", lang);
         window.history.replaceState({}, "", url.toString());
       }
-      toggle.addEventListener("click", function () {
-        apply(document.documentElement.lang === "en" ? "zh" : "en");
-      });
+      if (select) select.addEventListener("change", function () { apply(select.value); });
       var params = new URLSearchParams(window.location.search);
       var saved = null;
       try { saved = localStorage.getItem("neca_home_lang"); } catch (e) {}
       var initial = params.get("lang");
-      if (initial !== "en" && initial !== "zh") initial = saved === "en" ? "en" : "zh";
+      if (initial !== "en" && initial !== "zh" && initial !== "zh-TW") initial = (saved === "en" || saved === "zh-TW") ? saved : "zh";
       apply(initial);
     })();
   </script>

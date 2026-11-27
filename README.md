@@ -10,7 +10,9 @@
 >
 > **责任限制**：软件按“现状”提供，不提供明示或默示担保；在适用法律允许的范围内，作者与 AI 工具提供方不对使用或误用造成的损失承担责任。
 >
-> **开发期暂不接受外部 PR**：请先 fork；二次开发须遵守 AGPL 与 [开发政策](docs/SECONDARY-DEVELOPMENT.md)。
+> **安全边界**：安全性测试尚不完整，不建议用于商业用途或高风险生产环境；如使用，请自行完成独立安全评审、备份与回滚验证。
+>
+> **贡献与反馈**：请先通过 Issue 说明问题或需求；提交 PR 前请阅读 [开发政策](docs/SECONDARY-DEVELOPMENT.md)。二次开发须遵守 AGPL。
 >
 > 相关文件：[LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 
@@ -42,7 +44,7 @@ neca cert issue alice --platforms windows,android --zip --dry-run
 neca cert issue alice --platforms windows,android --zip
 ~~~
 
-生产环境把 <code>/opt/ipsec</code> 挂载给容器，并通过 wrapper 或 compose 运行；完整步骤见 [安装、升级与回滚](https://neca.nekobiglazyer.work/zh/#/install)。
+部署时把 <code>/opt/ipsec</code> 挂载给容器，并通过 wrapper 或 compose 运行；完整步骤见 [安装、升级与回滚](https://neca.nekobiglazyer.work/zh/#/install)。
 
 ## 🖥️ Web 面板
 
@@ -54,7 +56,7 @@ docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web --profile web
 neca web readonly off
 ~~~
 
-生产配置位于 <code>/opt/ipsec/config/neca.json</code>；Web 通过配置目录挂载感知 SIGHUP 热重载。默认仍建议使用 OpenSSH 本地转发，不直接暴露公网。
+部署配置位于 <code>/opt/ipsec/config/neca.json</code>；Web 通过配置目录挂载感知 SIGHUP 热重载。默认仍建议使用 OpenSSH 本地转发，不直接暴露公网。
 
 ## 📚 文档
 
@@ -84,12 +86,20 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 - **当前稳定版**：v1.2.0（2026-11-27 发布）
 - **已完成**：M0–M12；v1.2.0（CLI shell completion、证书链验证、文档一致性）
-- **后续**：v1.3.0 证书导入 preview；M13 公网访问方案已搁置；Passkey 与 M14 OpenAPI 长期搁置
-- **边界**：Passkey 仅有配置和接口预留，未注册登录路由；Web API 为实验性，当前没有 OpenAPI 契约
-- **生产环境**：v1.1.2 已部署（2026-11-26）；v1.2.0 尚未部署；strongSwan 未重启，Web/helper healthy；v1.1.1 回滚路径已演练
+- **后续**：v1.3.0 证书导入 preview；v1.4.0 cert+key 导入；v1.5.0 配置 schema 与 Passkey 评估
+- **边界**：Passkey 仅有配置和接口预留，未注册登录路由；Web API 为实验性接口
 
 ## ⚖️ 许可与致谢
 
 **AGPL-3.0-only**：允许商业使用，但分发或网络服务须按 AGPL 公开对应源码；必须保留原作者、仓库链接与许可。详见 [LICENSE](LICENSE) 与 [二次开发政策](docs/SECONDARY-DEVELOPMENT.md)。
 
-感谢 Go、strongSwan、OpenSSL、Docker 及所有上游开源项目。
+本项目建立在大量上游工作之上，特别感谢：
+
+- **Go** 标准库与工具链，以及 `golang.org/x` 系列依赖；
+- **strongSwan** 与 IKEv2 社区，为证书、CRL 与 VPN 配置提供实践基础；
+- **OpenSSL**，承担证书、密钥与 PKCS#12 的核心操作；
+- **Docker / Buildx / QEMU**，支持多架构镜像与可复现的开发环境；
+- **GitHub Actions**，提供 CI、发布与镜像流水线；
+- **Docsify** 与帮助站相关工具，以及所有提交 Issue、测试和建议的使用者。
+
+上游项目的许可证与版权归其各自作者所有；本项目仅保留必要的引用与许可声明。

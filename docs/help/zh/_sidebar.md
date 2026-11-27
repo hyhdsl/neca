@@ -14,6 +14,8 @@
 - [🧰 故障排查](troubleshooting.md)
 - [❓ 常见问题](faq.md)
 - [🛠️ 开发、许可与反馈](development.md)
+- [⚙️ GitHub 工作流](github-workflows.md)
+- [🔬 影子对比](shadow-comparison.md)
 
 ---
 

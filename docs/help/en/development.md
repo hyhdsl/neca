@@ -58,8 +58,8 @@ The language switch is in the top-right corner of the page.
 
 ## Contributing and feedback
 
-- External pull requests are not accepted during development.
-- Report issues at <https://github.com/hyhdsl/neca/issues>.
+- Describe issues or proposed changes at <https://github.com/hyhdsl/neca/issues> first.
+- PRs should include tests and license-impact notes for maintainer review.
 - For changes, fork the repository and follow AGPL and the
   [secondary-development requirements](https://github.com/hyhdsl/neca/blob/main/docs/SECONDARY-DEVELOPMENT.md).
 - For security issues, do not paste private keys, passwords or exploitable details in

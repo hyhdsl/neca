@@ -76,7 +76,7 @@ sources, validate the proxy secret and client CN, and strip forged headers.
 ## Backup security
 
 Backups contain the CA private key. Encrypt them, restrict access, keep them off the
-production host, verify restores, and never upload them to public repositories, public
+deployment host, verify restores, and never upload them to public repositories, public
 object storage or CI artifacts.
 
 ## Audit and monitoring
@@ -88,7 +88,7 @@ object storage or CI artifacts.
 
 ## Supply chain and license
 
-- Pin image tags; do not use `latest` in production.
+- Pin image tags; do not use `latest` in deployed environments.
 - Pull only from the official repository/GHCR and verify checksums.
 - **AGPL-3.0-only** applies; network use and distribution carry source-disclosure duties.
 - Code and docs contain AI-assisted content; review before use.

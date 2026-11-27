@@ -79,7 +79,7 @@ All `/api/v1/*` endpoints require a valid session. Writes also require `X-CSRF-T
 | POST | `/api/v1/certs/{cn}/unrevoke` | Unrevoke |
 | POST | `/api/v1/certs/{cn}/reissue` | Reissue |
 
-Delete, package and settings editing are not exposed.
+Delete, package and settings editing are not exposed. Imported certificates add flat `created`, `notBefore` and `importSource` fields; legacy certificates omit them, and they are presentation metadata only.
 
 ## Issue example
 

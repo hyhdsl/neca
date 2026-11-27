@@ -18,7 +18,7 @@
 | `--version` / `-V` | Show version, commit, build time and platform |
 | `-h` / `--help` | Show help for the current level |
 
-`--dry-run` intercepts only state-changing commands: cert issue/reissue/revoke/unrevoke/trash/platform/package/export, pki index sync, pki downloads clean, trash restore/purge, and web readonly on/off, idle-timeout changes, export on/off, lock and lockdown. Read-only commands run normally.
+`--dry-run` intercepts only state-changing commands: cert issue/reissue/revoke/unrevoke/trash/platform/package/export, pki index sync, pki downloads clean, trash restore/purge, and web readonly on/off, idle-timeout changes, export on/off, lock and lockdown. Read-only commands run normally. `cert import` is the exception: its `--dry-run` performs read-only validation and prints the plan without writing.
 
 **Exit codes**: `0` success (warnings allowed); `1` usage error; `2` runtime failure; `3` precondition not met (certificate already exists, missing CA, helper unavailable, insufficient privileges).
 
@@ -181,6 +181,18 @@ neca cert package alice --platforms windows,android --installers windows --p12-p
 ~~~
 
 Rebuilds platform packages from an existing certificate without issuing a new certificate or changing keys. The platform/installer/p12 arguments match issue.
+
+### cert import
+
+~~~bash
+neca cert import alice --p12 alice.p12 --password-file alice.p12.pass
+neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --allow-expired
+neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --dry-run
+~~~
+
+v1 imports only a p12 issued by the current CA and passing the current CA chain. The p12 must contain exactly one client certificate and a matching private key; existing CN, serial, clients directory or meta is rejected without overwrite or repair. The password file must be a regular 0600 file.
+
+Expired certificates are rejected by default. With `--allow-expired` plus Y/N confirmation, they are imported with index status E and the command prints `neca cert reissue <CN>` and `neca cert revoke <CN>`. JSON requires `--allow-expired` (only for expired input) and `--yes`. `--zip`, `--platforms`, `--installers` and `--p12-profile` follow issue semantics.
 
 ## pki: index and downloads
 

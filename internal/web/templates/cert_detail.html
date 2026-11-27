@@ -9,6 +9,9 @@
       <dt>{{$.T "web.table.serial"}}</dt><dd class="mono">{{.Serial}}</dd>
       <dt>{{$.T "web.detail.subject"}}</dt><dd>{{.Subject}}</dd>
       <dt>{{$.T "web.table.expires"}}</dt><dd>{{.Expires}}</dd>
+      {{if .Created}}<dt>{{$.T "web.detail.created"}}</dt><dd>{{.Created}}</dd>{{end}}
+      {{if .NotBefore}}<dt>{{$.T "web.detail.not_before"}}</dt><dd>{{.NotBefore}}</dd>{{end}}
+      {{if .ImportSource}}<dt>{{$.T "web.detail.import_source"}}</dt><dd>{{.ImportSource}}</dd>{{end}}
       <dt>{{$.T "web.table.platforms"}}</dt><dd>{{if .Platforms}}{{join .Platforms ", "}}{{else}}-{{end}}</dd>
       <dt>{{$.T "web.detail.fingerprint"}}</dt><dd class="mono wrap">{{.Fingerprint}}</dd>
       <dt>{{$.T "web.detail.san"}}</dt><dd>{{if .SAN}}{{.SAN}}{{else}}-{{end}}</dd>

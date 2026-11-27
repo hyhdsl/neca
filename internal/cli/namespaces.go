@@ -14,13 +14,13 @@ import (
 func newCertCommand() Command {
 	return Command{
 		Name:    "cert",
-		Summary: "证书管理（list/expiring/verify/issue/reissue/revoke/unrevoke/trash/export/platform/package）",
+		Summary: "证书管理（list/expiring/verify/issue/reissue/revoke/unrevoke/trash/export/platform/package/import）",
 		Group:   "cert",
 		Surface: SurfaceBackend,
 		Write:   true,
 		Run: func(env Env) int {
 			if len(env.Args) == 0 {
-				return usageFail(env, "用法: cert <list|expiring|verify|issue|reissue|revoke|unrevoke|trash|export|platform|package>")
+				return usageFail(env, "用法: cert <list|expiring|verify|issue|reissue|revoke|unrevoke|trash|export|platform|package|import>")
 			}
 			if env.Args[0] == "--help" || env.Args[0] == "-h" {
 				return printUsage(env, "cert.help")
@@ -51,6 +51,8 @@ func newCertCommand() Command {
 				return newPlatformCommand().Run(env)
 			case "package":
 				return newPackageCommand().Run(env)
+			case "import":
+				return newImportCommand().Run(env)
 			default:
 				return usageFail(env, "未知 cert 子命令: %s", sub)
 			}

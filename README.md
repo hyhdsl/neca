@@ -82,10 +82,9 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 状态
 
-- **当前稳定版**：v1.1.2（2026-11-26 发布）
-- **待发布**：v1.2.0 发布准备已完成，尚未 tag / 发布；包含 CLI shell completion、证书链验证与文档一致性
-- **已完成**：M0–M12（CLI、Web、root helper、M9 命令迁移、M10 安全运维、M11 回收站/设置、M12 可维护性/可观测性）
-- **下一步**：证书导入工作流设计（先设计后实现）；M13 公网访问方案已搁置；Passkey 与 M14 OpenAPI 长期搁置
+- **当前稳定版**：v1.2.0（2026-11-27 发布）
+- **已完成**：M0–M12；v1.2.0（CLI shell completion、证书链验证、文档一致性）
+- **后续**：v1.3.0 证书导入 preview；M13 公网访问方案已搁置；Passkey 与 M14 OpenAPI 长期搁置
 - **边界**：Passkey 仅有配置和接口预留，未注册登录路由；Web API 为实验性，当前没有 OpenAPI 契约
 - **生产环境**：v1.1.2 已部署（2026-11-26）；v1.2.0 尚未部署；strongSwan 未重启，Web/helper healthy；v1.1.1 回滚路径已演练
 

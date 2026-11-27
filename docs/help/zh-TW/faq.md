@@ -70,7 +70,7 @@ tar -C /opt/ipsec -czf /root/ipsec-backup-$(date +%Y%m%d-%H%M%S).tar.gz \
 
 ## 舊 bash 指令碼還能用嗎？
 
-保留在 `legacy/`，用於回復、影子測試與歷史參考。新部署應使用 neca；舊指令碼的
+保留在 `legacy/`，用於復原、影子測試與歷史參考。新部署應使用 neca；舊指令碼的
 遷移與復原說明見儲存庫 legacy/ 目錄與 v0.5.0 遷移表（內部紀錄，不隨儲存庫發布）。
 
 ## 如何參與貢獻？

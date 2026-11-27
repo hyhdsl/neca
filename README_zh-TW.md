@@ -10,7 +10,7 @@
 >
 > **責任限制**：軟體依「現狀」提供，不提供明示或默示擔保；在適用法律允許的範圍內，作者與 AI 工具提供方不對使用或誤用造成的損失負責。
 >
-> **安全邊界**：安全性測試尚不完整，不建議用於商業用途或高風險正式環境；如要使用，請自行完成獨立安全審查、備份與回復驗證。
+> **安全邊界**：安全性測試尚不完整，不建議用於商業用途或高風險正式環境；如要使用，請自行完成獨立安全審查、備份與復原驗證。
 >
 > **貢獻與回饋**：請先透過 Issue 說明問題或需求；提交 PR 前請閱讀 [開發政策](docs/SECONDARY-DEVELOPMENT.md)。二次開發須遵守 AGPL。
 >
@@ -68,7 +68,7 @@ neca web readonly off
 | ⌨️ [子命令參考](https://neca.nekobiglazyer.work/zh-TW/#/commands) | 全域旗標、全部子命令、參數、確認與結束代碼 |
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh-TW/#/api) | 實驗性介面說明 |
-| 🐳 [安裝、升級與回復](https://neca.nekobiglazyer.work/zh-TW/#/install) | Docker／二進位安裝、升級、回復 |
+| 🐳 [安裝、升級與復原](https://neca.nekobiglazyer.work/zh-TW/#/install) | Docker／二進位安裝、升級、復原 |
 | 🛠️ [開發、授權條款與回饋](https://neca.nekobiglazyer.work/zh-TW/#/development) | 本機建置、架構、發布流程、貢獻 |
 | 🤖 [AI 揭露](AI-DISCLOSURE.md) | AI 參與範圍與驗收邊界 |
 

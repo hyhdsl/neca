@@ -53,8 +53,9 @@ lite 与 neca-web 共享同一 core 与数据目录；不发布 full 镜像。
 
 ## 贡献与反馈
 
-- 开发期暂不接受外部 Pull Request；
-- 问题请提交 <https://github.com/hyhdsl/neca/issues>；
+- 问题或改动请先通过 <https://github.com/hyhdsl/neca/issues> 说明；
+- GitHub 三个工作流见 [工作流说明](github-workflows.md)，影子对比细节见 [影子对比](shadow-comparison.md)；
+- PR 请附测试与许可证影响说明，由维护者审查后合并；
 - 修改请先 fork，并遵守 AGPL 与 [二次开发要求](https://github.com/hyhdsl/neca/blob/main/docs/SECONDARY-DEVELOPMENT.md)；
 - 安全问题时不要公开粘贴私钥、密码或可利用细节，先联系维护者。
 

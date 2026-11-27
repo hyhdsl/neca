@@ -5,20 +5,22 @@
 > [!IMPORTANT]
 > This English README is a convenience translation. The [Chinese README](README.md) is the **authoritative version**; this translation may lag behind and is not guaranteed to be current. Other language versions will be updated separately on a scheduled basis. Normally, only the Chinese README is kept up to date.
 >
-> Translation status: synchronized with the v1.0.1 documentation on 2026-11-23; the Chinese README remains authoritative.
+> Translation status: synchronized with the v1.2.0 release on 2026-11-27; the Chinese README remains authoritative.
 
 > [!WARNING]
 > **AI disclosure (read before use)**: Code, debugging, tests, CI/build/deploy scripts, documentation and help-site content are primarily produced by an AI coding assistant; the human maintainer is responsible for requirements, review, functional acceptance and production operations. See [AI-DISCLOSURE.md](AI-DISCLOSURE.md) for the full scope.
 >
 > **Limitation of liability**: The software is provided “as is”, without express or implied warranties. To the extent permitted by applicable law, the authors and AI-tool providers are not liable for losses caused by use or misuse.
 >
-> **No external PRs during development**: Please fork first; derivative work must comply with AGPL and the [development policy](docs/SECONDARY-DEVELOPMENT.md).
+> **Security boundary**: security testing is incomplete; commercial or high-risk production use is not recommended. If you use it, perform an independent security review, backups and rollback validation.
+>
+> **Contributions**: open an Issue to describe a problem or request first; read the [development policy](docs/SECONDARY-DEVELOPMENT.md) before submitting a PR. Derivative work must comply with AGPL.
 >
 > Related files: [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 
 **Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
-🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.0.1](https://github.com/hyhdsl/neca/releases/tag/v1.0.1)
+🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.2.0](https://github.com/hyhdsl/neca/releases/tag/v1.2.0)
 
 ## ✨ Features
 
@@ -34,14 +36,14 @@
 Pin the version, dry-run first, then issue:
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.0.1
+docker pull ghcr.io/hyhdsl/neca:v1.2.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
 neca cert issue alice --platforms windows,android --zip
 ~~~
 
-In production, mount <code>/opt/ipsec</code> into the container and run it through the wrapper or compose. See the [install, upgrade and rollback guide](https://neca.nekobiglazyer.work/en/#/install) for the full procedure.
+When deploying, mount <code>/opt/ipsec</code> into the container and run it through the wrapper or compose. See the [install, upgrade and rollback guide](https://neca.nekobiglazyer.work/en/#/install) for the full procedure.
 
 ## 🖥️ Web panel
 
@@ -53,7 +55,7 @@ docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web --profile web
 neca web readonly off
 ~~~
 
-Production config lives at <code>/opt/ipsec/config/neca.json</code>; the web container sees SIGHUP reloads through the config-directory mount. OpenSSH local forwarding remains the recommended default; do not expose the panel publicly without an access design.
+Deployment config lives at <code>/opt/ipsec/config/neca.json</code>; the web container sees SIGHUP reloads through the config-directory mount. OpenSSH local forwarding remains the recommended default; do not expose the panel publicly without an access design.
 
 ## 📚 Documentation
 
@@ -81,14 +83,22 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 ## 📌 Status
 
-- **Current stable**: v1.0.1 (released 2026-11-23)
-- **Completed**: M0–M12 (CLI, web, root helper, command migration, security operations, trash/settings, maintainability)
-- **Next**: v1.2 in progress: CLI shell completion and certificate-chain verification are implemented; M13 public access is shelved; M14 OpenAPI remains long-term deferred
-- **Boundaries**: Passkey has configuration and reserved interfaces only (no login routes yet); the Web API is experimental with no OpenAPI contract
-- **Production**: v1.0.1 deployed; v0.4.1 rollback path verified; RC versions are kept as Git tags and source only
+- **Current stable**: v1.2.0 (released 2026-11-27)
+- **Completed**: M0–M12; v1.2.0 (CLI shell completion, certificate-chain verification and documentation consistency)
+- **Next**: v1.3.0 certificate-import preview; v1.4.0 cert+key import; v1.5.0 config-schema and Passkey evaluation
+- **Boundaries**: Passkey has configuration and reserved interfaces only (no login routes yet); the Web API is experimental
 
 ## ⚖️ License and acknowledgements
 
 **AGPL-3.0-only**: commercial use is allowed, but distribution or network services must publish the corresponding source under AGPL; keep the original author, repository link and license. See [LICENSE](LICENSE) and the [secondary-development policy](docs/SECONDARY-DEVELOPMENT.md).
 
-Thanks to Go, strongSwan, OpenSSL, Docker and all upstream open-source projects.
+This project builds on substantial upstream work. Special thanks to:
+
+- **Go** standard library and toolchain, plus the `golang.org/x` dependencies;
+- **strongSwan** and the IKEv2 community for certificate, CRL and VPN practice;
+- **OpenSSL** for certificate, key and PKCS#12 operations;
+- **Docker / Buildx / QEMU** for multi-architecture images and reproducible development;
+- **GitHub Actions** for CI, release and image pipelines;
+- **Docsify** and help-site tooling, and everyone who filed issues, tested or suggested improvements.
+
+Upstream licenses and copyrights remain with their respective authors; this project retains only the necessary notices.

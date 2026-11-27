@@ -7,7 +7,7 @@
 - [项目仓库](https://github.com/hyhdsl/neca)
 - [v1.2.0 Release](https://github.com/hyhdsl/neca/releases/tag/v1.2.0)
 
-默认只读；Web 写操作通过 root helper 的命令白名单执行。生产环境优先使用 OpenSSH
+默认只读；Web 写操作通过 root helper 的命令白名单执行。部署环境优先使用 OpenSSH
 本地转发，不直接暴露 Web 端口。
 
 ## 适用场景

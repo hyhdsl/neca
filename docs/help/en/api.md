@@ -1,8 +1,8 @@
 # Web API (experimental)
 
 > **Status: experimental, not a stable public API.** Endpoints, fields and
-> authentication may change; there is no OpenAPI contract and no third-party
-> compatibility promise. Validate automation in a test environment first.
+> authentication may change; no third-party compatibility is promised. Validate
+> automation in a test environment first.
 
 ## Scope
 

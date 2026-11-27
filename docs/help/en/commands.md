@@ -41,7 +41,7 @@ neca cert --help
 neca cert issue --help
 ~~~
 
-Running `neca` with no arguments starts the interactive wizard; `neca wizard` opens it explicitly. Menu items 0–10 map to exit, issue, revoke, unrevoke, reissue, add platform, export issued, export revoked, list, index sync and move to recycle bin. The equivalent CLI command is printed before each action.
+Running `neca` with no arguments starts the interactive wizard; `neca wizard` opens it explicitly. The wizard header shows the version and a `neca help` hint; the top-level menu is certificate management, import / export, trash, maintenance & diagnostics, and help. Import / export contains p12 import and issued/revoked CSV export. The equivalent CLI command is printed before each action.
 
 ### neca completion
 

@@ -12,7 +12,7 @@
 >
 > **安全边界**：安全性测试尚不完整，不建议用于商业用途或高风险生产环境；如使用，请自行完成独立安全评审、备份与回滚验证。
 >
-> **贡献与反馈**：请先通过 Issue 说明问题或需求；提交 PR 前请阅读 [开发政策](docs/SECONDARY-DEVELOPMENT.md)。二次开发须遵守 AGPL。
+> **贡献与反馈**：请先通过 Issue 说明问题或需求（[选择 Bug / Feature / Question 模板](https://github.com/hyhdsl/neca/issues/new/choose)）；提交 PR 前请阅读 [开发政策](docs/SECONDARY-DEVELOPMENT.md)。二次开发须遵守 AGPL。
 >
 > 相关文件：[LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 

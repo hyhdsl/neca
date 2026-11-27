@@ -1,0 +1,36 @@
+name: "❓ Question / 使用问题"
+description: "Ask for help with installation, configuration or usage / 咨询安装、配置或使用问题"
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先阅读帮助站和 FAQ：<https://neca.nekobiglazyer.work/>。
+        For security reports, do not open a public issue; use the private security advisory link in the issue chooser. / 安全问题请勿公开提交，使用 Issue 选择页中的私密安全公告入口。
+  - type: input
+    id: version
+    attributes:
+      label: neca version / 版本
+      placeholder: "v1.2.0"
+  - type: textarea
+    id: question
+    attributes:
+      label: Question / 问题
+      description: "Include the relevant command and sanitized output. / 请附相关命令与已脱敏输出。"
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / 背景
+      description: "Deployment shape, OS, Docker version, and what you already tried. Redact secrets. / 部署形态、系统、Docker 版本和已尝试步骤；请脱敏。"
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist / 检查项
+      options:
+        - label: "I read the help site and searched existing issues. / 我已阅读帮助站并搜索现有 Issue。"
+          required: true
+        - label: "I removed secrets and private environment data. / 我已移除凭据和私有环境信息。"
+          required: true

@@ -8,15 +8,15 @@
 > Translation status: synchronized with the v1.2.0 release on 2026-11-27; the Chinese README remains authoritative.
 
 > [!WARNING]
-> **AI disclosure (read before use)**: Code, debugging, tests, CI/build/deploy scripts, documentation and help-site content are primarily produced by an AI coding assistant; the human maintainer is responsible for requirements, review, functional acceptance and production operations. See [AI-DISCLOSURE.md](AI-DISCLOSURE.md) for the full scope.
+> **AI disclosure (read before use)**: Code, debugging, tests, CI/build/deploy scripts, documentation and help-site content are primarily produced by an AI coding assistant; the human maintainer is responsible for requirements, review, functional acceptance and production operations. See [AI-DISCLOSURE_EN.md](AI-DISCLOSURE_EN.md) for the full scope.
 >
 > **Limitation of liability**: The software is provided “as is”, without express or implied warranties. To the extent permitted by applicable law, the authors and AI-tool providers are not liable for losses caused by use or misuse.
 >
 > **Security boundary**: security testing is incomplete; commercial or high-risk production use is not recommended. If you use it, perform an independent security review, backups and rollback validation.
 >
-> **Contributions**: open an Issue to describe a problem or request first; read the [development policy](docs/SECONDARY-DEVELOPMENT.md) before submitting a PR. Derivative work must comply with AGPL.
+> **Contributions**: open an Issue using the Bug / Feature / Question template, or [choose a template](https://github.com/hyhdsl/neca/issues/new/choose); read the [development policy](docs/SECONDARY-DEVELOPMENT.md) before submitting a PR. Derivative work must comply with AGPL.
 >
-> Related files: [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE.md](AI-DISCLOSURE.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
+> Related files: [LICENSE](LICENSE) · [NOTICE](NOTICE) · [AI-DISCLOSURE_EN.md](AI-DISCLOSURE_EN.md) · [docs/SECONDARY-DEVELOPMENT.md](docs/SECONDARY-DEVELOPMENT.md)
 
 **Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
@@ -69,7 +69,7 @@ Deployment config lives at <code>/opt/ipsec/config/neca.json</code>; the web con
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | Experimental API reference |
 | 🐳 [Install, upgrade and rollback](https://neca.nekobiglazyer.work/en/#/install) | Docker/binary install, upgrade, rollback |
 | 🛠️ [Development, license and feedback (Chinese)](https://neca.nekobiglazyer.work/zh/#/development) | Local build, architecture, release flow, contribution (Chinese-only) |
-| 🤖 [AI disclosure](AI-DISCLOSURE.md) | AI scope and acceptance boundaries |
+| 🤖 [AI disclosure](AI-DISCLOSURE_EN.md) | AI scope and acceptance boundaries |
 
 ## 🛠️ Development
 

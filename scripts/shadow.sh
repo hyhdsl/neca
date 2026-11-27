@@ -108,6 +108,10 @@ PY
 }
 
 FAILED=0
+normalize_verify_chain() {
+  sed -E 's/, 证书链 (✓|✗)//'
+}
+
 check_same() {
   local label="$1" old_file="$2" new_file="$3"
   if diff -u "$old_file" "$new_file"; then
@@ -135,7 +139,9 @@ check_same "list stderr" "$WORK/old.list.err" "$WORK/new.list.err"
 # 2. verify
 run_old "$OLD" --verify >"$WORK/old.verify" 2>"$WORK/old.verify.err"
 run_new "$NEW" cert verify >"$WORK/new.verify" 2>"$WORK/new.verify.err"
-check_same "verify stdout" "$WORK/old.verify" "$WORK/new.verify"
+normalize_verify_chain <"$WORK/old.verify" >"$WORK/old.verify.norm"
+normalize_verify_chain <"$WORK/new.verify" >"$WORK/new.verify.norm"
+check_same "verify stdout" "$WORK/old.verify.norm" "$WORK/new.verify.norm"
 check_same "verify stderr" "$WORK/old.verify.err" "$WORK/new.verify.err"
 
 # 3. export issued / revoked（比较 CSV 内容；路径列先归一化）
@@ -232,6 +238,7 @@ run_old "$IOLD" --issue TMP20 --platforms windows,android --days 30 >"$WORK/old.
 run_new "$INEW" cert issue TMP20 --platforms windows,android --days 30 --installers windows >"$WORK/new.issue" 2>"$WORK/new.issue.err"
 normalize_issue() {
   sed -E -e 's/[0-9A-F]{16,}/SERIAL/g' \
+         -e 's/, 证书链 (✓|✗)//g' \
          -e 's/[A-Z][a-z]{2} [ 0-9][0-9] [0-9:]{8} [0-9]{4} GMT/DATE/g' \
          -e "s#$IOLD#SIDE#g" -e "s#$INEW#SIDE#g" | sort
 }

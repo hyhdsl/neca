@@ -18,7 +18,7 @@ var completionGlobalFlags = []string{
 
 // completionSubcommands 是各命名空间的直接子命令；只列出实际存在的命令。
 var completionSubcommands = map[string][]string{
-	"cert":       {"list", "expiring", "verify", "issue", "reissue", "revoke", "unrevoke", "trash", "export", "platform", "package"},
+	"cert":       {"list", "expiring", "verify", "issue", "reissue", "revoke", "unrevoke", "trash", "export", "platform", "package", "import"},
 	"pki":        {"index", "downloads"},
 	"trash":      {"list", "restore", "purge"},
 	"config":     {"init", "show", "validate", "export-env", "path"},
@@ -46,6 +46,7 @@ var completionFlags = map[string][]string{
 	"cert export":   {"--out"},
 	"cert platform": {"--platforms", "--installers", "--zip", "--no-reload"},
 	"cert package":  {"--platforms", "--installers", "--p12-profile", "--zip", "--no-reload"},
+	"cert import":   {"--p12", "--password-file", "--platforms", "--installers", "--p12-profile", "--allow-expired", "--zip"},
 	"pki downloads": {"--expired", "--all"},
 	"trash purge":   {"--expired"},
 	"config init":   {"--force", "--from-env"},

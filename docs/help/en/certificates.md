@@ -41,6 +41,7 @@ spaces, slashes, non-ASCII characters or `..`.
 | `neca trash purge <ID>` | Backend physical purge (Y/N, default N) |
 | `neca cert platform add / set <CN> ...` | Add packages or update platform metadata |
 | `neca cert package <CN> ...` | Rebuild packages from an existing certificate |
+| `neca cert import <CN> --p12 ... --password-file ...` | Import a current-CA p12 (expired needs confirmation) |
 | `neca cert export issued / revoked` | Export CSV |
 | `neca pki index sync` | Rebuild index/meta for manually installed certificates |
 

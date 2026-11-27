@@ -45,6 +45,7 @@ var helpTexts = map[string]string{
 	"config path":         "help.config.path",
 	"wizard":              "help.wizard",
 	"completion":          "help.completion",
+	"cert import":         "help.cert.import",
 }
 
 func helpRequested(args []string) bool {

@@ -46,4 +46,4 @@ FROM base AS lite
 COPY dist/neca-linux-${TARGETARCH} /usr/local/bin/neca
 RUN chmod 0755 /usr/local/bin/neca
 ENTRYPOINT ["/usr/local/bin/neca"]
-CMD ["help"]
+CMD ["wizard"]

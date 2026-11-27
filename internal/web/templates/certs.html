@@ -41,7 +41,7 @@
       <tbody>
       {{range .Certs}}
         <tr>
-          <td><a href="/certs/{{.CN}}" data-testid="cert-link">{{.CN}}</a></td>
+          <td><a href="/certs/{{.CN}}" data-testid="cert-link">{{.CN}}</a>{{if .ImportSource}} <span class="status muted">{{$.T "web.certs.imported"}}</span>{{end}}</td>
           <td><span class="status {{statusClass .Status}}">{{$.StatusLabel .Status}}</span></td>
           <td class="mono">{{.Serial}}</td>
           <td>{{if .Platforms}}{{join .Platforms ", "}}{{else}}-{{end}}</td>

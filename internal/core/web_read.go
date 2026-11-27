@@ -20,17 +20,20 @@ import (
 // 不扫描 pki 根目录；这样 Web 容器可以完全不挂载 ca.key 与客户端私钥。
 // Status 使用稳定英文值，StatusText 才用于页面展示。
 type WebCert struct {
-	CN          string    `json:"cn"`
-	Serial      string    `json:"serial"`
-	Status      string    `json:"status"`
-	StatusText  string    `json:"statusText"`
-	Platforms   []string  `json:"platforms"`
-	Expires     string    `json:"expires"`
-	ExpiresAt   time.Time `json:"expiresAt"`
-	Subject     string    `json:"subject,omitempty"`
-	Fingerprint string    `json:"fingerprint,omitempty"`
-	SAN         string    `json:"san,omitempty"`
-	Note        string    `json:"note,omitempty"`
+	CN           string    `json:"cn"`
+	Serial       string    `json:"serial"`
+	Status       string    `json:"status"`
+	StatusText   string    `json:"statusText"`
+	Platforms    []string  `json:"platforms"`
+	Expires      string    `json:"expires"`
+	ExpiresAt    time.Time `json:"expiresAt"`
+	Subject      string    `json:"subject,omitempty"`
+	Fingerprint  string    `json:"fingerprint,omitempty"`
+	SAN          string    `json:"san,omitempty"`
+	Note         string    `json:"note,omitempty"`
+	Created      string    `json:"created,omitempty"`
+	NotBefore    string    `json:"notBefore,omitempty"`
+	ImportSource string    `json:"importSource,omitempty"`
 }
 
 // WebCertList 是 Web 列表结果。
@@ -138,6 +141,14 @@ func ValidateCNName(cn string) error {
 	return validateCN(cn)
 }
 
+func metaValue(metaDir, cn, key string) string {
+	meta, err := LoadMeta(MetaPath(metaDir, cn))
+	if err != nil || meta == nil {
+		return ""
+	}
+	return meta.Get(key)
+}
+
 func webCertFromFile(ctx context.Context, cfg *Config, index map[string]ports.Row, oss *OpenSSL, certPath string) (WebCert, error) {
 	cn, err := oss.CN(ctx, certPath)
 	if err != nil {
@@ -172,6 +183,8 @@ func webCertFromFile(ctx context.Context, cfg *Config, index map[string]ports.Ro
 	return WebCert{
 		CN: cn, Serial: serial, Status: status, StatusText: statusText,
 		Platforms: platforms, Expires: strings.TrimSuffix(rawEnd, " GMT"),
-		ExpiresAt: expiresAt.UTC(),
+		ExpiresAt: expiresAt.UTC(), Created: metaValue(cfg.MetaDir, cn, "CREATED"),
+		NotBefore:    metaValue(cfg.MetaDir, cn, "NOT_BEFORE"),
+		ImportSource: strings.ToLower(metaValue(cfg.MetaDir, cn, "IMPORT_SOURCE")),
 	}, nil
 }

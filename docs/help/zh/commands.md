@@ -18,7 +18,7 @@
 | `--version` / `-V` | 显示版本、提交号、构建时间与平台 |
 | `-h` / `--help` | 显示当前层帮助 |
 
-`--dry-run` 只拦截会写状态的命令：cert 的 issue/reissue/revoke/unrevoke/trash/platform/package/export，pki index sync、pki downloads clean，trash restore/purge，以及 web 的 readonly on/off、idle-timeout 修改、export on/off、lock、lockdown。只读命令不受影响。
+`--dry-run` 只拦截会写状态的命令：cert 的 issue/reissue/revoke/unrevoke/trash/platform/package/export，pki index sync、pki downloads clean，trash restore/purge，以及 web 的 readonly on/off、idle-timeout 修改、export on/off、lock、lockdown。只读命令不受影响。`cert import` 是例外：`--dry-run` 由命令自身执行只读校验并输出计划，不写入。
 
 **退出码**：`0` 成功（允许附带 WARN）；`1` 用法错误；`2` 运行期失败；`3` 前置条件不满足（证书已存在、缺 CA、helper 不可用、权限不足等）。
 
@@ -192,6 +192,18 @@ neca cert package alice --platforms windows,android --installers windows --p12-p
 ~~~
 
 从已有证书重建平台包，不签发新证书、不更换密钥。参数与 issue 的平台/安装器/p12 部分相同。
+
+### cert import
+
+~~~bash
+neca cert import alice --p12 alice.p12 --password-file alice.p12.pass
+neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --allow-expired
+neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --dry-run
+~~~
+
+v1 只导入由当前 CA 签发、能通过当前 CA 证书链校验的 p12。p12 必须恰好包含一个客户端证书和一个匹配私钥；CN、序列号、clients 目录或 meta 冲突时拒绝，不覆盖、不 repair。密码文件必须是权限 0600 的普通文件。
+
+过期证书默认拒绝；使用 `--allow-expired` 并完成 Y/N 二次确认后，以 index 状态 E 导入，并提示随后执行 `neca cert reissue <CN>` 或 `neca cert revoke <CN>`。JSON 模式需要同时提供 `--allow-expired`（仅过期时）和 `--yes`。`--zip` 可在导入后生成下载包；`--platforms`/`--installers`/`--p12-profile` 与 issue 语义一致。
 
 ## pki：索引与下载目录
 

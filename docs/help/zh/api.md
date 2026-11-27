@@ -85,7 +85,7 @@ curl -sS -b "$JAR" "$BASE/api/v1/capabilities" | jq .
 
 `expiry` 只返回未来窗口内到期的 `valid` 证书；非法值会被忽略。
 
-不支持 delete、package 或设置编辑。
+不支持 delete、package 或设置编辑。证书对象在导入后额外包含平铺的 `created`、`notBefore`、`importSource`；旧证书没有这些字段时省略，不作为有效性判断依据。
 
 ## 示例：签发
 

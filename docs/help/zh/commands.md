@@ -12,7 +12,7 @@
 | `--dry-run` | 只打印将要执行的写命令，不执行、不修改文件 |
 | `--yes` / `-y` | 跳过 Y/N 确认；审计记录会标记为显式确认 |
 | `-q` / `--quiet` | 仅输出错误；与 `--json` 并用时以 JSON 为准 |
-| `--lang zh-CN\|en-US` | 覆盖本次命令语言；未指定时读取配置 |
+| `--lang zh-CN\|zh-TW\|en-US` | 覆盖本次命令语言；未指定时读取配置 |
 | `--config <文件>` | 本次命令使用指定配置文件（等价设置 `NECA_CONFIG`） |
 | `--reload-mode creds\|restart` | 覆盖 CRL 重载方式（等价设置 `NECA_RELOAD_MODE`） |
 | `--version` / `-V` | 显示版本、提交号、构建时间与平台 |

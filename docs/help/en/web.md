@@ -139,7 +139,7 @@ unset; no public TLS/mTLS endpoint is required by this configuration.
 
 ## Language and theme
 
-- zh-CN/en-US switching is available via the `neca_lang` cookie.
+- zh-CN/zh-TW/en-US switching is available via the `neca_lang` cookie.
 - The default language follows `neca.json` `language`.
 - Light/dark theme is stored in browser localStorage.
 - Theme and language controls live under Settings → General; they do not change server permissions or read-only state.

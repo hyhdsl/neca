@@ -23,7 +23,7 @@ docker compose run -T --rm dev make shadow
 | `make all` | gofmt + vet + ASCII + 测试 + 交叉编译 |
 | `make vuln` | govulncheck 依赖漏洞扫描（需联网） |
 | `make shadow` | 旧 bash 与 neca 的影子对比 |
-| `make check-locales` | zh-CN/en-US 语言包 key 一致性 |
+| `make check-locales` | zh-CN/zh-TW/en-US 语言包 key 一致性 |
 | `make docker` | 构建 lite 与 neca-web 镜像 |
 
 ## 架构

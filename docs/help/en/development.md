@@ -24,7 +24,7 @@ Common commands:
 | `make all` | gofmt + vet + ASCII + tests + cross-compile |
 | `make vuln` | govulncheck dependency vulnerability scan |
 | `make shadow` | shadow comparison between the old bash implementation and neca |
-| `make check-locales` | zh-CN/en-US locale key consistency |
+| `make check-locales` | zh-CN/zh-TW/en-US locale key consistency |
 | `make docker` | build the lite and neca-web images |
 
 ## Architecture

@@ -58,6 +58,8 @@ func newWebTranslator(language string) (*webTranslator, error) {
 func normalizeWebLanguage(raw string) string {
 	value := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(raw), "_", "-"))
 	switch {
+	case value == "zh-tw" || strings.HasPrefix(value, "zh-hant"):
+		return "zh-TW"
 	case value == "zh" || strings.HasPrefix(value, "zh-"):
 		return "zh-CN"
 	case value == "en" || strings.HasPrefix(value, "en-"):

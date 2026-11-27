@@ -12,7 +12,7 @@
 | `--dry-run` | Print the write command that would run; do not execute or modify files |
 | `--yes` / `-y` | Skip the Y/N confirmation; the audit entry records explicit confirmation |
 | `-q` / `--quiet` | Suppress normal output; `--json` takes precedence |
-| `--lang zh-CN\|en-US` | Override the language for this invocation |
+| `--lang zh-CN\|zh-TW\|en-US` | Override the language for this invocation |
 | `--config <file>` | Use a specific config file (sets `NECA_CONFIG`) |
 | `--reload-mode creds\|restart` | Override CRL reload mode (sets `NECA_RELOAD_MODE`) |
 | `--version` / `-V` | Show version, commit, build time and platform |

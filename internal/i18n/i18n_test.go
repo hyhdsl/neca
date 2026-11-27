@@ -8,12 +8,13 @@ import (
 
 func TestLocaleKeysAligned(t *testing.T) {
 	zh := Keys("zh-CN")
+	tw := Keys("zh-TW")
 	en := Keys("en-US")
-	if len(zh) == 0 || len(en) == 0 {
+	if len(zh) == 0 || len(tw) == 0 || len(en) == 0 {
 		t.Fatal("locale catalogs must not be empty")
 	}
-	if !reflect.DeepEqual(zh, en) {
-		t.Fatalf("zh-CN/en-US keys differ:\nzh=%v\nen=%v", zh, en)
+	if !reflect.DeepEqual(zh, tw) || !reflect.DeepEqual(zh, en) {
+		t.Fatalf("locale keys differ: zh=%d tw=%d en=%d", len(zh), len(tw), len(en))
 	}
 }
 
@@ -23,6 +24,9 @@ func TestNormalizeAndSelect(t *testing.T) {
 		"zh":      "zh-CN",
 		"zh_CN":   "zh-CN",
 		"zh-Hans": "zh-CN",
+		"zh-TW":   "zh-TW",
+		"zh_TW":   "zh-TW",
+		"zh-Hant": "zh-TW",
 		"en":      "en-US",
 		"en_US":   "en-US",
 	}

@@ -25,6 +25,7 @@
         <input type="hidden" name="next" value="{{.Path}}">
         <select id="language-select" name="lang" data-auto-submit data-testid="language-select" aria-label="{{.T "web.action.language"}}">
           <option value="zh-CN" {{if eq .Lang "zh-CN"}}selected{{end}}>中文</option>
+          <option value="zh-TW" {{if eq .Lang "zh-TW"}}selected{{end}}>繁體中文</option>
           <option value="en-US" {{if eq .Lang "en-US"}}selected{{end}}>English</option>
         </select>
         <noscript><button type="submit" class="button secondary">{{.T "web.settings.apply_language"}}</button></noscript>

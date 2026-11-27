@@ -233,10 +233,10 @@ func isWriteEndpoint(path string) bool {
 		return true
 	}
 	if strings.HasPrefix(path, "/api/v1/certs/") {
-		return strings.HasSuffix(path, "/revoke") || strings.HasSuffix(path, "/unrevoke") || strings.HasSuffix(path, "/reissue")
+		return strings.HasSuffix(path, "/revoke") || strings.HasSuffix(path, "/unrevoke") || strings.HasSuffix(path, "/reissue") || strings.HasSuffix(path, "/trash")
 	}
 	if strings.HasPrefix(path, "/certs/") {
-		return strings.HasSuffix(path, "/revoke") || strings.HasSuffix(path, "/unrevoke") || strings.HasSuffix(path, "/reissue")
+		return strings.HasSuffix(path, "/revoke") || strings.HasSuffix(path, "/unrevoke") || strings.HasSuffix(path, "/reissue") || strings.HasSuffix(path, "/trash")
 	}
 	return false
 }

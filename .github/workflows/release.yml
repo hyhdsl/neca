@@ -73,7 +73,8 @@ jobs:
           cd dist
           sha256sum neca-linux-amd64 neca-linux-arm64 \
             necad-linux-amd64 necad-linux-arm64 \
-            neca-web-helper-linux-amd64 neca-web-helper-linux-arm64 > checksums.txt
+            neca-web-helper-linux-amd64 neca-web-helper-linux-arm64 \
+            necap-linux-amd64 necap-linux-arm64 > checksums.txt
 
       - name: Sign checksums
         env:
@@ -107,6 +108,8 @@ jobs:
             dist/necad-linux-arm64 \
             dist/neca-web-helper-linux-amd64 \
             dist/neca-web-helper-linux-arm64 \
+            dist/necap-linux-amd64 \
+            dist/necap-linux-arm64 \
             dist/checksums.txt \
             dist/checksums.txt.asc \
             dist/neca-gpg-key.asc \

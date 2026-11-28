@@ -48,9 +48,23 @@ func TestWizardImportExportSubmenu(t *testing.T) {
 		t.Fatalf("exit = %d, stderr = %q", code, errOut.String())
 	}
 	text := out.String()
-	for _, want := range []string{"Import p12 certificate", "Export issued CSV", "Export revoked CSV"} {
+	for _, want := range []string{"Import p12 certificate", "Import PEM certificate + private key", "Export issued CSV", "Export revoked CSV"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("import/export submenu missing %q: %q", want, text)
+		}
+	}
+}
+
+func TestWizardCertKeyImportPrompt(t *testing.T) {
+	var out, errOut bytes.Buffer
+	code := RunWithIO([]string{"--lang", "en-US"}, strings.NewReader("2\n2\nWIZKEY\n/tmp/cert.pem\n/tmp/key.pem\n\n\n"), &out, &errOut)
+	if code != ExitOK {
+		t.Fatalf("exit = %d, stderr = %q", code, errOut.String())
+	}
+	text := out.String()
+	for _, want := range []string{"Certificate PEM path:", "Private key PEM path:", "--cert /tmp/cert.pem", "--key /tmp/key.pem"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("cert+key wizard output missing %q: %q", want, text)
 		}
 	}
 }

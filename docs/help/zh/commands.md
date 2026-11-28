@@ -41,7 +41,7 @@ neca cert --help
 neca cert issue --help
 ~~~
 
-不带参数运行 `neca` 会进入交互向导；`neca wizard` 也可显式进入。向导顶部显示版本信息和 `neca help` 提示；一级菜单为证书管理、导入 / 导出、回收站、维护与诊断、帮助。导入 / 导出下可导入 p12、导出已签发 CSV、导出已吊销 CSV。每个动作执行前会打印等价 CLI 命令。
+不带参数运行 `neca` 会进入交互向导；`neca wizard` 也可显式进入。向导顶部显示版本信息和 `neca help` 提示；一级菜单为证书管理、导入 / 导出、回收站、维护与诊断、帮助。导入 / 导出下可导入 p12、导入 PEM 证书 + 私钥、导出已签发 CSV、导出已吊销 CSV。每个动作执行前会打印等价 CLI 命令。
 
 ### neca completion
 

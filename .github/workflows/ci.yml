@@ -1,7 +1,7 @@
 # neca CI（M0 落地，开发文档 §15.2）
 #
 # 触发：
-#   - main 与功能分支的 push（文档 §15.1 分支命名：feat/ fix/ chore/）
+#   - main、功能分支与临时 release 分支的 push（分支标准见 .github/CONTRIBUTING.md）
 #   - 所有 pull_request
 #
 # 门禁（文档 §13.4）：
@@ -24,7 +24,10 @@ on:
       - main
       - "feat/**"
       - "fix/**"
+      - "docs/**"
       - "chore/**"
+      - "security/**"
+      - "release/**"
   pull_request:
 
 # 最小权限：CI 只读仓库内容，不使用任何 secret。
@@ -97,3 +100,31 @@ jobs:
             dist/neca-web-helper-linux-*
           retention-days: 7
           if-no-files-found: error
+
+  docker-smoke:
+    name: docker-smoke
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 下载已构建二进制
+        uses: actions/download-artifact@v4
+        with:
+          name: neca-linux
+          path: dist
+
+      - name: 构建 lite 镜像并验证无参数向导
+        run: |
+          docker build --target lite -t neca-ci-lite .
+          printf '0\n' | docker run --rm -i neca-ci-lite 2>&1 | tee /tmp/neca-wizard.txt
+          grep -q 'neca 交互向导' /tmp/neca-wizard.txt
+
+      - name: 构建 web 镜像并验证 necad 可执行
+        run: |
+          docker build --target web -t neca-ci-web .
+          docker run --rm --entrypoint /usr/local/bin/necad neca-ci-web --version

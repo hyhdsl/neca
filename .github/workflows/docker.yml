@@ -4,15 +4,55 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: docker-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
+  preflight:
+    name: image-preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag source and CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "invalid release tag: $tag" >&2
+            exit 1
+          fi
+          commit="$(git rev-list -n 1 "$GITHUB_REF")"
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
+          if ! git branch -r --contains "$commit" | grep -Eq 'origin/(main|release/[0-9]+\.[0-9]+)$'; then
+            echo "tag commit $commit is not on main or release/x.y" >&2
+            exit 1
+          fi
+          conclusion="$(gh api "repos/${{ github.repository }}/commits/$commit/check-runs" --jq '[.check_runs[] | select(.name == "build-and-test")] | sort_by(.started_at) | last | .conclusion')"
+          if [[ "$conclusion" != "success" ]]; then
+            echo "required build-and-test check is not successful: $conclusion" >&2
+            exit 1
+          fi
+
   image:
     name: build-and-push
+    needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

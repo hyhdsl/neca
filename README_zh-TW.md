@@ -18,7 +18,7 @@
 
 **Neko's Efficient Certificate Administrator（neca，亦寫作 NECA）** 是面向 strongSwan IKEv2 的輕量憑證管理工具。一個 Go CLI、一個選用且預設唯讀的 Web 面板，以及一條受控的 root helper 寫入邊界。
 
-🌐 [首頁](https://neca.nekobiglazyer.work) · 🇨🇳 [簡體中文文件](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.5.2](https://github.com/hyhdsl/neca/releases/tag/v1.5.2)
+🌐 [首頁](https://neca.nekobiglazyer.work) · 🇨🇳 [簡體中文文件](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.6.0](https://github.com/hyhdsl/neca/releases/tag/v1.6.0)
 
 ## ✨ 特性
 
@@ -42,7 +42,7 @@
 固定版本標籤，先 dry-run，再簽發：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.5.2
+docker pull ghcr.io/hyhdsl/neca:v1.6.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -59,12 +59,12 @@ neca cert import-batch ./batch --password-dir ./secrets --dry-run
 從 v1.5.1 起，正式 Release 提供 GPG 簽章的 <code>checksums.txt.asc</code> 與公鑰 <code>neca-gpg-key.asc</code>。Release 資產由專用 Ed25519 發布金鑰簽章，Git tag 仍使用既有個人 neca 金鑰，兩條鏈相互獨立。
 
 ~~~bash
-gh release download v1.5.2 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gh release download v1.6.0 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
 gpg --import neca-gpg-key.asc
 gpg --fingerprint E514EB7C153AA24A3E4241F846CC03EE21F66795
 gpg --verify checksums.txt.asc checksums.txt
 sha256sum -c checksums.txt
-git fetch --tags && git tag -v v1.5.2
+git fetch --tags && git tag -v v1.6.0
 ~~~
 
 發布金鑰指紋為 <code>E514EB7C153AA24A3E4241F846CC03EE21F66795</code>；Git tag 簽章者指紋為 <code>4DE8259A9C3E832137506D3C9398D6D10FD5A903</code>。完整步驟與疑難排解見 [GPG 驗證](https://neca.nekobiglazyer.work/zh-TW/#/gpg)。
@@ -119,9 +119,9 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 狀態
 
-- **目前穩定版**：v1.5.2（2026-11-28 發布）
-- **已完成**：M0–M12；v1.5.0 批次匯入；v1.5.1 專用 GPG 發布簽章；v1.5.2 精靈 cert+key 匯入
-- **後續**：v1.6.0 設定 schema 與 Passkey 評估；Go 1.27 試評估；其他語言文件同步
+- **目前穩定版**：v1.6.0（2026-11-28 發布）
+- **已完成**：M0–M12；v1.5.0 批次匯入；v1.5.1 專用 GPG 發布簽章；v1.5.2 精靈 cert+key 匯入；v1.6.0 設定 schema v2
+- **後續**：v1.7 Passkey 評估；Go 1.27 試評估；其他語言文件同步
 - **邊界**：Passkey 僅有設定與介面預留，未註冊登入路由；Web API 為實驗性介面
 
 ## ⚖️ 授權條款與致謝

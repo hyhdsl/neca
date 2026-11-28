@@ -5,7 +5,7 @@
 > [!IMPORTANT]
 > This English README is a convenience translation. The [Chinese README](README.md) is the **authoritative version**; this translation may lag behind and is not guaranteed to be current. Other language versions will be updated separately on a scheduled basis. Normally, only the Chinese README is kept up to date.
 >
-> Translation status: synchronized with the v1.5.2 release on 2026-11-28; the Chinese README remains authoritative.
+> Translation status: synchronized with the v1.6.0 release on 2026-11-28; the Chinese README remains authoritative.
 
 > [!WARNING]
 > **AI disclosure (read before use)**: Code, debugging, tests, CI/build/deploy scripts, documentation and help-site content are primarily produced by an AI coding assistant; the human maintainer is responsible for requirements, review, functional acceptance and production operations. See [AI-DISCLOSURE_EN.md](AI-DISCLOSURE_EN.md) for the full scope.
@@ -20,7 +20,7 @@
 
 **Neko's Efficient Certificate Administrator (neca, also written NECA)** is a lightweight certificate manager for strongSwan IKEv2. One Go CLI, an optional web panel that is read-only by default, and a controlled root-helper write boundary.
 
-🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.5.2](https://github.com/hyhdsl/neca/releases/tag/v1.5.2)
+🌐 [Home](https://neca.nekobiglazyer.work) · 🇨🇳 [Chinese docs](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.6.0](https://github.com/hyhdsl/neca/releases/tag/v1.6.0)
 
 ## ✨ Features
 
@@ -41,7 +41,7 @@
 Pin the version, dry-run first, then issue:
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.5.2
+docker pull ghcr.io/hyhdsl/neca:v1.6.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -58,12 +58,12 @@ When deploying, mount <code>/opt/ipsec</code> into the container and run it thro
 From v1.5.1 onward, official releases include a GPG-signed <code>checksums.txt.asc</code> and <code>neca-gpg-key.asc</code>. Release assets use a dedicated Ed25519 key; Git tags use the existing personal neca key. The chains are independent.
 
 ~~~bash
-gh release download v1.5.2 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gh release download v1.6.0 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
 gpg --import neca-gpg-key.asc
 gpg --fingerprint E514EB7C153AA24A3E4241F846CC03EE21F66795
 gpg --verify checksums.txt.asc checksums.txt
 sha256sum -c checksums.txt
-git fetch --tags && git tag -v v1.5.2
+git fetch --tags && git tag -v v1.6.0
 ~~~
 
 The release-key fingerprint is <code>E514EB7C153AA24A3E4241F846CC03EE21F66795</code>; the Git-tag signer fingerprint is <code>4DE8259A9C3E832137506D3C9398D6D10FD5A903</code>. See [GPG verification](https://neca.nekobiglazyer.work/en/#/gpg) for the full procedure and troubleshooting.
@@ -118,9 +118,9 @@ Common checks: <code>make check-docs</code>, <code>make check-locales</code>, <c
 
 ## 📌 Status
 
-- **Current stable**: v1.5.2 (released 2026-11-28)
-- **Completed**: M0–M12; v1.5.0 batch import; v1.5.1 dedicated GPG release signing; v1.5.2 wizard cert+key import
-- **Next**: v1.6.0 config-schema and Passkey evaluation; Go 1.27 trial evaluation; other-language documentation sync
+- **Current stable**: v1.6.0 (released 2026-11-28)
+- **Completed**: M0–M12; v1.5.0 batch import; v1.5.1 dedicated GPG release signing; v1.5.2 wizard cert+key import; v1.6.0 config schema v2
+- **Next**: v1.7 Passkey evaluation; Go 1.27 trial evaluation; other-language documentation sync
 - **Boundaries**: Passkey has configuration and reserved interfaces only (no login routes yet); the Web API is experimental
 
 ## ⚖️ License and acknowledgements

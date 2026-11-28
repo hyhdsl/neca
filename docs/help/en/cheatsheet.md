@@ -1,6 +1,6 @@
 # Command cheat sheet
 
-> Applies to neca v1.5.2.
+> Applies to neca v1.6.0.
 > Run write commands with `--dry-run` first. Interactive confirmation defaults to N; automation may pass `--yes` (audited).
 
 ## Version, config and diagnostics

@@ -46,6 +46,7 @@ var helpTexts = map[string]string{
 	"wizard":              "help.wizard",
 	"completion":          "help.completion",
 	"cert import":         "help.cert.import",
+	"cert import-batch":   "help.cert.import-batch",
 }
 
 func helpRequested(args []string) bool {

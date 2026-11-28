@@ -28,15 +28,15 @@ type passResult struct {
 }
 
 type passStatus struct {
-	Policy        string `json:"Policy"`
-	TOTP          bool   `json:"TOTP"`
-	Passkeys      int    `json:"Passkeys"`
-	RecoveryCodes int    `json:"RecoveryCodes"`
+	Policy        string `json:"policy"`
+	TOTP          bool   `json:"totp"`
+	Passkeys      int    `json:"passkeys"`
+	RecoveryCodes int    `json:"recoveryCodes"`
 }
 
 type passTOTPEnrollment struct {
-	ChallengeID string `json:"ChallengeID"`
-	URI         string `json:"URI"`
+	ChallengeID string `json:"challengeId"`
+	URI         string `json:"uri"`
 }
 
 type passkeyInfo struct {
@@ -53,6 +53,9 @@ func newPassCommand() Command {
 			if len(env.Args) > 0 && (env.Args[0] == "--help" || env.Args[0] == "-h") {
 				fmt.Fprintln(env.Stdout, i18n.T("pass.help"))
 				return ExitOK
+			}
+			if err := requireRoot(); err != nil {
+				return fail(env, err)
 			}
 			if len(env.Args) == 0 || env.Args[0] == "status" {
 				return runPassStatus(env)

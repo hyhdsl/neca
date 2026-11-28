@@ -20,3 +20,4 @@ Thumbs.db
 # 本地环境覆盖（fixture.env 由 testdata/gen-fixture.sh 生成，不入库）
 fixture.env
 *.local
+.dsh/skills/neca-dev/SKILL.md

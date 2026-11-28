@@ -46,10 +46,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 安装 Go（版本取自 go.mod）
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
@@ -91,7 +91,7 @@ jobs:
           ./dist/neca-web-helper-linux-amd64 --version
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: neca-linux
           path: |
@@ -110,10 +110,10 @@ jobs:
       contents: read
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 下载已构建二进制
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: neca-linux
           path: dist

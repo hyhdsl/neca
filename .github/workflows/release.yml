@@ -53,6 +53,7 @@ jobs:
     name: build-and-release
     needs: preflight
     runs-on: ubuntu-latest
+    environment: release-signing
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -74,6 +75,23 @@ jobs:
             necad-linux-amd64 necad-linux-arm64 \
             neca-web-helper-linux-amd64 neca-web-helper-linux-arm64 > checksums.txt
 
+      - name: Sign checksums
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$RUNNER_TEMP/gnupg"
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          printf '%s\n' "$GPG_PRIVATE_KEY" | gpg --batch --import
+          key_id="$(gpg --show-keys --with-colons keys/neca-release-signing.asc | awk -F: '$1=="fpr"{print $10; exit}')"
+          test -n "$key_id"
+          printf '%s' "$GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback --passphrase-fd 0 \
+            --local-user "$key_id" --armor --detach-sign \
+            --output dist/checksums.txt.asc dist/checksums.txt
+          gpg --verify dist/checksums.txt.asc dist/checksums.txt
+          gpg --armor --export "$key_id" > dist/neca-gpg-key.asc
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -90,6 +108,8 @@ jobs:
             dist/neca-web-helper-linux-amd64 \
             dist/neca-web-helper-linux-arm64 \
             dist/checksums.txt \
+            dist/checksums.txt.asc \
+            dist/neca-gpg-key.asc \
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             "${extra[@]}"

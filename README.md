@@ -62,7 +62,7 @@ sha256sum -c checksums.txt
 git fetch --tags && git tag -v v1.5.0
 ~~~
 
-当前签名使用既有 neca GPG 密钥；专用发布签名子密钥与 CI 自动化在 v1.5.1 规划中。
+v1.5.0 使用既有 neca GPG 密钥；v1.5.1 起 Release 由专用 Ed25519 发布密钥在受保护的 release-signing environment 自动签名。公钥提交在 keys/neca-release-signing.asc，且随 Release 发布。
 
 ## 🧮 运行资源基线
 

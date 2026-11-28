@@ -228,7 +228,8 @@ secrets/
 - p12 密码文件支持 CN.pass；兼容旧命名的 CN.p12.pass。加密 key 使用 CN.key.pass。
 - 可选 entry.json 仅覆盖 platforms、installers、p12Profile、allowExpired；不要写密码或任意路径。
 - 单条失败不会回滚其他成功项；退出码 3 表示至少一条失败，逐项结果仍会输出。
-- 实际导入是非交互批次，必须显式 --yes；--dry-run 不写文件。
+- 过期证书需要 allowExpired/--allow-expired；实际导入仍必须显式 --yes，--dry-run 不写文件。
+- CN 目录只放固定文件；未知非隐藏文件、子目录或符号链接会让该条失败。
 - 保持 CLI-only；Web/helper 不接收 p12、私钥或口令。本版本不在向导中增加批量入口。
 
 ## pki：索引与下载目录

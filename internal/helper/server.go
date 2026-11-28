@@ -42,6 +42,7 @@ type Server struct {
 	store     *core.FileIndexStore
 	oss       *core.OpenSSL
 	engine    *core.Engine
+	necap     *NeCapClient
 
 	mu    sync.Mutex
 	cache map[string]cacheEntry
@@ -57,6 +58,9 @@ func NewServer(cfg *core.Config, cfgPath string) *Server {
 		oss:   core.NewOpenSSL(runner), engine: core.NewEngine(cfg, runner),
 		cache: map[string]cacheEntry{}, now: time.Now,
 	}
+	if socket := strings.TrimSpace(os.Getenv("NECAP_SOCKET")); socket != "" {
+		server.necap = NewNeCapClient(socket)
+	}
 	if server.cacheFile != "" {
 		server.loadCache()
 	}
@@ -69,6 +73,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", s.handleStatus)
 	mux.HandleFunc("POST /v1/execute", s.handleExecute)
 	mux.HandleFunc("POST /v1/settings", s.handleSettings)
+	mux.HandleFunc("POST /v1/necap", s.handleNeCap)
 	return mux
 }
 
@@ -85,6 +90,31 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		OK: true, Protocol: ProtocolVersion, Version: version.Get().Version,
 		ReadOnly: cfg.Web.ReadOnly, Socket: os.Getenv("NECA_WEB_HELPER_SOCKET"),
 	})
+}
+
+func (s *Server) handleNeCap(w http.ResponseWriter, r *http.Request) {
+	if s.necap == nil {
+		writeHelperJSON(w, http.StatusServiceUnavailable, Response{OK: false, Protocol: ProtocolVersion, Error: &Error{Code: "necap_unavailable", Message: "necap 未配置"}})
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	var req NeCapProxyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeHelperJSON(w, http.StatusBadRequest, Response{OK: false, Protocol: ProtocolVersion, Error: &Error{Code: "bad_request", Message: "necap 请求格式错误"}})
+		return
+	}
+	status, body, err := s.necap.Forward(r.Context(), req.Path, req.Payload)
+	if err != nil {
+		writeHelperJSON(w, http.StatusBadGateway, Response{OK: false, Protocol: ProtocolVersion, Error: &Error{Code: "necap_error", Message: err.Error()}})
+		return
+	}
+	writeNeCapProxy(w, NeCapProxyResponse{Status: status, Body: body})
+}
+
+func writeNeCapProxy(w http.ResponseWriter, response NeCapProxyResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {

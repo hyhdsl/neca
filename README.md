@@ -18,7 +18,7 @@
 
 **Neko's Efficient Certificate Administrator（neca，亦写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具。一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
 
-🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.3.1](https://github.com/hyhdsl/neca/releases/tag/v1.3.1)
+🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.4.0](https://github.com/hyhdsl/neca/releases/tag/v1.4.0)
 
 ## ✨ 特性
 
@@ -37,7 +37,7 @@
 固定版本标签，先 dry-run，再签发：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.3.1
+docker pull ghcr.io/hyhdsl/neca:v1.4.0
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -95,9 +95,9 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 状态
 
-- **当前稳定版**：v1.3.1（2026-11-28 发布）
-- **已完成**：M0–M12；v1.3.x 证书导入、Web 写路径与向导整改；v1.4 cert+key 已合入 main（未发布）
-- **后续**：v1.4 候选发布与批量导入；v1.5.0 配置 schema 与 Passkey 评估
+- **当前稳定版**：v1.4.0（2026-11-28 发布）
+- **已完成**：M0–M12；v1.4 cert+key 导入、事务标记/恢复、Node 24 Actions 与运行资源基线
+- **后续**：批量导入；v1.5.0 配置 schema 与 Passkey 评估
 - **边界**：Passkey 仅有配置和接口预留，未注册登录路由；Web API 为实验性接口
 
 ## ⚖️ 许可与致谢

@@ -319,6 +319,7 @@ func writeAuthCompletion(w http.ResponseWriter, result *AuthResult, grant *Manag
 	}
 	if grant != nil {
 		response["managementToken"] = grant.Token
+		response["userId"] = grant.UserID
 		response["expires"] = grant.Expires
 	}
 	writeJSON(w, http.StatusOK, response)

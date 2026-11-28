@@ -1,0 +1,79 @@
+{{/* 本模板渲染 necap 安全设置。 */}}
+{{define "content"}}
+<section class="panel" aria-labelledby="necap-security-title">
+  <div class="panel-head"><h2 id="necap-security-title">{{.T "web.settings.security_title"}}</h2></div>
+  <p class="muted">{{.T "web.settings.necap_desc"}}</p>
+  {{if .NeCapError}}<div class="alert danger" role="alert" data-testid="necap-error">{{.NeCapError}}</div>{{end}}
+  {{if not .NeCapAdmin}}
+  <h3>{{.T "web.settings.necap_reauth_title"}}</h3>
+  <p class="muted">{{.T "web.settings.necap_reauth_desc"}}</p>
+  <form method="post" action="/settings/security/reauth" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+    <label class="setting-field">{{.T "web.login.password"}}
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <label class="setting-field">{{.T "web.settings.necap_reauth_code"}}
+      <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code">
+    </label>
+    <button type="submit" class="button primary">{{.T "web.settings.necap_reauth_submit"}}</button>
+  </form>
+  {{else}}
+  {{if .NeCapStatus}}
+  <dl class="detail-list">
+    <dt>{{.T "web.settings.necap_policy"}}</dt><dd>{{.NeCapStatus.Policy}}</dd>
+    <dt>{{.T "web.settings.necap_totp"}}</dt><dd>{{if .NeCapStatus.TOTP}}{{.T "web.settings.yes"}}{{else}}{{.T "web.settings.no"}}{{end}}</dd>
+    <dt>{{.T "web.settings.necap_passkeys"}}</dt><dd>{{.NeCapStatus.Passkeys}}</dd>
+    <dt>{{.T "web.settings.necap_recovery"}}</dt><dd>{{.NeCapStatus.RecoveryCodes}}</dd>
+  </dl>
+  {{end}}
+  {{if .NeCapStatus}}
+  <h3>{{.T "web.settings.necap_policy_set"}}</h3>
+  <form method="post" action="/settings/security/policy" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+    <label class="setting-field">{{.T "web.settings.necap_policy"}}
+      <select name="mode">
+        <option value="password" {{if eq .NeCapStatus.Policy "password"}}selected{{end}}>{{.T "web.settings.necap_policy_password"}}</option>
+        <option value="totp" {{if eq .NeCapStatus.Policy "totp"}}selected{{end}}>{{.T "web.settings.necap_policy_totp"}}</option>
+        <option value="passkey" {{if eq .NeCapStatus.Policy "passkey"}}selected{{end}}>{{.T "web.settings.necap_policy_passkey"}}</option>
+        <option value="any" {{if eq .NeCapStatus.Policy "any"}}selected{{end}}>{{.T "web.settings.necap_policy_any"}}</option>
+      </select>
+    </label>
+    <button type="submit" class="button">{{.T "web.settings.necap_policy_save"}}</button>
+  </form>
+  {{end}}
+  {{if .NeCapTotpURI}}
+  <h3>{{.T "web.settings.necap_totp_setup"}}</h3>
+  <p class="muted">{{.T "web.settings.necap_totp_uri_hint"}}</p>
+  <pre class="code-block">{{.NeCapTotpURI}}</pre>
+  <form method="post" action="/settings/security/totp/finish" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+    <label class="setting-field">{{.T "web.login.2fa.totp"}}
+      <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6,8}" maxlength="8" required>
+    </label>
+    <button type="submit" class="button primary">{{.T "web.settings.necap_totp_finish"}}</button>
+  </form>
+  {{else}}
+  <form method="post" action="/settings/security/totp/begin" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+    <button type="submit" class="button">{{.T "web.settings.necap_totp_begin"}}</button>
+  </form>
+  {{end}}
+  {{if .NeCapStatus}}{{if .NeCapStatus.TOTP}}
+  <form method="post" action="/settings/security/totp/delete" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+    <button type="submit" class="button danger">{{.T "web.settings.necap_totp_delete"}}</button>
+  </form>
+  {{end}}{{end}}
+  {{if .NeCapRecoveryCodes}}
+  <h3>{{.T "web.settings.necap_recovery_once"}}</h3>
+  <pre class="code-block">{{range .NeCapRecoveryCodes}}{{.}}
+{{end}}</pre>
+  {{end}}
+  <form method="post" action="/settings/security/recovery/regenerate" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+    <button type="submit" class="button">{{.T "web.settings.necap_recovery_regenerate"}}</button>
+  </form>
+  <p class="muted small">{{.T "web.settings.necap_passkey_note"}}</p>
+  {{end}}
+</section>
+{{end}}

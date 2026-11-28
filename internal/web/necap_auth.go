@@ -9,8 +9,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/hyhdsl/neca/internal/core"
 )
 
 const mfaCookieName = "neca_mfa"
@@ -76,7 +74,7 @@ func (s *Server) handleNeCapLogin(w http.ResponseWriter, r *http.Request, client
 		return
 	}
 	if challenge.Complete {
-		s.completeWebLogin(w, r, clientCN, next, "password")
+		s.completeWebLogin(w, r, clientCN, next, "password", challenge.UserID)
 		return
 	}
 	if challenge.PendingToken == "" || len(challenge.Methods) == 0 {
@@ -142,13 +140,11 @@ func (s *Server) clearPending(w http.ResponseWriter, r *http.Request) {
 	clearMFACookie(w, s.secureCookies)
 }
 
-func (s *Server) completeWebLogin(w http.ResponseWriter, r *http.Request, clientCN, next, method string) {
-	token, _, err := s.sessions.issue(clientCN)
-	if err != nil {
+func (s *Server) completeWebLogin(w http.ResponseWriter, r *http.Request, clientCN, next, method, userID string) {
+	if err := s.issueNeCapSession(w, clientCN, userID); err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	setSessionCookie(w, token, s.secureCookies, core.AbsoluteWebSessionTimeout)
 	s.clearPending(w, r)
 	s.limiter.reset(clientIP(r))
 	s.audit.log("login-success", clientIP(r), clientCN, method)
@@ -207,7 +203,7 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 		s.redirectWithError(w, r, "totp")
 		return
 	}
-	s.completeWebLogin(w, r, pending.ClientCN, pending.Next, "totp")
+	s.completeWebLogin(w, r, pending.ClientCN, pending.Next, "totp", pending.UserID)
 }
 
 func (s *Server) handleLoginRecovery(w http.ResponseWriter, r *http.Request) {
@@ -234,7 +230,7 @@ func (s *Server) handleLoginRecovery(w http.ResponseWriter, r *http.Request) {
 		s.redirectWithError(w, r, "recovery")
 		return
 	}
-	s.completeWebLogin(w, r, pending.ClientCN, pending.Next, "recovery")
+	s.completeWebLogin(w, r, pending.ClientCN, pending.Next, "recovery", pending.UserID)
 }
 
 func (s *Server) redirectWithError(w http.ResponseWriter, r *http.Request, _ string) {
@@ -286,12 +282,10 @@ func (s *Server) handlePasskeyLoginFinish(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "invalid_passkey"})
 		return
 	}
-	token, _, err := s.sessions.issue(pending.ClientCN)
-	if err != nil {
+	if err := s.issueNeCapSession(w, pending.ClientCN, pending.UserID); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "internal"})
 		return
 	}
-	setSessionCookie(w, token, s.secureCookies, core.AbsoluteWebSessionTimeout)
 	s.clearPending(w, r)
 	s.limiter.reset(clientIP(r))
 	s.audit.log("login-success", clientIP(r), "", "passkey")

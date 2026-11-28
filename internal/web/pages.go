@@ -159,6 +159,10 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSettingsSecurity(w http.ResponseWriter, r *http.Request) {
+	if s.necapEnabled {
+		s.handleNeCapSecurity(w, r)
+		return
+	}
 	s.renderSettingsPage(w, r, "settings_security", "settings-security", "web.settings.security_title")
 }
 

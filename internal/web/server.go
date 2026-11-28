@@ -61,6 +61,9 @@ type Server struct {
 	necapUsername     string
 	pendingMu         sync.Mutex
 	pending           map[string]pendingMFA
+	necapUsers        map[string]string
+	necapAdmins       map[string]necapAdminGrant
+	necapSetups       map[string]necapSetup
 	translator        *webTranslator
 	translators       map[string]*webTranslator
 	now               func() time.Time
@@ -137,7 +140,9 @@ func New(opts Options) (*Server, error) {
 		helperClient: helperClient,
 		necapEnabled: opts.NeCapEnabled, necapUsername: strings.TrimSpace(opts.NeCapUsername),
 		pending:    map[string]pendingMFA{},
-		translator: defaultTranslator, translators: translators,
+		necapUsers: map[string]string{}, necapAdmins: map[string]necapAdminGrant{},
+		necapSetups: map[string]necapSetup{},
+		translator:  defaultTranslator, translators: translators,
 		sessions: newSessionManager(opts.SessionKey, idle, now),
 		limiter:  newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
 		templates: templates, static: http.FileServer(http.FS(staticFS)),
@@ -233,7 +238,7 @@ func (s *Server) readOnlyGuard(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if r.URL.Path == "/login" || r.URL.Path == "/logout" || strings.HasPrefix(r.URL.Path, "/login/") || isWriteEndpoint(r.URL.Path) {
+		if r.URL.Path == "/login" || r.URL.Path == "/logout" || strings.HasPrefix(r.URL.Path, "/login/") || strings.HasPrefix(r.URL.Path, "/settings/security/") || isWriteEndpoint(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -360,6 +365,12 @@ type pageData struct {
 	RecoveryAvailable  bool
 	RecoveryRemaining  int
 	NeCapEnabled       bool
+	NeCapAdmin         bool
+	NeCapStatus        *necapFactorStatus
+	NeCapTotpURI       string
+	NeCapRecoveryCodes []string
+	NeCapError         string
+	NeCapNotice        string
 	Lang               string
 	Tr                 *webTranslator
 	Path               string
@@ -486,7 +497,7 @@ func loadTemplates() (map[string]*template.Template, error) {
 		"join":      strings.Join,
 		"hasPrefix": strings.HasPrefix,
 	}
-	pages := []string{"login", "dashboard", "certs", "cert_new", "cert_detail", "downloads", "settings", "settings_security", "settings_about", "error"}
+	pages := []string{"login", "login_2fa", "dashboard", "certs", "cert_new", "cert_detail", "downloads", "settings", "settings_security", "settings_security_necap", "settings_about", "error"}
 	out := make(map[string]*template.Template, len(pages))
 	for _, page := range pages {
 		tmpl, err := template.New("layout").Funcs(funcs).ParseFS(assets, "templates/layout.html", "templates/"+page+".html")

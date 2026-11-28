@@ -430,12 +430,26 @@ func (s *AuthService) DeleteTOTPWithManagement(ctx context.Context, token, userI
 	if err := s.RequireManagement(token, userID); err != nil {
 		return err
 	}
+	status, err := s.FactorStatus(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if status.Policy == PolicyTOTP || (status.Policy == PolicyAny && status.Passkeys == 0) {
+		return fmt.Errorf("不能删除当前策略依赖的唯一第二因素；请先改为仅密码或注册 Passkey")
+	}
 	return s.store.DeleteTOTP(ctx, userID)
 }
 
 func (s *AuthService) DeletePasskeyWithManagement(ctx context.Context, token, userID string, id []byte) error {
 	if err := s.RequireManagement(token, userID); err != nil {
 		return err
+	}
+	status, err := s.FactorStatus(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if status.Policy == PolicyPasskey || (status.Policy == PolicyAny && !status.TOTP) {
+		return fmt.Errorf("不能删除当前策略依赖的唯一第二因素；请先改为仅密码或注册 TOTP")
 	}
 	removed, err := s.store.DeletePasskey(ctx, userID, id)
 	if err != nil {

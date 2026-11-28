@@ -45,6 +45,12 @@ func (s *Server) registerDownloadRoutes(mux *http.ServeMux) {
 	if s.cfg.Web.FeatureEnabled("settings") {
 		mux.HandleFunc("GET /settings", s.handleSettings)
 		mux.HandleFunc("GET /settings/security", s.handleSettingsSecurity)
+		mux.HandleFunc("POST /settings/security/reauth", s.handleNeCapReauth)
+		mux.HandleFunc("POST /settings/security/totp/begin", s.handleNeCapTOTPBegin)
+		mux.HandleFunc("POST /settings/security/totp/finish", s.handleNeCapTOTPFinish)
+		mux.HandleFunc("POST /settings/security/totp/delete", s.handleNeCapTOTPDelete)
+		mux.HandleFunc("POST /settings/security/recovery/regenerate", s.handleNeCapRecoveryRegenerate)
+		mux.HandleFunc("POST /settings/security/policy", s.handleNeCapPolicy)
 		mux.HandleFunc("GET /settings/about", s.handleSettingsAbout)
 		mux.HandleFunc("POST /settings/high-risk", s.handleSettingsHighRisk)
 	}

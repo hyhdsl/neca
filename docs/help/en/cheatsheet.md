@@ -8,6 +8,7 @@
 ~~~bash
 neca version
 neca config validate
+neca config migrate
 neca config show
 neca doctor
 ~~~

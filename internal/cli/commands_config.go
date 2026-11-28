@@ -11,14 +11,14 @@ import (
 	"github.com/hyhdsl/neca/internal/core"
 )
 
-// newConfigCommand 构造 neca config init|show|validate|export-env。
+// newConfigCommand 构造 neca config init|show|validate|export-env|migrate。
 func newConfigCommand() Command {
 	return Command{
 		Name:    "config",
-		Summary: "管理 JSON 配置文件（init/show/validate/export-env）",
+		Summary: "管理 JSON 配置文件（init/show/validate/export-env/migrate）",
 		Run: func(env Env) int {
 			if len(env.Args) == 0 {
-				return usageFail(env, "用法: config init|show|validate|export-env")
+				return usageFail(env, "用法: config init|show|validate|export-env|migrate")
 			}
 			if env.Args[0] == "--help" || env.Args[0] == "-h" {
 				return printUsage(env, "config.help")
@@ -32,6 +32,8 @@ func newConfigCommand() Command {
 					return usageFail(env, "config %s 不接受额外参数", action)
 				}
 				return runConfigRead(env, action)
+			case "migrate":
+				return runConfigMigrate(env)
 			case "path":
 				fmt.Fprintln(env.Stdout, core.ConfigFilePath())
 				return ExitOK
@@ -77,6 +79,32 @@ func runConfigInit(env Env) int {
 	return ExitOK
 }
 
+func runConfigMigrate(env Env) int {
+	pos, _, bools, err := parseFlags(env.Args[1:], nil, []string{"check", "write"})
+	if err != nil || len(pos) != 0 {
+		if err == nil {
+			err = fmt.Errorf("用法: config migrate [--check] [--write]")
+		}
+		return usageFail(env, "%v", err)
+	}
+	if bools["check"] && bools["write"] {
+		return usageFail(env, "--check 与 --write 不能同时使用")
+	}
+	result, err := core.MigrateConfigFile(core.ConfigFilePath(), bools["write"])
+	if err != nil {
+		return fail(env, err)
+	}
+	switch {
+	case !result.NeedsMigration:
+		fmt.Fprintf(env.Stdout, "[OK]   配置已是 schema v2: %s\n", result.Path)
+	case !result.Written:
+		fmt.Fprintf(env.Stdout, "[INFO] 配置可迁移: schema %d -> v2: %s（使用 --write 写入，自动备份）\n", result.From, result.Path)
+	default:
+		fmt.Fprintf(env.Stdout, "[OK]   配置已迁移: schema %d -> v2: %s（备份: %s）\n", result.From, result.Path, result.BackupPath)
+	}
+	return ExitOK
+}
+
 func runConfigRead(env Env, action string) int {
 	cfg, err := core.LoadConfig()
 	if err != nil {
@@ -95,7 +123,10 @@ func runConfigRead(env Env, action string) int {
 		fmt.Fprintln(env.Stdout, string(data))
 		return ExitOK
 	case "validate":
-		fmt.Fprintf(env.Stdout, "[OK]   配置有效: %s\n", cfg.ConfigFile)
+		fmt.Fprintf(env.Stdout, "[OK]   配置有效: %s（schemaVersion=%d）\n", cfg.ConfigFile, cfg.SchemaVersion)
+		if cfg.SchemaVersion > 0 && cfg.SchemaVersion < core.CurrentConfigSchemaVersion {
+			fmt.Fprintln(env.Stdout, "[INFO] 旧 schema 配置可迁移；使用 neca config migrate --check 检查，--write 写入并备份")
+		}
 		return ExitOK
 	case "export-env":
 		values := core.ConfigEnvMap(cfg)

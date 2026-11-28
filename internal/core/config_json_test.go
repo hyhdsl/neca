@@ -48,6 +48,9 @@ func TestJSONSourcePrecedence(t *testing.T) {
 	if cfg.ServerID != "env.example.com" {
 		t.Fatalf("env precedence failed: %q", cfg.ServerID)
 	}
+	if cfg.SchemaVersion != ConfigSchemaV1 {
+		t.Fatalf("schema version = %d, want 1", cfg.SchemaVersion)
+	}
 	if cfg.Language != "en-US" || cfg.DefaultDays != 30 || cfg.KeyBits != 2048 {
 		t.Fatalf("json values not applied: %+v", cfg)
 	}

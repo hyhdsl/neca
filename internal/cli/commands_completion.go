@@ -21,7 +21,7 @@ var completionSubcommands = map[string][]string{
 	"cert":       {"list", "expiring", "verify", "issue", "reissue", "revoke", "unrevoke", "trash", "export", "platform", "package", "import"},
 	"pki":        {"index", "downloads"},
 	"trash":      {"list", "restore", "purge"},
-	"config":     {"init", "show", "validate", "export-env", "path"},
+	"config":     {"init", "show", "validate", "export-env", "migrate", "path"},
 	"web":        {"status", "readonly", "idle-timeout", "export", "lock", "lockdown", "hash-password"},
 	"completion": {"bash", "zsh", "fish", "powershell", "pwsh"},
 }
@@ -51,6 +51,7 @@ var completionFlags = map[string][]string{
 	"pki downloads":     {"--expired", "--all"},
 	"trash purge":       {"--expired"},
 	"config init":       {"--force", "--from-env"},
+	"config migrate":    {"--check", "--write"},
 }
 
 var completionFlagPaths = []string{

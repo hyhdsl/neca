@@ -18,7 +18,7 @@
 
 **Neko's Efficient Certificate Administrator（neca，亦写作 NECA）** 是面向 strongSwan IKEv2 的轻量证书管理工具。一个 Go CLI、一个可选且默认只读的 Web 面板，以及一条受控的 root helper 写边界。
 
-🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.5.0](https://github.com/hyhdsl/neca/releases/tag/v1.5.0)
+🌐 [主页](https://neca.nekobiglazyer.work) · 🇨🇳 [中文文档](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.5.1](https://github.com/hyhdsl/neca/releases/tag/v1.5.1)
 
 ## ✨ 特性
 
@@ -38,7 +38,7 @@
 固定版本标签，先 dry-run，再签发：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.5.0
+docker pull ghcr.io/hyhdsl/neca:v1.5.1
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
@@ -52,17 +52,17 @@ neca cert import-batch ./batch --password-dir ./secrets --dry-run
 
 ## 🔐 验证发布签名
 
-v1.5.0 起，正式 Release 提供 GPG 签名的 <code>checksums.txt.asc</code> 与公钥 <code>neca-gpg-key.asc</code>；Git tag 也已签名。下载对应版本后验证：
+v1.5.1 起，正式 Release 提供 GPG 签名的 <code>checksums.txt.asc</code> 与公钥 <code>neca-gpg-key.asc</code>；Git tag 也已签名。下载对应版本后验证：
 
 ~~~bash
-gh release download v1.5.0 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gh release download v1.5.1 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
 gpg --import neca-gpg-key.asc
 gpg --verify checksums.txt.asc checksums.txt
 sha256sum -c checksums.txt
-git fetch --tags && git tag -v v1.5.0
+git fetch --tags && git tag -v v1.5.1
 ~~~
 
-v1.5.0 使用既有 neca GPG 密钥；v1.5.1 起 Release 由专用 Ed25519 发布密钥在受保护的 release-signing environment 自动签名。公钥提交在 keys/neca-release-signing.asc，且随 Release 发布。
+v1.5.1 使用既有 neca GPG 密钥；v1.5.1 起 Release 由专用 Ed25519 发布密钥在受保护的 release-signing environment 自动签名。公钥提交在 keys/neca-release-signing.asc，且随 Release 发布。
 
 ## 🧮 运行资源基线
 
@@ -113,9 +113,9 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 状态
 
-- **当前稳定版**：v1.5.0（2026-11-28 发布）
+- **当前稳定版**：v1.5.1（2026-11-28 发布）
 - **已完成**：M0–M12；v1.4 cert+key 导入、事务标记/恢复、Node 24 Actions 与运行资源基线
-- **后续**：批量导入；v1.5.0 配置 schema 与 Passkey 评估
+- **后续**：批量导入；v1.5.1 配置 schema 与 Passkey 评估
 - **边界**：Passkey 仅有配置和接口预留，未注册登录路由；Web API 为实验性接口
 
 ## ⚖️ 许可与致谢

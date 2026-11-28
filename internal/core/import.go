@@ -17,23 +17,26 @@ import (
 type ImportSource string
 
 const (
-	// ImportSourceP12 是 v1 唯一支持的 p12 来源。
+	// ImportSourceP12 是 p12 来源。
 	ImportSourceP12 ImportSource = "p12"
-	// ImportSourceCertKey 为未来 cert+key 来源保留，不在 v1 CLI 暴露。
+	// ImportSourceCertKey 是 PEM 证书 + 私钥来源。
 	ImportSourceCertKey ImportSource = "cert-key"
 )
 
 // ImportRequest 是证书导入的结构化输入。
 type ImportRequest struct {
-	CN           string
-	Source       ImportSource
-	P12Path      string
-	PasswordFile string
-	Platforms    []string
-	Installers   InstallerSet
-	P12Profile   P12Profile
-	AllowExpired bool
-	DryRun       bool
+	CN              string
+	Source          ImportSource
+	P12Path         string
+	PasswordFile    string
+	CertPath        string
+	KeyPath         string
+	KeyPasswordFile string
+	Platforms       []string
+	Installers      InstallerSet
+	P12Profile      P12Profile
+	AllowExpired    bool
+	DryRun          bool
 }
 
 // ImportValidation 是导入前的只读检查结果。
@@ -96,6 +99,9 @@ func ValidateImport(ctx context.Context, cfg *Config, store *FileIndexStore, oss
 	if err := normalizeImportRequest(cfg, &req); err != nil {
 		return nil, err
 	}
+	if err := checkPendingImportTxn(cfg); err != nil {
+		return nil, err
+	}
 	prep, err := prepareImport(ctx, cfg, oss, req)
 	if err != nil {
 		return nil, err
@@ -120,6 +126,9 @@ func ImportCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 		return nil, err
 	}
 	err = withPkiLock(cfg.LockFile, func() error {
+		if recoverErr := recoverImportTransactionsLocked(ctx, cfg, store); recoverErr != nil {
+			return recoverErr
+		}
 		prep, prepErr := prepareImport(ctx, cfg, oss, req)
 		if prepErr != nil {
 			return prepErr
@@ -154,6 +163,16 @@ func ImportCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 		keyTarget := filepath.Join(cfg.PKIDir, prep.cn+".key")
 		clientsDir := filepath.Join(cfg.ClientsDir, prep.cn)
 		metaPath := MetaPath(cfg.MetaDir, prep.cn)
+		cleanupOK := true
+		txn, txnErr := beginImportTxn(cfg, prep.cn, prep.serial)
+		if txnErr != nil {
+			return txnErr
+		}
+		defer func() {
+			if cleanupOK {
+				_ = txn.remove()
+			}
+		}()
 		indexAdded := false
 		success := false
 		defer func() {
@@ -161,7 +180,7 @@ func ImportCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 				return
 			}
 			if indexAdded {
-				_ = store.UpdateLocked(context.Background(), func(idx *ports.Index) error {
+				if rollbackErr := store.UpdateLocked(context.Background(), func(idx *ports.Index) error {
 					kept := idx.Rows[:0]
 					for _, row := range idx.Rows {
 						if !strings.EqualFold(row.Serial, prep.serial) {
@@ -170,18 +189,30 @@ func ImportCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 					}
 					idx.Rows = kept
 					return nil
-				})
+				}); rollbackErr != nil {
+					cleanupOK = false
+				}
 			}
-			_ = os.Remove(certTarget)
-			_ = os.Remove(keyTarget)
-			_ = os.RemoveAll(clientsDir)
-			_ = os.Remove(metaPath)
+			for _, path := range []string{certTarget, keyTarget, metaPath} {
+				if removeErr := os.Remove(path); removeErr != nil && !os.IsNotExist(removeErr) {
+					cleanupOK = false
+				}
+			}
+			if removeErr := os.RemoveAll(clientsDir); removeErr != nil {
+				cleanupOK = false
+			}
 		}()
 
 		if err := installImportFile(prep.certPath, certTarget, 0o644); err != nil {
 			return err
 		}
+		if err := txn.setPhase("cert"); err != nil {
+			return err
+		}
 		if err := installImportFile(prep.keyPath, keyTarget, 0o600); err != nil {
+			return err
+		}
+		if err := txn.setPhase("key"); err != nil {
 			return err
 		}
 
@@ -208,11 +239,20 @@ func ImportCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 		}
 		indexAdded = true
 		result.IndexAdded = true
+		if err := txn.setPhase("index"); err != nil {
+			return err
+		}
 		if err := writeImportMeta(cfg, prep, req); err != nil {
 			return err
 		}
 		result.MetaWritten = true
+		if err := txn.setPhase("meta"); err != nil {
+			return err
+		}
 		if err := exportP12Locked(ctx, cfg, oss, prep.cn, req.P12Profile); err != nil {
+			return err
+		}
+		if err := txn.setPhase("clients"); err != nil {
 			return err
 		}
 		bundles, err := RenderBundles(ctx, cfg, prep.cn, req.Platforms, req.Installers)
@@ -221,6 +261,9 @@ func ImportCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 		}
 		result.Messages = bundles.Messages
 		result.Warnings = append(result.Warnings, bundles.Warnings...)
+		if err := txn.commit(); err != nil {
+			return err
+		}
 		success = true
 		return nil
 	})
@@ -229,16 +272,35 @@ func ImportCertificate(ctx context.Context, cfg *Config, store *FileIndexStore, 
 
 func normalizeImportRequest(cfg *Config, req *ImportRequest) error {
 	if req.Source == "" {
-		req.Source = ImportSourceP12
+		switch {
+		case req.P12Path != "":
+			req.Source = ImportSourceP12
+		case req.CertPath != "" || req.KeyPath != "":
+			req.Source = ImportSourceCertKey
+		default:
+			return usagef("导入证书", "必须提供 --p12，或 --cert 与 --key")
+		}
 	}
-	if req.Source != ImportSourceP12 {
-		return usagef("导入证书", "v1 仅支持 p12 导入")
-	}
-	if req.P12Path == "" {
-		return usagef("导入证书", "必须提供 --p12")
-	}
-	if req.PasswordFile == "" {
-		return usagef("导入证书", "必须提供 --password-file")
+	switch req.Source {
+	case ImportSourceP12:
+		if req.CertPath != "" || req.KeyPath != "" || req.KeyPasswordFile != "" {
+			return usagef("导入证书", "--p12 不能与 --cert/--key/--key-password-file 同时使用")
+		}
+		if req.P12Path == "" {
+			return usagef("导入证书", "必须提供 --p12")
+		}
+		if req.PasswordFile == "" {
+			return usagef("导入证书", "必须提供 --password-file")
+		}
+	case ImportSourceCertKey:
+		if req.P12Path != "" || req.PasswordFile != "" {
+			return usagef("导入证书", "--cert/--key 不能与 --p12/--password-file 同时使用")
+		}
+		if req.CertPath == "" || req.KeyPath == "" {
+			return usagef("导入证书", "--cert 与 --key 必须同时提供")
+		}
+	default:
+		return usagef("导入证书", "不支持的导入来源: %s", req.Source)
 	}
 	if req.Platforms == nil {
 		req.Platforms = DefaultPlatforms()
@@ -258,6 +320,9 @@ func normalizeImportRequest(cfg *Config, req *ImportRequest) error {
 }
 
 func prepareImport(ctx context.Context, cfg *Config, oss *OpenSSL, req ImportRequest) (*importPrepared, error) {
+	if req.Source == ImportSourceCertKey {
+		return prepareCertKeyImport(ctx, cfg, oss, req)
+	}
 	if err := checkRegularFile(req.P12Path, 16<<20); err != nil {
 		return nil, err
 	}

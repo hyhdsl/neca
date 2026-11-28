@@ -63,6 +63,11 @@ func runDoctor(env Env) int {
 	} else {
 		checks = append(checks, doctorCheck{Name: "audit", Status: "OK", Detail: cfg.AuditFile})
 	}
+	if err := core.PendingImportTransaction(cfg); err != nil {
+		checks = append(checks, doctorCheck{Name: "importTxn", Status: "FAIL", Detail: err.Error()})
+	} else {
+		checks = append(checks, doctorCheck{Name: "importTxn", Status: "OK", Detail: "none"})
+	}
 	helperClient := helper.NewClient(helperSocketPath())
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	status, helperErr := helperClient.Status(ctx)

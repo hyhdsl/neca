@@ -83,7 +83,7 @@
   "help.cert.platform.add": "usage: cert platform add <CN> --platforms ...",
   "help.cert.platform.set": "usage: cert platform set <CN> --platforms ...",
   "help.cert.package": "usage: cert package <CN> [--platforms ...] [--installers ...] [--zip]",
-  "help.cert.import": "usage: cert import <CN> --p12 FILE --password-file FILE [--allow-expired]",
+  "help.cert.import": "usage: cert import <CN> --p12 FILE --password-file FILE | --cert FILE --key FILE [--key-password-file FILE] [--allow-expired]",
   "help.pki": "usage: pki <index|downloads> ...",
   "help.pki.index": "usage: pki index sync",
   "help.pki.index.sync": "usage: pki index sync",

@@ -186,11 +186,11 @@ Rebuilds platform packages from an existing certificate without issuing a new ce
 
 ~~~bash
 neca cert import alice --p12 alice.p12 --password-file alice.p12.pass
-neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --allow-expired
-neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --dry-run
+neca cert import alice --cert alice.crt --key alice.key
+neca cert import alice --cert alice.crt --key alice.key --key-password-file alice.key.pass --dry-run
 ~~~
 
-v1 imports only a p12 issued by the current CA and passing the current CA chain. The p12 must contain exactly one client certificate and a matching private key; existing CN, serial, clients directory or meta is rejected without overwrite or repair. The password file must be a regular 0600 file.
+v1.4 supports two mutually exclusive sources: a p12 issued by the current CA and passing the current chain, or one PEM client certificate plus one PEM private key. The p12 or cert/key pair must match and contain exactly one client certificate and one key; existing CN, serial, clients directory, meta or CRL is rejected without overwrite or repair. Password and key files must be regular 0600 files on Unix (Windows has only ACL limitations); encrypted keys require --key-password-file.
 
 Expired certificates are rejected by default. With `--allow-expired` plus Y/N confirmation, they are imported with index status E and the command prints `neca cert reissue <CN>` and `neca cert revoke <CN>`. JSON requires `--allow-expired` (only for expired input) and `--yes`. `--zip`, `--platforms`, `--installers` and `--p12-profile` follow issue semantics.
 

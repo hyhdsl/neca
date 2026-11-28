@@ -18,7 +18,7 @@
 
 **Neko's Efficient Certificate Administrator（neca，亦寫作 NECA）** 是面向 strongSwan IKEv2 的輕量憑證管理工具。一個 Go CLI、一個選用且預設唯讀的 Web 面板，以及一條受控的 root helper 寫入邊界。
 
-🌐 [首頁](https://neca.nekobiglazyer.work) · 🇨🇳 [簡體中文文件](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.2.0](https://github.com/hyhdsl/neca/releases/tag/v1.2.0)
+🌐 [首頁](https://neca.nekobiglazyer.work) · 🇨🇳 [簡體中文文件](https://neca.nekobiglazyer.work/zh/) · 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) · 📦 [v1.5.2](https://github.com/hyhdsl/neca/releases/tag/v1.5.2)
 
 ## ✨ 特性
 
@@ -30,6 +30,11 @@
 - ⚙️ **可維運**：JSON 設定、<code>--json</code> / <code>--dry-run</code>、稽核日誌、SIGHUP 熱重載與 requestId 冪等快取。
 - ⌨️ **Shell completion**：bash / zsh / fish / PowerShell 自動補齊指令、子命令與主要旗標。
 - 🔗 **憑證鏈校驗**：<code>neca cert verify</code> 使用 CA 校驗憑證鏈；鏈失敗只告警，不改變結束代碼約定。
+- ⏳ **到期概覽**：CLI 與 Web 提供 30/60/90 天唯讀到期檢視，不修改憑證或設定。
+- ⌨️ **Shell completion**：bash / zsh / fish / PowerShell 自動補齊指令、子命令與主要旗標。
+- 🔗 **憑證鏈校驗**：<code>neca cert verify</code> 使用 CA 校驗憑證鏈；鏈失敗只告警，不改變結束代碼約定。
+- 📥 **批次匯入**：依 CN 目錄批次匯入 p12 或 cert+key；可選 <code>entry.json</code> 覆寫，單筆失敗不影響其他成功項目。
+- 🧭 **精靈匯入**：互動精靈支援 p12 與 PEM cert+key；加密私鑰可指定密碼檔，仍維持 CLI-only。
 - 🧩 **可擴充**：<code>internal/core/ports</code> 提供索引儲存與設定來源介面。
 
 ## 🚀 快速開始
@@ -37,14 +42,43 @@
 固定版本標籤，先 dry-run，再簽發：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.2.0
+docker pull ghcr.io/hyhdsl/neca:v1.5.2
 neca version
 neca cert list
 neca cert issue alice --platforms windows,android --zip --dry-run
 neca cert issue alice --platforms windows,android --zip
+
+# 批次匯入（建議先 dry-run）
+neca cert import-batch ./batch --password-dir ./secrets --dry-run
 ~~~
 
 部署時把 <code>/opt/ipsec</code> 掛載給容器，並透過 wrapper 或 compose 執行；完整步驟見 [安裝、升級與復原](https://neca.nekobiglazyer.work/zh-TW/#/install)。
+
+## 🔐 驗證發布簽章
+
+從 v1.5.1 起，正式 Release 提供 GPG 簽章的 <code>checksums.txt.asc</code> 與公鑰 <code>neca-gpg-key.asc</code>。Release 資產由專用 Ed25519 發布金鑰簽章，Git tag 仍使用既有個人 neca 金鑰，兩條鏈相互獨立。
+
+~~~bash
+gh release download v1.5.2 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gpg --import neca-gpg-key.asc
+gpg --fingerprint E514EB7C153AA24A3E4241F846CC03EE21F66795
+gpg --verify checksums.txt.asc checksums.txt
+sha256sum -c checksums.txt
+git fetch --tags && git tag -v v1.5.2
+~~~
+
+發布金鑰指紋為 <code>E514EB7C153AA24A3E4241F846CC03EE21F66795</code>；Git tag 簽章者指紋為 <code>4DE8259A9C3E832137506D3C9398D6D10FD5A903</code>。完整步驟與疑難排解見 [GPG 驗證](https://neca.nekobiglazyer.work/zh-TW/#/gpg)。
+
+## 🧮 執行資源基線
+
+> 以下為 2026-11-28 在 Linux amd64、2 vCPU、1.6 GiB 記憶體環境下的低負載實測與安全餘量；CLI 與 Web 分開列出，不包含宿主 Docker、strongSwan、反向代理或高併發/大憑證庫的額外開銷。
+
+| 元件 | 最低（低負載餘量） | 建議 |
+|---|---|---|
+| `neca` CLI | 1 vCPU / 64 MiB 記憶體 / 256 MiB 可用磁碟 | 1 vCPU / 256 MiB / 1 GiB |
+| `neca-web` + helper | 1 vCPU / 256 MiB / 512 MiB 可用磁碟 | 2 vCPU / 512 MiB / 2 GiB |
+
+實測參考：CLI 在 16 MiB 容器限制下可執行 `version`，常駐約 2.8 MiB；Web/helper 常駐合計約 15.5 MiB，healthcheck 為 healthy；兩個映像分別約 126.5 MiB 與 135.7 MiB。
 
 ## 🖥️ Web 面板
 
@@ -69,6 +103,7 @@ neca web readonly off
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh-TW/#/api) | 實驗性介面說明 |
 | 🐳 [安裝、升級與復原](https://neca.nekobiglazyer.work/zh-TW/#/install) | Docker／二進位安裝、升級、復原 |
+| 🔏 [GPG 驗證](https://neca.nekobiglazyer.work/zh-TW/#/gpg) | Release checksums、指紋與 Git tag 驗證 |
 | 🛠️ [開發、授權條款與回饋](https://neca.nekobiglazyer.work/zh-TW/#/development) | 本機建置、架構、發布流程、貢獻 |
 | 🤖 [AI 揭露](AI-DISCLOSURE.md) | AI 參與範圍與驗收邊界 |
 
@@ -84,9 +119,9 @@ docker compose run -T --rm dev make test     # go test -race ./...
 
 ## 📌 狀態
 
-- **目前穩定版**：v1.2.0（2026-11-27 發布）
-- **已完成**：M0–M12；v1.2.0（CLI shell completion、憑證鏈驗證、文件一致性）
-- **後續**：v1.3.0 憑證匯入 preview；v1.4.0 cert+key 匯入；v1.5.0 設定 schema 與 Passkey 評估
+- **目前穩定版**：v1.5.2（2026-11-28 發布）
+- **已完成**：M0–M12；v1.5.0 批次匯入；v1.5.1 專用 GPG 發布簽章；v1.5.2 精靈 cert+key 匯入
+- **後續**：v1.6.0 設定 schema 與 Passkey 評估；Go 1.27 試評估；其他語言文件同步
 - **邊界**：Passkey 僅有設定與介面預留，未註冊登入路由；Web API 為實驗性介面
 
 ## ⚖️ 授權條款與致謝

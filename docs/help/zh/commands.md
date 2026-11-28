@@ -67,6 +67,20 @@ neca config init --from-env
 - 写入配置文件；已存在时需 `--force`。
 - 新文件权限为 0600；覆盖时保留原权限。
 - `--from-env` 以当前环境/默认值生成配置，而不是示例模板。
+- 生成 `schemaVersion: 2` 配置；v1/0 配置仍可读取。
+- 升级旧配置先运行 `neca config migrate` 检查；确认后用 `--write` 迁移，写入前自动生成 0600 备份。
+
+### config migrate
+
+~~~bash
+neca config migrate --check
+neca config migrate --write
+~~~
+
+- 默认只检查；`--check` 明确只读，不修改文件。
+- `--write` 将 v1/0 迁移到 schema v2，保留原文件权限并建立带时间戳的备份。
+- v2 严格拒绝未知字段、重复键、非法枚举/范围、相对路径与 Web 安全边界；v1 保持宽容读取。
+- 含 v2 不识别字段的 v1 配置会拒绝迁移，避免静默丢失字段。
 
 ### config show / validate / path
 
@@ -76,8 +90,8 @@ neca config validate
 neca config path
 ~~~
 
-- `show`：输出当前生效配置的 JSON 快照，用于核对路径和 Web 设置。
-- `validate`：加载并校验配置；通过时输出配置文件路径。
+- `show`：输出当前生效配置的 JSON 快照，包含 `schemaVersion`、迁移状态、路径与 Web 设置。
+- `validate`：加载并校验配置；v2 严格检查未知字段与非法值，通过时输出配置文件路径。
 - `path`：只输出当前配置文件路径。
 
 ### config export-env

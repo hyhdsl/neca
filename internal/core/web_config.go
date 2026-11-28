@@ -303,6 +303,9 @@ func UpdateWebConfig(path string, mutate func(*WebConfig) error) (*WebConfig, er
 		if err := json.Unmarshal(data, &root); err != nil {
 			return usagef("更新 Web 配置", "%s: %v", path, err)
 		}
+		if _, err := decodeFileConfig(data, path); err != nil {
+			return err
+		}
 		var document struct {
 			SchemaVersion int           `json:"schemaVersion"`
 			Web           webFileConfig `json:"web"`
@@ -310,8 +313,8 @@ func UpdateWebConfig(path string, mutate func(*WebConfig) error) (*WebConfig, er
 		if err := json.Unmarshal(data, &document); err != nil {
 			return usagef("更新 Web 配置", "%s: %v", path, err)
 		}
-		if document.SchemaVersion < 0 || document.SchemaVersion > 1 {
-			return usagef("更新 Web 配置", "%s: 不支持的 schemaVersion=%d（当前为 1）", path, document.SchemaVersion)
+		if document.SchemaVersion < 0 || document.SchemaVersion > ConfigSchemaV2 {
+			return usagef("更新 Web 配置", "%s: 不支持的 schemaVersion=%d（当前支持 1/2）", path, document.SchemaVersion)
 		}
 		web := webConfigFromFile(document.Web)
 		if err := mutate(&web); err != nil {

@@ -91,6 +91,7 @@ type Config struct {
 	AuditKeep        int           // 轮转保留份数
 	Language         string        // 控制台语言偏好
 	ConfigFile       string        // 实际读取的 JSON 配置路径
+	SchemaVersion    int           // JSON 配置 schema 版本；0 表示仅环境变量/旧文件
 	Web              WebConfig     // Web 面板配置；lite 只读取不使用
 }
 
@@ -206,27 +207,29 @@ func loadConfigFrom(sources []ports.Source, initLayout bool) (*Config, error) {
 		return nil, runtimef("加载配置", "%v", err)
 	}
 
+	schemaVersion, _ := strconv.Atoi(values[configSchemaVersionKey])
 	cfg := &Config{
-		PKIDir:     values["PKI_DIR"],
-		CACert:     values["CA_CERT"],
-		CAKey:      values["CA_KEY"],
-		CADBDir:    values["CADB_DIR"],
-		IndexFile:  values["INDEX_FILE"],
-		CRLNumFile: values["CRLNUM_FILE"],
-		CAConf:     values["CA_CONF"],
-		CRLDir:     values["CRL_DIR"],
-		CRLFile:    values["CRL_FILE"],
-		ClientsDir: values["CLIENTS_DIR"],
-		MetaDir:    values["META_DIR"],
-		ArchiveDir: values["ARCHIVE_DIR"],
-		ExportDir:  values["EXPORT_DIR"],
-		Container:  values["CONTAINER"],
-		DockerBin:  values["DOCKER_BIN"],
-		ServerID:   values["SERVER_ID"],
-		CACN:       values["CA_CN"],
-		ORG:        values["ORG"],
-		ReloadMode: values["NECA_RELOAD_MODE"],
-		LockFile:   values["NECA_LOCK_FILE"],
+		SchemaVersion: schemaVersion,
+		PKIDir:        values["PKI_DIR"],
+		CACert:        values["CA_CERT"],
+		CAKey:         values["CA_KEY"],
+		CADBDir:       values["CADB_DIR"],
+		IndexFile:     values["INDEX_FILE"],
+		CRLNumFile:    values["CRLNUM_FILE"],
+		CAConf:        values["CA_CONF"],
+		CRLDir:        values["CRL_DIR"],
+		CRLFile:       values["CRL_FILE"],
+		ClientsDir:    values["CLIENTS_DIR"],
+		MetaDir:       values["META_DIR"],
+		ArchiveDir:    values["ARCHIVE_DIR"],
+		ExportDir:     values["EXPORT_DIR"],
+		Container:     values["CONTAINER"],
+		DockerBin:     values["DOCKER_BIN"],
+		ServerID:      values["SERVER_ID"],
+		CACN:          values["CA_CN"],
+		ORG:           values["ORG"],
+		ReloadMode:    values["NECA_RELOAD_MODE"],
+		LockFile:      values["NECA_LOCK_FILE"],
 
 		DownloadsDir: values["NECA_DOWNLOAD_DIR"],
 		Installers:   values["NECA_INSTALLERS"],

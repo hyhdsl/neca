@@ -42,6 +42,7 @@ var helpTexts = map[string]string{
 	"config show":         "help.config.show",
 	"config validate":     "help.config.validate",
 	"config export-env":   "help.config.export-env",
+	"config migrate":      "help.config.migrate",
 	"config path":         "help.config.path",
 	"wizard":              "help.wizard",
 	"completion":          "help.completion",

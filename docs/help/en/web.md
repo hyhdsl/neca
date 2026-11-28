@@ -23,6 +23,7 @@ In `/opt/ipsec/config/neca.json`:
 
 ~~~json
 {
+  "schemaVersion": 2,
   "web": {
     "enabled": true,
     "listen": "127.0.0.1:18080",

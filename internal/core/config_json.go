@@ -93,6 +93,7 @@ func (s JSONSource) Load(ctx context.Context) (map[string]string, error) {
 		return map[string]string{}, nil
 	}
 	values := map[string]string{}
+	values[configSchemaVersionKey] = strconv.Itoa(cfg.SchemaVersion)
 	set := func(key, value string) {
 		if strings.TrimSpace(value) != "" {
 			values[key] = value
@@ -182,14 +183,7 @@ func readFileConfig(path string) (*fileConfig, error) {
 	if err != nil {
 		return nil, runtimef("读取配置", "%s: %v", path, err)
 	}
-	var cfg fileConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, usagef("解析配置", "%s: %v", path, err)
-	}
-	if cfg.SchemaVersion < 0 || cfg.SchemaVersion > 1 {
-		return nil, usagef("解析配置", "%s: 不支持的 schemaVersion=%d（当前为 1）", path, cfg.SchemaVersion)
-	}
-	return &cfg, nil
+	return decodeFileConfig(data, path)
 }
 
 // ReadConfigLanguage 只读取配置中的 language，供 CLI 在加载完整配置前选择语言。
@@ -223,39 +217,41 @@ func ConfigSnapshot(cfg *Config) map[string]any {
 		return nil
 	}
 	return map[string]any{
-		"configFile":       cfg.ConfigFile,
-		"pkiDir":           cfg.PKIDir,
-		"caCert":           cfg.CACert,
-		"caKey":            cfg.CAKey,
-		"caDbDir":          cfg.CADBDir,
-		"indexFile":        cfg.IndexFile,
-		"crlNumFile":       cfg.CRLNumFile,
-		"caConf":           cfg.CAConf,
-		"crlDir":           cfg.CRLDir,
-		"crlFile":          cfg.CRLFile,
-		"clientsDir":       cfg.ClientsDir,
-		"metaDir":          cfg.MetaDir,
-		"archiveDir":       cfg.ArchiveDir,
-		"exportDir":        cfg.ExportDir,
-		"container":        cfg.Container,
-		"dockerBin":        cfg.DockerBin,
-		"serverId":         cfg.ServerID,
-		"org":              cfg.ORG,
-		"caCn":             cfg.CACN,
-		"defaultDays":      cfg.DefaultDays,
-		"keyBits":          cfg.KeyBits,
-		"reloadMode":       cfg.ReloadMode,
-		"lockFile":         cfg.LockFile,
-		"downloadsDir":     cfg.DownloadsDir,
-		"downloadTTL":      cfg.DownloadTTL.String(),
-		"downloadMaxFiles": cfg.DownloadMaxFiles,
-		"trashRetention":   cfg.TrashRetention.String(),
-		"p12Profile":       cfg.P12Profile,
-		"installers":       cfg.Installers,
-		"auditFile":        cfg.AuditFile,
-		"auditMaxBytes":    cfg.AuditMaxBytes,
-		"auditKeep":        cfg.AuditKeep,
-		"language":         cfg.Language,
+		"configFile":           cfg.ConfigFile,
+		"schemaVersion":        cfg.SchemaVersion,
+		"schemaNeedsMigration": cfg.SchemaVersion < ConfigSchemaV2,
+		"pkiDir":               cfg.PKIDir,
+		"caCert":               cfg.CACert,
+		"caKey":                cfg.CAKey,
+		"caDbDir":              cfg.CADBDir,
+		"indexFile":            cfg.IndexFile,
+		"crlNumFile":           cfg.CRLNumFile,
+		"caConf":               cfg.CAConf,
+		"crlDir":               cfg.CRLDir,
+		"crlFile":              cfg.CRLFile,
+		"clientsDir":           cfg.ClientsDir,
+		"metaDir":              cfg.MetaDir,
+		"archiveDir":           cfg.ArchiveDir,
+		"exportDir":            cfg.ExportDir,
+		"container":            cfg.Container,
+		"dockerBin":            cfg.DockerBin,
+		"serverId":             cfg.ServerID,
+		"org":                  cfg.ORG,
+		"caCn":                 cfg.CACN,
+		"defaultDays":          cfg.DefaultDays,
+		"keyBits":              cfg.KeyBits,
+		"reloadMode":           cfg.ReloadMode,
+		"lockFile":             cfg.LockFile,
+		"downloadsDir":         cfg.DownloadsDir,
+		"downloadTTL":          cfg.DownloadTTL.String(),
+		"downloadMaxFiles":     cfg.DownloadMaxFiles,
+		"trashRetention":       cfg.TrashRetention.String(),
+		"p12Profile":           cfg.P12Profile,
+		"installers":           cfg.Installers,
+		"auditFile":            cfg.AuditFile,
+		"auditMaxBytes":        cfg.AuditMaxBytes,
+		"auditKeep":            cfg.AuditKeep,
+		"language":             cfg.Language,
 		"web": map[string]any{
 			"enabled":               cfg.Web.Enabled,
 			"listen":                cfg.Web.Listen,
@@ -315,7 +311,7 @@ func ConfigEnvMap(cfg *Config) map[string]string {
 
 // ConfigFileJSON 生成用于 config init --from-env 的 JSON 文本。
 func ConfigFileJSON(cfg *Config) ([]byte, error) {
-	fc := fileConfig{SchemaVersion: 1}
+	fc := fileConfig{SchemaVersion: CurrentConfigSchemaVersion}
 	if cfg != nil {
 		fc.ServerID = cfg.ServerID
 		fc.Org = cfg.ORG
@@ -346,7 +342,9 @@ func ConfigFileJSON(cfg *Config) ([]byte, error) {
 		fc.Reload.Container = cfg.Container
 		fc.Reload.DockerBin = cfg.DockerBin
 		fc.Download.Dir = cfg.DownloadsDir
-		fc.Download.TTL = cfg.DownloadTTL.String()
+		if cfg.DownloadTTL > 0 {
+			fc.Download.TTL = cfg.DownloadTTL.String()
+		}
 		fc.Download.MaxFiles = cfg.DownloadMaxFiles
 		if cfg.TrashRetention > 0 {
 			fc.Trash.Retention = cfg.TrashRetention.String()

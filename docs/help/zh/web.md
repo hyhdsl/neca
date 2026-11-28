@@ -21,6 +21,7 @@ Web 容器没有 `ca.key`、客户端私钥或 `docker.sock`；helper 才挂载�
 
 ~~~json
 {
+  "schemaVersion": 2,
   "web": {
     "enabled": true,
     "listen": "127.0.0.1:18080",

@@ -30,12 +30,12 @@ const (
 )
 
 type LoginChallenge struct {
-	Complete          bool
-	UserID            string
-	Username          string
-	PendingToken      string
-	Methods           []AuthMethod
-	RecoveryRemaining int
+	Complete          bool         `json:"complete"`
+	UserID            string       `json:"userId"`
+	Username          string       `json:"username"`
+	PendingToken      string       `json:"pendingToken"`
+	Methods           []AuthMethod `json:"methods"`
+	RecoveryRemaining int          `json:"recoveryRemaining"`
 }
 
 type AuthResult struct {
@@ -70,8 +70,8 @@ type pendingTOTP struct {
 }
 
 type TOTPEnrollment struct {
-	ChallengeID string
-	URI         string
+	ChallengeID string `json:"challengeId"`
+	URI         string `json:"uri"`
 }
 
 type AuthService struct {
@@ -401,10 +401,10 @@ func (s *AuthService) ensureRecoveryCodes(ctx context.Context, userID string) ([
 }
 
 type FactorStatus struct {
-	Policy        PolicyMode
-	TOTP          bool
-	Passkeys      int
-	RecoveryCodes int
+	Policy        PolicyMode `json:"policy"`
+	TOTP          bool       `json:"totp"`
+	Passkeys      int        `json:"passkeys"`
+	RecoveryCodes int        `json:"recoveryCodes"`
 }
 
 func (s *AuthService) FactorStatus(ctx context.Context, userID string) (FactorStatus, error) {

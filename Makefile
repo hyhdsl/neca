@@ -38,6 +38,9 @@ help: ## 显示可用目标
 
 all: fmt-check vet check-ascii check-locales check-docs test build ## 完整本地校验（等价 CI）
 
+e2e-necap: ## 在 neca-dev 中运行 necap+helper+Web 密码/TOTP E2E
+	docker compose run -T --rm dev bash /src/scripts/necap-e2e.sh
+
 build: build-lite build-web ## 交叉编译 lite + neca-web 的全部二进制到 dist/
 
 build-lite: ## 交叉编译 lite CLI（linux/amd64、linux/arm64）

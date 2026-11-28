@@ -31,7 +31,7 @@
   <main>
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow"><span class="dot"></span> neca v1.2.0 · AGPL-3.0-only</p>
+        <p class="eyebrow"><span class="dot"></span> neca v1.5.2 · AGPL-3.0-only</p>
         <h1 data-i18n-html="hero.title">证书管理<br><em>回归简单。</em></h1>
         <p class="lead" data-i18n="hero.lead">Neko's Efficient Certificate Administrator（neca）是面向 strongSwan IKEv2 的轻量证书管理工具。一个 CLI，一个可选的只读 Web 面板，一条受控的 root helper 写边界。</p>
         <div class="actions">
@@ -47,15 +47,15 @@
       <div class="hero-visual" aria-hidden="true">
         <div class="terminal">
           <div class="terminal-bar"><span></span><span></span><span></span><b>ops</b></div>
-          <pre><code><span class="prompt">$</span> docker pull ghcr.io/hyhdsl/neca:v1.2.0
+          <pre><code><span class="prompt">$</span> docker pull ghcr.io/hyhdsl/neca:v1.5.2
 <span class="ok">✓</span> image ready
 
-<span class="prompt">$</span> neca list
+<span class="prompt">$</span> neca cert list
 CN        STATUS   PLATFORMS
 alice     valid    windows, android
 team-01   valid    linux, ios
 
-<span class="prompt">$</span> neca issue alice
+<span class="prompt">$</span> neca cert issue alice
     --platforms windows,android --zip
 <span class="ok">✓</span> certificate issued
 </code></pre>
@@ -107,11 +107,11 @@ team-01   valid    linux, ios
       </div>
       <div class="code-card">
         <div class="code-title" data-i18n="quick.terminal">终端</div>
-        <pre><code><span class="prompt">$</span> docker pull ghcr.io/hyhdsl/neca:v1.2.0
+        <pre><code><span class="prompt">$</span> docker pull ghcr.io/hyhdsl/neca:v1.5.2
 <span class="prompt">$</span> neca version
-<span class="prompt">$</span> neca issue alice
+<span class="prompt">$</span> neca cert issue alice
     --platforms windows,android --zip --dry-run
-<span class="prompt">$</span> neca issue alice
+<span class="prompt">$</span> neca cert issue alice
     --platforms windows,android --zip
 </code></pre>
       </div>

@@ -3,7 +3,7 @@
 **README 语言 / Language：** [简体中文（当前）](README.md) · [繁體中文](README_zh-TW.md) · [English](README_EN.md)
 
 > [!NOTE]
-> 本文件为**中文主版本**。其他语言版本将另行安排时间统一更新，可能滞后；日常只维护中文版本。英文翻译：[README_EN.md](README_EN.md)。
+> 本文件为**中文主版本**。其他语言版本已按 v1.5.2 同步；后续变更仍以中文版本为权威。英文翻译：[README_EN.md](README_EN.md)。
 
 > [!WARNING]
 > **AI 披露（使用前必读）**：本项目的代码、调试、测试、CI/构建/部署脚本、文档和帮助站内容主要由 AI 编程助手完成；人类维护者负责需求、审查、功能验收与生产操作。完整边界见 [AI-DISCLOSURE.md](AI-DISCLOSURE.md)。
@@ -53,17 +53,18 @@ neca cert import-batch ./batch --password-dir ./secrets --dry-run
 
 ## 🔐 验证发布签名
 
-v1.5.1 起，正式 Release 提供 GPG 签名的 <code>checksums.txt.asc</code> 与公钥 <code>neca-gpg-key.asc</code>；Git tag 也已签名。下载对应版本后验证：
+从 v1.5.1 起，正式 Release 提供 GPG 签名的 <code>checksums.txt.asc</code> 与公钥 <code>neca-gpg-key.asc</code>。Release 资产由专用 Ed25519 发布密钥签名，Git tag 仍使用既有个人 neca 密钥，两条链相互独立。
 
 ~~~bash
-gh release download v1.5.1 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gh release download v1.5.2 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
 gpg --import neca-gpg-key.asc
+gpg --fingerprint E514EB7C153AA24A3E4241F846CC03EE21F66795
 gpg --verify checksums.txt.asc checksums.txt
 sha256sum -c checksums.txt
-git fetch --tags && git tag -v v1.5.1
+git fetch --tags && git tag -v v1.5.2
 ~~~
 
-v1.5.1 使用既有 neca GPG 密钥；v1.5.1 起 Release 由专用 Ed25519 发布密钥在受保护的 release-signing environment 自动签名。公钥提交在 keys/neca-release-signing.asc，且随 Release 发布。
+验证时必须核对发布密钥指纹 <code>E514EB7C153AA24A3E4241F846CC03EE21F66795</code>；Git tag 的签名者指纹为 <code>4DE8259A9C3E832137506D3C9398D6D10FD5A903</code>。完整说明、常见问题与公钥来源见 [GPG 验证](https://neca.nekobiglazyer.work/zh/#/gpg)。
 
 ## 🧮 运行资源基线
 
@@ -99,6 +100,7 @@ neca web readonly off
 | 🇬🇧 [English](https://neca.nekobiglazyer.work/en/) | English core pages |
 | 🧪 [Web API](https://neca.nekobiglazyer.work/zh/#/api) | 实验性接口说明 |
 | 🐳 [安装、升级与回滚](https://neca.nekobiglazyer.work/zh/#/install) | Docker/二进制安装、升级、回滚 |
+| 🔏 [GPG 验证](https://neca.nekobiglazyer.work/zh/#/gpg) | Release checksums、指纹与 Git tag 验证 |
 | 🛠️ [开发、许可与反馈](https://neca.nekobiglazyer.work/zh/#/development) | 本地构建、架构、发布流程、贡献 |
 | 🤖 [AI 披露](AI-DISCLOSURE.md) | AI 参与范围与验收边界 |
 
@@ -115,8 +117,8 @@ docker compose run -T --rm dev make test     # go test -race ./...
 ## 📌 状态
 
 - **当前稳定版**：v1.5.2（2026-11-28 发布）
-- **已完成**：M0–M12；v1.4 cert+key 导入、事务标记/恢复、Node 24 Actions 与运行资源基线
-- **后续**：批量导入；v1.5.1 配置 schema 与 Passkey 评估
+- **已完成**：M0–M12；v1.5.0 批量导入；v1.5.1 专用 GPG 发布签名；v1.5.2 向导 cert+key 导入
+- **后续**：v1.6.0 配置 schema 与 Passkey 评估；Go 1.27 试评估；其他语言文档同步
 - **边界**：Passkey 仅有配置和接口预留，未注册登录路由；Web API 为实验性接口
 
 ## ⚖️ 许可与致谢

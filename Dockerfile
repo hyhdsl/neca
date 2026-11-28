@@ -31,11 +31,14 @@ WORKDIR /opt/ipsec
 FROM base AS web
 RUN groupadd --system --gid 10001 neca-web \
  && useradd --system --uid 10001 --gid neca-web --no-create-home --shell /usr/sbin/nologin neca-web \
+ && groupadd --system --gid 10002 necap \
+ && useradd --system --uid 10002 --gid necap --no-create-home --shell /usr/sbin/nologin necap \
  && mkdir -p /opt/ipsec/pki/ca /opt/ipsec/pki/meta /opt/ipsec/clients /opt/ipsec/downloads /opt/ipsec/swanctl/x509crl /opt/ipsec/web-secrets
 COPY dist/necad-linux-${TARGETARCH} /usr/local/bin/necad
 COPY dist/neca-web-helper-linux-${TARGETARCH} /usr/local/bin/neca-web-helper
-RUN chmod 0755 /usr/local/bin/necad /usr/local/bin/neca-web-helper \
- && chown root:root /usr/local/bin/necad /usr/local/bin/neca-web-helper
+COPY dist/necap-linux-${TARGETARCH} /usr/local/bin/necap
+RUN chmod 0755 /usr/local/bin/necad /usr/local/bin/neca-web-helper /usr/local/bin/necap \
+ && chown root:root /usr/local/bin/necad /usr/local/bin/neca-web-helper /usr/local/bin/necap
 USER 10001:10001
 HEALTHCHECK --interval=30s --timeout=4s --start-period=5s --retries=3 \
   CMD ["/usr/local/bin/necad", "-healthcheck"]

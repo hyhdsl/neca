@@ -73,6 +73,34 @@ services:
       start_period: 5s
       retries: 3
 
+  necap:
+    image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v1.5.2}
+    container_name: necap
+    profiles: ["necap"]
+    restart: unless-stopped
+    user: "10002:10002"
+    read_only: true
+    network_mode: "none"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    environment:
+      NECAP_CONFIG: /opt/ipsec/necap/necap.json
+    volumes:
+      - /opt/ipsec/necap:/opt/ipsec/necap
+      - /run/necap:/run/necap
+    entrypoint: ["/usr/local/bin/necap"]
+    command: ["serve"]
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /run/necap/necap.sock"]
+      interval: 30s
+      timeout: 4s
+      start_period: 10s
+      retries: 3
+
   web-helper:
     image: ${NECA_WEB_IMAGE:-ghcr.io/hyhdsl/neca-web:v1.5.2}
     container_name: neca-web-helper
@@ -92,6 +120,7 @@ services:
       NECA_CONFIG: /opt/ipsec/config/neca.json
       NECA_WEB_HELPER_SOCKET: /run/neca/web-helper.sock
       NECA_WEB_HELPER_GID: "10001"
+      NECAP_SOCKET: /run/necap/necap.sock
       NECA_WEB_HELPER_CACHE_FILE: /run/neca/web-helper-cache.json
       # Web 以单文件 bind mount 读取 index/CRL；helper 必须原位写回以保持 Web 可见。
       NECA_INDEX_INPLACE: "1"
@@ -99,6 +128,7 @@ services:
       - /opt/ipsec:/opt/ipsec
       - /var/run/docker.sock:/var/run/docker.sock
       - /run/neca:/run/neca
+      - /run/necap:/run/necap:ro
     entrypoint: ["/usr/local/bin/neca-web-helper"]
     command: ["-socket", "/run/neca/web-helper.sock"]
     healthcheck:

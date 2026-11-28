@@ -18,6 +18,11 @@ func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 func (s *Server) registerAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /login", s.handleLoginPage)
 	mux.HandleFunc("POST /login", s.handleLogin)
+	mux.HandleFunc("GET /login/2fa", s.handleLogin2FA)
+	mux.HandleFunc("POST /login/totp", s.handleLoginTOTP)
+	mux.HandleFunc("POST /login/recovery", s.handleLoginRecovery)
+	mux.HandleFunc("POST /login/passkey/begin", s.handlePasskeyLoginBegin)
+	mux.HandleFunc("POST /login/passkey/finish", s.handlePasskeyLoginFinish)
 	mux.HandleFunc("POST /logout", s.handleLogout)
 }
 

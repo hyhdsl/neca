@@ -52,7 +52,9 @@ build-web: ## 交叉编译 neca-web 的 necad/helper（linux/amd64、linux/arm64
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/necad-linux-arm64 ./cmd/necad
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/neca-web-helper-linux-amd64 ./cmd/neca-web-helper
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/neca-web-helper-linux-arm64 ./cmd/neca-web-helper
-	@echo "[OK]   构建完成：necad 与 neca-web-helper（amd64/arm64）"
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/necap-linux-amd64 ./cmd/necap
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(DIST)/necap-linux-arm64 ./cmd/necap
+	@echo "[OK]   构建完成：necad、neca-web-helper 与 necap（amd64/arm64）"
 
 build-native: ## 构建当前平台的 CLI/necad 调试二进制到 dist/
 	@mkdir -p $(DIST)

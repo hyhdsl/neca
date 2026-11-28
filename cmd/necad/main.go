@@ -54,9 +54,13 @@ func main() {
 		log.Fatal("web.enabled=false；neca-web 镜像不会在此配置下启动")
 	}
 
-	passwordHash, err := readSecret("NECA_WEB_PASSWORD_HASH", "NECA_WEB_PASSWORD_HASH_FILE")
-	if err != nil {
-		log.Fatal(err)
+	necapEnabled := parseBool(os.Getenv("NECA_NECAP_ENABLED"))
+	var passwordHash []byte
+	if !necapEnabled {
+		passwordHash, err = readSecret("NECA_WEB_PASSWORD_HASH", "NECA_WEB_PASSWORD_HASH_FILE")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	sessionKey, err := readSessionKey()
 	if err != nil {
@@ -75,7 +79,8 @@ func main() {
 		OpenSSL: core.NewOpenSSL(runner), PasswordHash: passwordHash, SessionKey: sessionKey,
 		ProxySecret: proxySecret, SecureCookies: parseBool(os.Getenv("NECA_WEB_SECURE_COOKIES")),
 		HelperSocket: strings.TrimSpace(os.Getenv("NECA_WEB_HELPER_SOCKET")),
-		Audit:        audit,
+		NeCapEnabled: necapEnabled, NeCapUsername: strings.TrimSpace(os.Getenv("NECA_NECAP_USERNAME")),
+		Audit: audit,
 	})
 	if err != nil {
 		log.Fatal(err)

@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -39,6 +40,8 @@ type Options struct {
 	Audit            io.Writer
 	Now              func() time.Time
 	HelperSocket     string
+	NeCapEnabled     bool
+	NeCapUsername    string
 }
 
 // Server 是 Web 面板的 HTTP 服务；写能力由 helper 与 readOnly 双重控制。
@@ -54,6 +57,10 @@ type Server struct {
 	limiter           *loginLimiter
 	audit             *auditLogger
 	helperClient      *helper.Client
+	necapEnabled      bool
+	necapUsername     string
+	pendingMu         sync.Mutex
+	pending           map[string]pendingMFA
 	translator        *webTranslator
 	translators       map[string]*webTranslator
 	now               func() time.Time
@@ -74,11 +81,16 @@ func New(opts Options) (*Server, error) {
 	if err := opts.Config.Web.Validate(); err != nil {
 		return nil, err
 	}
-	if len(opts.PasswordHash) == 0 {
-		return nil, corePrecondition("Web 启动", "未设置 NECA_WEB_PASSWORD_HASH")
+	if !opts.NeCapEnabled {
+		if len(opts.PasswordHash) == 0 {
+			return nil, corePrecondition("Web 启动", "未设置 NECA_WEB_PASSWORD_HASH")
+		}
+		if _, err := bcrypt.Cost(opts.PasswordHash); err != nil {
+			return nil, corePrecondition("Web 启动", "NECA_WEB_PASSWORD_HASH 不是合法 bcrypt 哈希: %v", err)
+		}
 	}
-	if _, err := bcrypt.Cost(opts.PasswordHash); err != nil {
-		return nil, corePrecondition("Web 启动", "NECA_WEB_PASSWORD_HASH 不是合法 bcrypt 哈希: %v", err)
+	if opts.NeCapEnabled && strings.TrimSpace(opts.HelperSocket) == "" {
+		return nil, corePrecondition("Web 启动", "启用 necap 时必须设置 NECA_WEB_HELPER_SOCKET")
 	}
 	if len(opts.SessionKey) < 32 {
 		return nil, corePrecondition("Web 启动", "会话密钥至少 32 字节（NECA_WEB_SESSION_KEY 或 NECA_WEB_SESSION_KEY_FILE）")
@@ -123,10 +135,15 @@ func New(opts Options) (*Server, error) {
 		passwordHash: opts.PasswordHash, proxySecret: []byte(opts.ProxySecret),
 		secureCookies: opts.SecureCookies, allowNonLoopback: opts.AllowNonLoopback,
 		helperClient: helperClient,
-		translator:   defaultTranslator, translators: translators,
+		necapEnabled: opts.NeCapEnabled, necapUsername: strings.TrimSpace(opts.NeCapUsername),
+		pending:    map[string]pendingMFA{},
+		translator: defaultTranslator, translators: translators,
 		sessions: newSessionManager(opts.SessionKey, idle, now),
 		limiter:  newLoginLimiter(), audit: newAuditLogger(opts.Audit), now: now,
 		templates: templates, static: http.FileServer(http.FS(staticFS)),
+	}
+	if server.necapUsername == "" {
+		server.necapUsername = "admin"
 	}
 	server.readOnlyFlag.Store(opts.Config.Web.ReadOnly)
 	server.exportEnabledFlag.Store(opts.Config.Web.ExportEnabled)
@@ -216,7 +233,7 @@ func (s *Server) readOnlyGuard(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if r.URL.Path == "/login" || r.URL.Path == "/logout" || isWriteEndpoint(r.URL.Path) {
+		if r.URL.Path == "/login" || r.URL.Path == "/logout" || strings.HasPrefix(r.URL.Path, "/login/") || isWriteEndpoint(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -243,7 +260,7 @@ func isWriteEndpoint(path string) bool {
 
 func (s *Server) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/healthz" || r.URL.Path == "/language" || r.URL.Path == "/login" || strings.HasPrefix(r.URL.Path, "/static/") {
+		if r.URL.Path == "/healthz" || r.URL.Path == "/language" || r.URL.Path == "/login" || strings.HasPrefix(r.URL.Path, "/login/") || strings.HasPrefix(r.URL.Path, "/static/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -337,6 +354,12 @@ type pageData struct {
 	Error              string
 	Login              bool
 	Next               string
+	Methods            []string
+	TOTPAvailable      bool
+	PasskeyAvailable   bool
+	RecoveryAvailable  bool
+	RecoveryRemaining  int
+	NeCapEnabled       bool
 	Lang               string
 	Tr                 *webTranslator
 	Path               string
@@ -384,6 +407,7 @@ func (s *Server) renderStatus(w http.ResponseWriter, r *http.Request, status int
 	data.SettingsEnabled = s.cfg.Web.FeatureEnabled("settings")
 	data.ExportEnabled = s.exportEnabled()
 	data.Version = version.Get().Version
+	data.NeCapEnabled = s.necapEnabled
 	data.Path = r.URL.RequestURI()
 	tr := s.translatorFor(r)
 	data.Lang = tr.Language()

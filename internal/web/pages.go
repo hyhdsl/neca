@@ -38,6 +38,10 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	password := r.FormValue("password")
+	if s.necapEnabled {
+		s.handleNeCapLogin(w, r, clientCN, next, password)
+		return
+	}
 	if !s.checkPassword(password) {
 		s.limiter.fail(ip, now)
 		s.audit.log("login-failed", ip, clientCN, "password")

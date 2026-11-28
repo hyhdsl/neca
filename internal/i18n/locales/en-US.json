@@ -119,6 +119,7 @@
   "trash.help": "usage: trash <list|restore|purge> ...\n",
   "config.help": "usage: config init|show|validate|export-env|migrate\n",
   "web.help": "usage: web <status|readonly|idle-timeout|export|lock|lockdown|hash-password>\n",
+  "pass.help": "usage: pass <status|totp add|totp remove|passkey list|passkey remove|recovery regenerate|policy> (root/helper re-authentication required)\n",
   "cmd.cert.summary": "certificate management (list/expiring/verify/issue/reissue/revoke/unrevoke/trash/export/platform/package/import)",
   "cmd.pki.summary": "PKI operations (index/downloads)",
   "cmd.trash.summary": "recycle bin (list/restore/purge)",
@@ -140,6 +141,7 @@
   "cmd.package.summary": "rebuild platform bundles from an existing certificate (optional zip)",
   "cmd.downloads.summary": "manage downloadable zips (list|clean)",
   "cmd.config.summary": "manage the JSON config file (init/show/validate/export-env/migrate)",
+  "cmd.pass.summary": "manage necap TOTP, Passkeys, recovery codes and policy (re-authentication required)",
   "cmd.completion.summary": "generate shell completion scripts (bash/zsh/fish/PowerShell)",
   "help.completion": "usage: completion <bash|zsh|fish|powershell>",
   "cmd.wizard.summary": "enter the interactive wizard"

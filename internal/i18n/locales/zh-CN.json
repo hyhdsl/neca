@@ -119,6 +119,7 @@
   "trash.help": "用法: trash <list|restore|purge> ...\n",
   "config.help": "用法: config init|show|validate|export-env|migrate\n",
   "web.help": "用法: web <status|readonly|idle-timeout|export|lock|lockdown|hash-password>\n",
+  "pass.help": "用法: pass <status|totp add|totp remove|passkey list|passkey remove|recovery regenerate|policy>（需 root/helper 再认证）\n",
   "cmd.cert.summary": "证书管理（list/expiring/verify/issue/reissue/revoke/unrevoke/trash/export/platform/package/import）",
   "cmd.pki.summary": "PKI 运维（index/downloads）",
   "cmd.trash.summary": "回收站（list/restore/purge）",
@@ -140,6 +141,7 @@
   "cmd.package.summary": "从现有证书重建平台包（可选 zip）",
   "cmd.downloads.summary": "管理下载目录中的 zip（list|clean）",
   "cmd.config.summary": "管理 JSON 配置文件（init/show/validate/export-env/migrate）",
+  "cmd.pass.summary": "管理 necap 的 TOTP、Passkey、恢复码与策略（需再认证）",
   "cmd.completion.summary": "生成 shell 补全脚本（bash/zsh/fish/PowerShell）",
   "help.completion": "用法: completion <bash|zsh|fish|powershell>",
   "cmd.wizard.summary": "进入交互向导"

@@ -189,6 +189,7 @@ func newBuiltinRegistry() *Registry {
 	registry.MustRegister(backendCommand(newTrashCommand(), "trash", true))
 	registry.MustRegister(backendCommand(newConfigCommand(), "config", true))
 	registry.MustRegister(backendCommand(newWebCommand(), "web", true))
+	registry.MustRegister(backendCommand(newPassCommand(), "pass", true))
 	registry.MustRegister(backendCommand(newDoctorCommand(), "meta", false))
 	registry.MustRegister(backendCommand(newCompletionCommand(registry), "meta", false))
 

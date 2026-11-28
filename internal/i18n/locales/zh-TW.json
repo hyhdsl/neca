@@ -120,6 +120,7 @@
   "trash.help": "用法: trash <list|restore|purge> ...\n",
   "config.help": "用法: config init|show|validate|export-env|migrate\n",
   "web.help": "用法: web <status|readonly|idle-timeout|export|lock|lockdown|hash-password>\n",
+  "pass.help": "用法: pass <status|totp add|totp remove|passkey list|passkey remove|recovery regenerate|policy>（需 root/helper 再驗證）\n",
   "cmd.cert.summary": "憑證管理（list/expiring/verify/issue/reissue/revoke/unrevoke/trash/export/platform/package）",
   "cmd.pki.summary": "PKI 維運（index/downloads）",
   "cmd.trash.summary": "回收桶（list/restore/purge）",
@@ -141,6 +142,7 @@
   "cmd.package.summary": "從現有憑證重建平台套件（可選 zip）",
   "cmd.downloads.summary": "管理下載目錄中的 zip（list|clean）",
   "cmd.config.summary": "管理 JSON 設定檔（init/show/validate/export-env/migrate）",
+  "cmd.pass.summary": "管理 necap 的 TOTP、Passkey、恢復碼與策略（需再驗證）",
   "cmd.completion.summary": "產生 shell 補全指令碼（bash/zsh/fish/PowerShell）",
   "help.completion": "用法: completion <bash|zsh|fish|powershell>",
   "cmd.wizard.summary": "進入互動精靈"

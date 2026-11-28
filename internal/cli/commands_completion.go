@@ -22,12 +22,17 @@ var completionSubcommands = map[string][]string{
 	"pki":        {"index", "downloads"},
 	"trash":      {"list", "restore", "purge"},
 	"config":     {"init", "show", "validate", "export-env", "migrate", "path"},
+	"pass":       {"status", "totp", "passkey", "recovery", "policy"},
 	"web":        {"status", "readonly", "idle-timeout", "export", "lock", "lockdown", "hash-password"},
 	"completion": {"bash", "zsh", "fish", "powershell", "pwsh"},
 }
 
 // completionNested 是第三层子命令，例如 cert platform add。
 var completionNested = map[string][]string{
+	"pass totp":     {"add", "remove"},
+	"pass passkey":  {"list", "remove"},
+	"pass recovery": {"regenerate"},
+	"pass policy":   {"password", "totp", "passkey", "any"},
 	"cert platform": {"add", "set"},
 	"pki index":     {"sync"},
 	"pki downloads": {"list", "clean"},
@@ -61,6 +66,7 @@ var completionFlagPaths = []string{
 
 var completionNestedPaths = []string{
 	"cert platform", "pki index", "pki downloads", "web readonly", "web export",
+	"pass totp", "pass passkey", "pass recovery", "pass policy",
 }
 
 type completionEntry struct {

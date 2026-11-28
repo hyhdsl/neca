@@ -30,17 +30,17 @@
 
 ## 0.2 验证发布签名
 
-v1.5.0 起，正式 Release 附带 GPG 签名的 checksums 与公钥；Git tag 也已签名。下载对应版本后验证：
+v1.5.1 起，正式 Release 附带 GPG 签名的 checksums 与公钥；Git tag 也已签名。下载对应版本后验证：
 
 ~~~bash
-gh release download v1.5.0 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gh release download v1.5.1 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
 gpg --import neca-gpg-key.asc
 gpg --verify checksums.txt.asc checksums.txt
 sha256sum -c checksums.txt
-git fetch --tags && git tag -v v1.5.0
+git fetch --tags && git tag -v v1.5.1
 ~~~
 
-v1.5.0 使用既有 neca GPG 密钥；v1.5.1 起 Release 由专用 Ed25519 发布密钥在受保护的 release-signing environment 自动签名。公钥提交在 keys/neca-release-signing.asc，且随 Release 发布。
+v1.5.1 使用既有 neca GPG 密钥；v1.5.1 起 Release 由专用 Ed25519 发布密钥在受保护的 release-signing environment 自动签名。公钥提交在 keys/neca-release-signing.asc，且随 Release 发布。
 
 ## 方式 A：Docker Compose 安装（A1–A6）
 
@@ -88,14 +88,14 @@ docker compose -f docker-compose.neca.yml run --rm neca cert list
 或先拉取固定版本镜像：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.5.0
+docker pull ghcr.io/hyhdsl/neca:v1.5.1
 ~~~
 
 ### A4. 可选：启动只读 Web
 
 ~~~bash
 cd /opt/ipsec
-NECA_IMAGE=ghcr.io/hyhdsl/neca:v1.5.0 ./init-web-secrets.sh
+NECA_IMAGE=ghcr.io/hyhdsl/neca:v1.5.1 ./init-web-secrets.sh
 docker compose -f docker-compose.neca.yml --profile web up -d web
 ~~~
 
@@ -140,7 +140,7 @@ neca doctor
 ### B1. 下载与校验二进制
 
 ~~~bash
-VERSION=v1.5.0
+VERSION=v1.5.1
 curl -fLO "https://github.com/hyhdsl/neca/releases/download/${VERSION}/neca-linux-amd64"
 curl -fLO "https://github.com/hyhdsl/neca/releases/download/${VERSION}/checksums.txt"
 grep " neca-linux-amd64$" checksums.txt > /tmp/neca-checksum
@@ -201,8 +201,8 @@ GPG 口令不要写入命令、Git 或普通文档；恢复与更多细节见
 Docker 方式：更新 compose 中的镜像标签后执行：
 
 ~~~bash
-docker pull ghcr.io/hyhdsl/neca:v1.5.0
-docker pull ghcr.io/hyhdsl/neca-web:v1.5.0
+docker pull ghcr.io/hyhdsl/neca:v1.5.1
+docker pull ghcr.io/hyhdsl/neca-web:v1.5.1
 docker compose -f /opt/ipsec/docker-compose.neca.yml --profile web up -d web
 ~~~
 

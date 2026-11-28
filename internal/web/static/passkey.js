@@ -13,7 +13,7 @@
     var bytes = new Uint8Array(buffer);
     var s = "";
     for (var i = 0; i < bytes.length; i++) { s += String.fromCharCode(bytes[i]); }
-    return btoa(s).replace(/+/g, "-").replace(///g, "_").replace(/=+$/, "");
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
   function post(url, body, csrf) {
     return fetch(url, {

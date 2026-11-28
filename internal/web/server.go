@@ -369,6 +369,7 @@ type pageData struct {
 	NeCapStatus        *necapFactorStatus
 	NeCapTotpURI       string
 	NeCapRecoveryCodes []string
+	NeCapPasskeys      []necapPasskeyInfo
 	NeCapError         string
 	NeCapNotice        string
 	Lang               string

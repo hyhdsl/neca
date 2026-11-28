@@ -36,6 +36,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /v1/factors/status", s.handleStatus)
 	mux.HandleFunc("POST /v1/factors/totp/begin", s.handleTOTPBegin)
 	mux.HandleFunc("POST /v1/factors/totp/finish", s.handleTOTPFinish)
+	mux.HandleFunc("POST /v1/factors/passkeys", s.handlePasskeyList)
 	mux.HandleFunc("POST /v1/factors/passkey/begin", s.handlePasskeyEnrollBegin)
 	mux.HandleFunc("POST /v1/factors/passkey/finish", s.handlePasskeyEnrollFinish)
 	mux.HandleFunc("POST /v1/factors/totp/delete", s.handleTOTPDelete)
@@ -185,6 +186,19 @@ func (s *Server) handleTOTPFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"recoveryCodes": codes})
+}
+
+func (s *Server) handlePasskeyList(w http.ResponseWriter, r *http.Request) {
+	var req managementRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	passkeys, err := s.auth.ListPasskeysWithManagement(r.Context(), req.Token, req.UserID)
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"passkeys": passkeys})
 }
 
 func (s *Server) handlePasskeyEnrollBegin(w http.ResponseWriter, r *http.Request) {

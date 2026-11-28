@@ -2,6 +2,7 @@
 package web
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -29,6 +30,17 @@ type necapFactorStatus struct {
 	TOTP          bool   `json:"TOTP"`
 	Passkeys      int    `json:"Passkeys"`
 	RecoveryCodes int    `json:"RecoveryCodes"`
+}
+
+type necapPasskeyInfo struct {
+	ID         string    `json:"id"`
+	Label      string    `json:"label"`
+	CreatedAt  time.Time `json:"createdAt"`
+	LastUsedAt time.Time `json:"lastUsedAt,omitempty"`
+}
+
+type necapPasskeyListResponse struct {
+	Passkeys []necapPasskeyInfo `json:"passkeys"`
 }
 
 type necapTOTPEnrollment struct {
@@ -96,6 +108,10 @@ func (s *Server) handleNeCapSecurity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data.NeCapStatus = &status
+	var passkeys necapPasskeyListResponse
+	if err := s.necapCall(r.Context(), "/v1/factors/passkeys", map[string]any{"token": admin.Token, "userId": admin.UserID}, &passkeys); err == nil {
+		data.NeCapPasskeys = passkeys.Passkeys
+	}
 	s.pendingMu.Lock()
 	if setup, exists := s.necapSetups[admin.UserID]; exists && s.now().Before(setup.Expires) {
 		data.NeCapTotpURI = setup.URI
@@ -179,6 +195,81 @@ func (s *Server) renderNeCapSecurityError(w http.ResponseWriter, r *http.Request
 		TitleKey: "web.settings.security_title", Nav: "settings-security",
 		Web: &s.cfg.Web, SettingsEnabled: true, NeCapEnabled: true, NeCapError: message,
 	})
+}
+
+func (s *Server) handleNeCapPasskeyBegin(w http.ResponseWriter, r *http.Request) {
+	if !s.validCSRF(r) {
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": "csrf"})
+		return
+	}
+	admin, ok := s.necapAdminForRequest(r)
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "reauth_required"})
+		return
+	}
+	var response map[string]json.RawMessage
+	if err := s.necapCall(r.Context(), "/v1/factors/passkey/begin", map[string]any{
+		"token": admin.Token, "userId": admin.UserID, "label": "Web Passkey",
+	}, &response); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "passkey_begin_failed"})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(response)
+}
+
+func (s *Server) handleNeCapPasskeyFinish(w http.ResponseWriter, r *http.Request) {
+	if !s.validCSRF(r) {
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": "csrf"})
+		return
+	}
+	admin, ok := s.necapAdminForRequest(r)
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "reauth_required"})
+		return
+	}
+	var request struct {
+		ChallengeID string          `json:"challengeId"`
+		Response    json.RawMessage `json:"response"`
+		Label       string          `json:"label"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&request); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid_request"})
+		return
+	}
+	var result struct {
+		RecoveryCodes []string `json:"recoveryCodes"`
+	}
+	if err := s.necapCall(r.Context(), "/v1/factors/passkey/finish", map[string]any{
+		"token": admin.Token, "userId": admin.UserID, "challengeId": request.ChallengeID,
+		"response": request.Response, "label": request.Label,
+	}, &result); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "passkey_finish_failed"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "recoveryCodes": result.RecoveryCodes})
+}
+
+func (s *Server) handleNeCapPasskeyDelete(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil || !s.validCSRF(r) {
+		s.renderNeCapSecurityError(w, r, "CSRF token 无效")
+		return
+	}
+	admin, ok := s.necapAdminForRequest(r)
+	if !ok {
+		http.Redirect(w, r, "/settings/security", http.StatusSeeOther)
+		return
+	}
+	id := strings.TrimSpace(r.FormValue("id"))
+	if id == "" {
+		s.renderNeCapSecurityError(w, r, "Passkey ID 为空")
+		return
+	}
+	if err := s.necapCall(r.Context(), "/v1/factors/passkey/delete", map[string]any{"token": admin.Token, "userId": admin.UserID, "id": id}, nil); err != nil {
+		s.renderNeCapSecurityError(w, r, "删除 Passkey 失败；请确认策略仍允许其他因素")
+		return
+	}
+	http.Redirect(w, r, "/settings/security", http.StatusSeeOther)
 }
 
 func (s *Server) handleNeCapTOTPBegin(w http.ResponseWriter, r *http.Request) {

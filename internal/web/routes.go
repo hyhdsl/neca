@@ -51,6 +51,9 @@ func (s *Server) registerDownloadRoutes(mux *http.ServeMux) {
 		mux.HandleFunc("POST /settings/security/totp/delete", s.handleNeCapTOTPDelete)
 		mux.HandleFunc("POST /settings/security/recovery/regenerate", s.handleNeCapRecoveryRegenerate)
 		mux.HandleFunc("POST /settings/security/policy", s.handleNeCapPolicy)
+		mux.HandleFunc("POST /settings/security/passkey/begin", s.handleNeCapPasskeyBegin)
+		mux.HandleFunc("POST /settings/security/passkey/finish", s.handleNeCapPasskeyFinish)
+		mux.HandleFunc("POST /settings/security/passkey/delete", s.handleNeCapPasskeyDelete)
 		mux.HandleFunc("GET /settings/about", s.handleSettingsAbout)
 		mux.HandleFunc("POST /settings/high-risk", s.handleSettingsHighRisk)
 	}

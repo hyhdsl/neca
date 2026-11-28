@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base32"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -424,6 +425,31 @@ func (s *AuthService) FactorStatus(ctx context.Context, userID string) (FactorSt
 		return FactorStatus{}, err
 	}
 	return FactorStatus{Policy: policy, TOTP: totp.Confirmed, Passkeys: passkeys, RecoveryCodes: recovery}, nil
+}
+
+type PasskeyInfo struct {
+	ID         string    `json:"id"`
+	Label      string    `json:"label"`
+	CreatedAt  time.Time `json:"createdAt"`
+	LastUsedAt time.Time `json:"lastUsedAt,omitempty"`
+}
+
+func (s *AuthService) ListPasskeysWithManagement(ctx context.Context, token, userID string) ([]PasskeyInfo, error) {
+	if err := s.RequireManagement(token, userID); err != nil {
+		return nil, err
+	}
+	records, err := s.store.ListPasskeys(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]PasskeyInfo, 0, len(records))
+	for _, record := range records {
+		result = append(result, PasskeyInfo{
+			ID: base64.RawURLEncoding.EncodeToString(record.ID), Label: record.Label,
+			CreatedAt: record.CreatedAt, LastUsedAt: record.LastUsedAt,
+		})
+	}
+	return result, nil
 }
 
 func (s *AuthService) DeleteTOTPWithManagement(ctx context.Context, token, userID string) error {

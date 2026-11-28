@@ -20,6 +20,7 @@ var necapAllowedPaths = map[string]bool{
 	"/v1/auth/passkey/begin": true, "/v1/auth/passkey/finish": true,
 	"/v1/factors/status":     true,
 	"/v1/factors/totp/begin": true, "/v1/factors/totp/finish": true,
+	"/v1/factors/passkeys":      true,
 	"/v1/factors/passkey/begin": true, "/v1/factors/passkey/finish": true,
 	"/v1/factors/totp/delete": true, "/v1/factors/passkey/delete": true,
 	"/v1/factors/recovery/regenerate": true, "/v1/factors/policy": true,

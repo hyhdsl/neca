@@ -73,6 +73,31 @@
     <input type="hidden" name="csrf_token" value="{{.CSRF}}">
     <button type="submit" class="button">{{.T "web.settings.necap_recovery_regenerate"}}</button>
   </form>
+  <h3>{{.T "web.settings.necap_passkey_title"}}</h3>
+  {{if .NeCapPasskeys}}
+  <ul class="detail-list">
+    {{range .NeCapPasskeys}}
+    <li>
+      <strong>{{.Label}}</strong>
+      <span class="muted small">{{formatTime .CreatedAt}}</span>
+      <form method="post" action="/settings/security/passkey/delete" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <button type="submit" class="link-button">{{$.T "web.settings.necap_passkey_delete"}}</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="muted">{{.T "web.settings.necap_passkey_none"}}</p>
+  {{end}}
+  <button type="button" class="button" id="passkey-register" data-csrf="{{.CSRF}}" data-begin="/settings/security/passkey/begin" data-finish="/settings/security/passkey/finish">{{.T "web.settings.necap_passkey_register"}}</button>
+  <p class="muted small" id="passkey-settings-error" role="alert" hidden></p>
+  <div id="passkey-recovery" hidden>
+    <h4>{{.T "web.settings.necap_recovery_once"}}</h4>
+    <pre class="code-block" id="passkey-recovery-codes"></pre>
+  </div>
+  <script src="/static/passkey_settings.js?v={{.Version}}" defer></script>
   <p class="muted small">{{.T "web.settings.necap_passkey_note"}}</p>
   {{end}}
 </section>

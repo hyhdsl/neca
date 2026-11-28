@@ -136,6 +136,7 @@ func runWizardImportExportMenu(env Env, reader *bufio.Reader, registry *Registry
 			"wizard.menu.import.1",
 			"wizard.menu.import.2",
 			"wizard.menu.import.3",
+			"wizard.menu.import.4",
 			"wizard.menu.back",
 		)
 		choice, err := wizardChoice(env, reader)
@@ -146,10 +147,12 @@ func runWizardImportExportMenu(env Env, reader *bufio.Reader, registry *Registry
 		case "0":
 			return
 		case "1":
-			wizardImport(env, reader, registry)
+			wizardImportP12(env, reader, registry)
 		case "2":
-			invokeWizard(env, registry, "cert", []string{"export", "issued"})
+			wizardImportCertKey(env, reader, registry)
 		case "3":
+			invokeWizard(env, registry, "cert", []string{"export", "issued"})
+		case "4":
 			invokeWizard(env, registry, "cert", []string{"export", "revoked"})
 		default:
 			fmt.Fprintln(env.Stdout, i18n.T("wizard.invalid"))
@@ -157,7 +160,7 @@ func runWizardImportExportMenu(env Env, reader *bufio.Reader, registry *Registry
 	}
 }
 
-func wizardImport(env Env, reader *bufio.Reader, registry *Registry) {
+func wizardImportP12(env Env, reader *bufio.Reader, registry *Registry) {
 	cn, ok := wizardCN(env, reader)
 	if !ok {
 		return
@@ -177,6 +180,35 @@ func wizardImport(env Env, reader *bufio.Reader, registry *Registry) {
 	invokeWizard(env, registry, "cert", []string{
 		"import", cn, "--p12", p12, "--password-file", passwordFile, "--platforms", platforms,
 	})
+}
+
+func wizardImportCertKey(env Env, reader *bufio.Reader, registry *Registry) {
+	cn, ok := wizardCN(env, reader)
+	if !ok {
+		return
+	}
+	cert, ok := wizardValue(env, reader, "wizard.import.cert")
+	if !ok {
+		return
+	}
+	key, ok := wizardValue(env, reader, "wizard.import.key")
+	if !ok {
+		return
+	}
+	keyPassword, ok := wizardValueOptional(env, reader, "wizard.import.key_password")
+	if !ok {
+		return
+	}
+	platforms, ok := wizardValueDefault(env, reader, "wizard.import.platforms", "windows,android")
+	if !ok {
+		return
+	}
+	args := []string{"import", cn, "--cert", cert, "--key", key}
+	if keyPassword != "" {
+		args = append(args, "--key-password-file", keyPassword)
+	}
+	args = append(args, "--platforms", platforms)
+	invokeWizard(env, registry, "cert", args)
 }
 
 func runWizardTrashMenu(env Env, reader *bufio.Reader, registry *Registry) {
@@ -256,6 +288,15 @@ func wizardValue(env Env, reader *bufio.Reader, key string) (string, bool) {
 	fmt.Fprint(env.Stdout, i18n.T(key))
 	value, err := readWizardLine(reader)
 	if err != nil || value == "" {
+		return "", false
+	}
+	return value, true
+}
+
+func wizardValueOptional(env Env, reader *bufio.Reader, key string) (string, bool) {
+	fmt.Fprint(env.Stdout, i18n.T(key))
+	value, err := readWizardLine(reader)
+	if err != nil {
 		return "", false
 	}
 	return value, true

@@ -31,6 +31,7 @@
 - ⌨️ **Shell completion**：bash / zsh / fish / PowerShell 补全命令、子命令与主要开关。
 - 🔗 **证书链校验**：<code>neca cert verify</code> 使用 CA 校验证书链；链失败只告警，不改变退出码契约。
 - 📥 **批量导入**：按 CN 目录批量导入 p12 或 cert+key；可选 <code>entry.json</code> 覆盖，单条失败不影响其他成功项。
+- 🧭 **向导导入**：交互向导支持 p12 与 PEM cert+key；加密私钥可指定口令文件，仍保持 CLI-only。
 - 🧩 **可扩展**：<code>internal/core/ports</code> 提供索引存储与配置来源接口。
 
 ## 🚀 快速开始

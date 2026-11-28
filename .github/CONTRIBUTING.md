@@ -28,7 +28,7 @@
 - 所有变更经 Pull Request 合并；禁止直接 push main。
 - 默认 base 为 `main`；旧稳定线补丁 base 为对应 `release/x.y`。
 - 合并方式：squash merge；保持线性历史；合并后删除 head 分支。
-- 必需检查：`build-and-test`；启用 conversation resolution。
+- 必需检查：`build-and-test` 与 `docker-smoke`；启用 conversation resolution。
 - main 已启用管理员约束、禁止强推/删除；release/x.y 创建时必须采用同等保护。
 - PR 标题采用 `type(scope): 中文 / English`，与提交规范一致。
 - PR 描述必须写明变更范围、验证证据、风险与回滚方式；涉及证书、权限、部署配置或生产行为的变更必须单独说明。

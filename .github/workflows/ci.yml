@@ -89,6 +89,7 @@ jobs:
           ./dist/neca-linux-amd64 version
           ./dist/necad-linux-amd64 --version
           ./dist/neca-web-helper-linux-amd64 --version
+          ./dist/necap-linux-amd64 -version
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v7
@@ -98,6 +99,7 @@ jobs:
             dist/neca-linux-*
             dist/necad-linux-*
             dist/neca-web-helper-linux-*
+            dist/necap-linux-*
           retention-days: 7
           if-no-files-found: error
 
@@ -128,3 +130,4 @@ jobs:
         run: |
           docker build --target web -t neca-ci-web .
           docker run --rm --entrypoint /usr/local/bin/necad neca-ci-web --version
+          docker run --rm --entrypoint /usr/local/bin/necap neca-ci-web -version

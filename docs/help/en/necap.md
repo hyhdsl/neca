@@ -92,4 +92,5 @@ Rollback returns the Web panel to the legacy password hash. necap data is not de
 - Recovery codes are stored only as hashes and shown once.
 - Removing the only factor required by the active policy is refused.
 - v1.7 has no passwordless login and no multi-user Web UI.
-- This is development documentation; browser E2E and security review are still required before release.
+- Verified: a real necap+helper+Web password-to-TOTP HTTP E2E, plus synthetic-authenticator Passkey registration/assertion tests.
+- Real-browser Passkey flow and pre-release security review remain.

@@ -37,19 +37,20 @@ var completionNested = map[string][]string{
 
 // completionFlags 只列主要开关；通用开关由 completionGlobalFlags 统一追加。
 var completionFlags = map[string][]string{
-	"cert":          {"--platforms", "--days", "--installers", "--p12-profile", "--zip", "--no-reload", "--out"},
-	"cert expiring": {"--days"},
-	"cert issue":    {"--platforms", "--days", "--installers", "--p12-profile", "--zip", "--no-reload"},
-	"cert reissue":  {"--platforms", "--days", "--installers", "--p12-profile", "--zip", "--no-reload"},
-	"cert revoke":   {"--no-reload"},
-	"cert unrevoke": {"--no-reload"},
-	"cert export":   {"--out"},
-	"cert platform": {"--platforms", "--installers", "--zip", "--no-reload"},
-	"cert package":  {"--platforms", "--installers", "--p12-profile", "--zip", "--no-reload"},
-	"cert import":   {"--p12", "--password-file", "--cert", "--key", "--key-password-file", "--platforms", "--installers", "--p12-profile", "--allow-expired", "--zip"},
-	"pki downloads": {"--expired", "--all"},
-	"trash purge":   {"--expired"},
-	"config init":   {"--force", "--from-env"},
+	"cert":              {"--platforms", "--days", "--installers", "--p12-profile", "--zip", "--no-reload", "--out"},
+	"cert expiring":     {"--days"},
+	"cert issue":        {"--platforms", "--days", "--installers", "--p12-profile", "--zip", "--no-reload"},
+	"cert reissue":      {"--platforms", "--days", "--installers", "--p12-profile", "--zip", "--no-reload"},
+	"cert revoke":       {"--no-reload"},
+	"cert unrevoke":     {"--no-reload"},
+	"cert export":       {"--out"},
+	"cert platform":     {"--platforms", "--installers", "--zip", "--no-reload"},
+	"cert package":      {"--platforms", "--installers", "--p12-profile", "--zip", "--no-reload"},
+	"cert import":       {"--p12", "--password-file", "--cert", "--key", "--key-password-file", "--platforms", "--installers", "--p12-profile", "--allow-expired", "--zip"},
+	"cert import-batch": {"--password-dir", "--platforms", "--installers", "--p12-profile", "--allow-expired"},
+	"pki downloads":     {"--expired", "--all"},
+	"trash purge":       {"--expired"},
+	"config init":       {"--force", "--from-env"},
 }
 
 var completionFlagPaths = []string{

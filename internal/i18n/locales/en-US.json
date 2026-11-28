@@ -84,6 +84,7 @@
   "help.cert.platform.set": "usage: cert platform set <CN> --platforms ...",
   "help.cert.package": "usage: cert package <CN> [--platforms ...] [--installers ...] [--zip]",
   "help.cert.import": "usage: cert import <CN> --p12 FILE --password-file FILE | --cert FILE --key FILE [--key-password-file FILE] [--allow-expired]",
+  "help.cert.import-batch": "usage: cert import-batch <DIR> [--password-dir DIR] [--platforms ...] [--installers ...] [--p12-profile ...] [--allow-expired] [--dry-run] [--json --yes]",
   "help.pki": "usage: pki <index|downloads> ...",
   "help.pki.index": "usage: pki index sync",
   "help.pki.index.sync": "usage: pki index sync",

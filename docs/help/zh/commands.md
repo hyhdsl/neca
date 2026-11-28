@@ -205,6 +205,32 @@ v1.4 支持两种互斥来源：由当前 CA 签发、能通过证书链校验�
 
 过期证书默认拒绝；使用 `--allow-expired` 并完成 Y/N 二次确认后，以 index 状态 E 导入，并提示随后执行 `neca cert reissue <CN>` 或 `neca cert revoke <CN>`。JSON 模式需要同时提供 `--allow-expired`（仅过期时）和 `--yes`。`--zip` 可在导入后生成下载包；`--platforms`/`--installers`/`--p12-profile` 与 issue 语义一致。
 
+### cert import-batch
+
+~~~bash
+neca cert import-batch ./batch --password-dir ./secrets --dry-run
+neca cert import-batch ./batch --password-dir ./secrets --yes
+~~~
+
+批次目录优先，不需要必填清单。每个 CN 一个目录，文件名为固定约定：
+
+~~~text
+batch/
+  alice/client.p12                 # p12 来源
+  bob/client.crt                   # 或 cert+key 来源
+  bob/client.key
+  bob/entry.json                   # 可选覆盖
+secrets/
+  alice.pass                       # p12 密码
+  bob.key.pass                     # 加密私钥密码（如需要）
+~~~
+
+- p12 密码文件支持 CN.pass；兼容旧命名的 CN.p12.pass。加密 key 使用 CN.key.pass。
+- 可选 entry.json 仅覆盖 platforms、installers、p12Profile、allowExpired；不要写密码或任意路径。
+- 单条失败不会回滚其他成功项；退出码 3 表示至少一条失败，逐项结果仍会输出。
+- 实际导入是非交互批次，必须显式 --yes；--dry-run 不写文件。
+- 保持 CLI-only；Web/helper 不接收 p12、私钥或口令。本版本不在向导中增加批量入口。
+
 ## pki：索引与下载目录
 
 ### pki index sync

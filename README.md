@@ -50,6 +50,20 @@ neca cert import-batch ./batch --password-dir ./secrets --dry-run
 
 部署时把 <code>/opt/ipsec</code> 挂载给容器，并通过 wrapper 或 compose 运行；完整步骤见 [安装、升级与回滚](https://neca.nekobiglazyer.work/zh/#/install)。
 
+## 🔐 验证发布签名
+
+v1.5.0 起，正式 Release 提供 GPG 签名的 <code>checksums.txt.asc</code> 与公钥 <code>neca-gpg-key.asc</code>；Git tag 也已签名。下载对应版本后验证：
+
+~~~bash
+gh release download v1.5.0 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gpg --import neca-gpg-key.asc
+gpg --verify checksums.txt.asc checksums.txt
+sha256sum -c checksums.txt
+git fetch --tags && git tag -v v1.5.0
+~~~
+
+当前签名使用既有 neca GPG 密钥；专用发布签名子密钥与 CI 自动化在 v1.5.1 规划中。
+
 ## 🧮 运行资源基线
 
 > 以下为 2026-11-28 在 Linux amd64、2 vCPU、1.6 GiB 内存环境下的低负载实测与安全余量；CLI 与 Web 分开给出，不包含宿主 Docker、strongSwan、反向代理或高并发/大证书库的额外开销。

@@ -58,6 +58,9 @@ func OpenStore(ctx context.Context, dbPath string, key []byte) (*Store, error) {
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0o700); err != nil {
 		return nil, fmt.Errorf("创建 necap 数据库目录: %w", err)
 	}
+	if err := os.Chmod(filepath.Dir(dbPath), 0o700); err != nil {
+		return nil, fmt.Errorf("设置 necap 数据库目录权限: %w", err)
+	}
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("打开 necap 数据库: %w", err)

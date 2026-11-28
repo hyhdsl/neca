@@ -26,10 +26,10 @@ type necapSetup struct {
 }
 
 type necapFactorStatus struct {
-	Policy        string `json:"Policy"`
-	TOTP          bool   `json:"TOTP"`
-	Passkeys      int    `json:"Passkeys"`
-	RecoveryCodes int    `json:"RecoveryCodes"`
+	Policy        string `json:"policy"`
+	TOTP          bool   `json:"totp"`
+	Passkeys      int    `json:"passkeys"`
+	RecoveryCodes int    `json:"recoveryCodes"`
 }
 
 type necapPasskeyInfo struct {
@@ -44,8 +44,8 @@ type necapPasskeyListResponse struct {
 }
 
 type necapTOTPEnrollment struct {
-	ChallengeID string `json:"ChallengeID"`
-	URI         string `json:"URI"`
+	ChallengeID string `json:"challengeId"`
+	URI         string `json:"uri"`
 }
 
 func (s *Server) issueNeCapSession(w http.ResponseWriter, clientCN, userID string) error {
@@ -130,6 +130,11 @@ func (s *Server) handleNeCapReauth(w http.ResponseWriter, r *http.Request) {
 		s.renderNeCapSecurityError(w, r, "CSRF token 无效")
 		return
 	}
+	ip := clientIP(r)
+	if !s.limiter.allow(ip, s.now()) {
+		s.renderNeCapSecurityError(w, r, "尝试过多，请稍后再试")
+		return
+	}
 	password := r.FormValue("password")
 	if password == "" {
 		s.renderNeCapSecurityError(w, r, "请输入密码")
@@ -139,6 +144,7 @@ func (s *Server) handleNeCapReauth(w http.ResponseWriter, r *http.Request) {
 	if err := s.necapCall(r.Context(), "/v1/auth/password", map[string]any{
 		"username": s.necapUsername, "password": password, "reauth": true,
 	}, &challenge); err != nil {
+		s.limiter.fail(ip, s.now())
 		s.renderNeCapSecurityError(w, r, s.translatorFor(r).T("web.login.error"))
 		return
 	}
@@ -147,6 +153,7 @@ func (s *Server) handleNeCapReauth(w http.ResponseWriter, r *http.Request) {
 			s.renderNeCapSecurityError(w, r, "管理凭据不完整")
 			return
 		}
+		s.limiter.reset(ip)
 		s.storeNeCapAdmin(w, r, challenge.PendingToken, challenge.UserID)
 		http.Redirect(w, r, "/settings/security", http.StatusSeeOther)
 		return
@@ -161,6 +168,7 @@ func (s *Server) handleNeCapReauth(w http.ResponseWriter, r *http.Request) {
 		if err := s.necapCall(r.Context(), "/v1/auth/totp", map[string]any{
 			"pendingToken": challenge.PendingToken, "code": code,
 		}, &result); err == nil && result.Complete && result.ManagementToken != "" {
+			s.limiter.reset(ip)
 			s.storeNeCapAdmin(w, r, result.ManagementToken, result.UserID)
 			http.Redirect(w, r, "/settings/security", http.StatusSeeOther)
 			return
@@ -171,11 +179,13 @@ func (s *Server) handleNeCapReauth(w http.ResponseWriter, r *http.Request) {
 		if err := s.necapCall(r.Context(), "/v1/auth/recovery", map[string]any{
 			"pendingToken": challenge.PendingToken, "code": code,
 		}, &result); err == nil && result.Complete && result.ManagementToken != "" {
+			s.limiter.reset(ip)
 			s.storeNeCapAdmin(w, r, result.ManagementToken, result.UserID)
 			http.Redirect(w, r, "/settings/security", http.StatusSeeOther)
 			return
 		}
 	}
+	s.limiter.fail(ip, s.now())
 	s.renderNeCapSecurityError(w, r, s.translatorFor(r).T("web.login.2fa.error"))
 }
 

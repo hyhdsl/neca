@@ -21,6 +21,9 @@ func LoadOrCreateMasterKey(path string) ([]byte, error) {
 		if len(data) != masterKeySize {
 			return nil, fmt.Errorf("主密钥长度必须为 %d 字节", masterKeySize)
 		}
+		if err := os.Chmod(path, 0o600); err != nil {
+			return nil, fmt.Errorf("收紧主密钥权限: %w", err)
+		}
 		return data, nil
 	}
 	if !errors.Is(err, os.ErrNotExist) {

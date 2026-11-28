@@ -290,6 +290,9 @@ func (s *Server) ListenAndServe(ctx context.Context, socket string) error {
 	if err := os.MkdirAll(filepath.Dir(socket), 0o700); err != nil {
 		return fmt.Errorf("创建 necap socket 目录: %w", err)
 	}
+	if err := os.Chmod(filepath.Dir(socket), 0o700); err != nil {
+		return fmt.Errorf("设置 necap socket 目录权限: %w", err)
+	}
 	_ = os.Remove(socket)
 	listener, err := net.Listen("unix", socket)
 	if err != nil {

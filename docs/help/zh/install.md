@@ -28,6 +28,20 @@
 
 实测参考：CLI 在 16 MiB 容器限制下可执行 `version`，常驻约 2.8 MiB；Web/helper 常驻合计约 15.5 MiB，healthcheck 为 healthy；两个镜像分别约 126.5 MiB 与 135.7 MiB。Docker、OpenSSL 与浏览器前置按本页安装步骤执行；未单独列出的宿主细节以安装验证通过、可以正常工作为准。
 
+## 0.2 验证发布签名
+
+v1.5.0 起，正式 Release 附带 GPG 签名的 checksums 与公钥；Git tag 也已签名。下载对应版本后验证：
+
+~~~bash
+gh release download v1.5.0 --repo hyhdsl/neca --pattern checksums.txt --pattern checksums.txt.asc --pattern neca-gpg-key.asc
+gpg --import neca-gpg-key.asc
+gpg --verify checksums.txt.asc checksums.txt
+sha256sum -c checksums.txt
+git fetch --tags && git tag -v v1.5.0
+~~~
+
+当前签名使用既有 neca GPG 密钥；专用发布签名子密钥与 CI 自动化在 v1.5.1 规划中。
+
 ## 方式 A：Docker Compose 安装（A1–A6）
 
 **路径范围**：A1–A6；A5 是可选的 Web 写能力。完成 A6 即完成 Docker 安装。

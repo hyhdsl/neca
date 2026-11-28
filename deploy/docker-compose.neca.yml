@@ -92,6 +92,7 @@ services:
     volumes:
       - /opt/ipsec/necap:/opt/ipsec/necap
       - /run/necap:/run/necap
+      - /opt/ipsec/web-secrets/password.hash:/opt/ipsec/web-secrets/password.hash:ro
     entrypoint: ["/usr/local/bin/necap"]
     command: ["serve"]
     healthcheck:

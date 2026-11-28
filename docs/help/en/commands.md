@@ -102,6 +102,25 @@ neca config export-env
 
 Prints shell variable assignments. The output may contain sensitive settings; use it in a controlled terminal and never paste it into logs, tickets or public chat.
 
+## pass: necap authentication management
+
+Available only when necap is enabled and the helper is reachable. Every write operation requires re-authentication with the admin password and an existing TOTP or recovery code.
+
+~~~bash
+neca pass status
+neca pass totp add
+neca pass totp remove
+neca pass passkey list
+neca pass passkey remove <ID>
+neca pass recovery regenerate
+neca pass policy <password|totp|passkey|any>
+~~~
+
+- Passkey enrollment is Web-only; the CLI lists and removes credentials.
+- Recovery codes are shown once.
+- The only factor required by the active policy cannot be removed.
+- Passwordless TOTP-only/Passkey-only login is out of scope for v1.7.
+
 ## cert: certificate management
 
 ### cert list

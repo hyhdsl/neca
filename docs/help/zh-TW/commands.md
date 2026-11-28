@@ -102,6 +102,25 @@ neca config export-env
 
 輸出可直接交給 shell 的環境變數指派。輸出可能包含敏感設定，請在受控終端使用，不要寫入日誌、工單或公開聊天。
 
+## pass：necap 認證管理
+
+僅在 necap 已啟用且 helper 可用時使用；所有寫入操作都會要求重新驗證管理員密碼與現有 TOTP/恢復碼。
+
+~~~bash
+neca pass status
+neca pass totp add
+neca pass totp remove
+neca pass passkey list
+neca pass passkey remove <ID>
+neca pass recovery regenerate
+neca pass policy <password|totp|passkey|any>
+~~~
+
+- Passkey 註冊只在 Web 安全設定完成；CLI 僅列出與刪除。
+- 恢復碼只顯示一次。
+- 目前策略依賴的唯一第二因素不能被刪除。
+- 無密碼 TOTP-only/Passkey-only 登入不在 v1.7 範圍。
+
 ## cert：憑證管理
 
 ### cert list

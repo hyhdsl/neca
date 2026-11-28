@@ -10,6 +10,7 @@
 - [🔐 憑證管理](certificates.md)
 - [💻 平台套件與用戶端安裝](packages.md)
 - [🖥️ Web 面板](web.md)
+- [🛡️ necap 認證（v1.7 開發中）](necap.md)
 - [🔌 Web API（實驗性）](api.md)
 - [⚙️ 部署與日常維運](operations.md)
 - [🛡️ 安全、權限與備份](security.md)

@@ -10,6 +10,7 @@
 - [🔐 Certificate management](certificates.md)
 - [💻 Platform packages](packages.md)
 - [🖥️ Web panel](web.md)
+- [🛡️ necap authentication (v1.7 development)](necap.md)
 - [🔌 Web API (experimental)](api.md)
 - [⚙️ Deployment and operations](operations.md)
 - [🛡️ Security, permissions and backups](security.md)

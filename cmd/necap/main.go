@@ -79,6 +79,8 @@ func runInit(args []string) {
 	socket := fs.String("socket", necap.DefaultSocketPath, "Unix socket 路径")
 	username := fs.String("username", "admin", "管理员用户名")
 	hashFile := fs.String("password-hash-file", "/opt/ipsec/web-secrets/password.hash", "现有 bcrypt 密码哈希文件")
+	uid := fs.Int("uid", -1, "生成文件的属主 UID（运行 necap 的用户）")
+	gid := fs.Int("gid", -1, "生成文件的属组 GID")
 	fs.Parse(args)
 
 	if strings.TrimSpace(*rpID) == "" || strings.TrimSpace(*origins) == "" {
@@ -110,6 +112,9 @@ func runInit(args []string) {
 	if err := os.MkdirAll(filepath.Dir(*configPath), 0o700); err != nil {
 		log.Fatalf("创建 necap 配置目录: %v", err)
 	}
+	if err := os.Chmod(filepath.Dir(*configPath), 0o700); err != nil {
+		log.Fatalf("设置 necap 配置目录权限: %v", err)
+	}
 	file, err := os.OpenFile(*configPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
 		log.Fatalf("创建 necap 配置: %v", err)
@@ -140,6 +145,25 @@ func runInit(args []string) {
 	user, err := store.CreateUser(context.Background(), *username, hash, "admin")
 	if err != nil {
 		log.Fatalf("创建 necap 管理员: %v", err)
+	}
+	if *uid >= 0 || *gid >= 0 {
+		if os.Geteuid() != 0 {
+			log.Fatal("指定 --uid/--gid 时需要 root 运行 necap init")
+		}
+		if *uid < 0 {
+			*uid = 10002
+		}
+		if *gid < 0 {
+			*gid = *uid
+		}
+		for _, path := range []string{filepath.Dir(*configPath), *configPath, *keyFile, *database, *database + "-wal", *database + "-shm"} {
+			if _, err := os.Stat(path); err != nil {
+				continue
+			}
+			if err := os.Chown(path, *uid, *gid); err != nil {
+				log.Fatalf("设置 %s 属主: %v", path, err)
+			}
+		}
 	}
 	fmt.Printf("[OK]   necap 初始化完成: config=%s db=%s user=%s\n", *configPath, *database, user.Username)
 }

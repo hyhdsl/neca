@@ -197,11 +197,11 @@ neca cert package alice --platforms windows,android --installers windows --p12-p
 
 ~~~bash
 neca cert import alice --p12 alice.p12 --password-file alice.p12.pass
-neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --allow-expired
-neca cert import alice --p12 alice.p12 --password-file alice.p12.pass --dry-run
+neca cert import alice --cert alice.crt --key alice.key
+neca cert import alice --cert alice.crt --key alice.key --key-password-file alice.key.pass --dry-run
 ~~~
 
-v1 只导入由当前 CA 签发、能通过当前 CA 证书链校验的 p12。p12 必须恰好包含一个客户端证书和一个匹配私钥；CN、序列号、clients 目录或 meta 冲突时拒绝，不覆盖、不 repair。密码文件必须是权限 0600 的普通文件。
+v1.4 支持两种互斥来源：由当前 CA 签发、能通过证书链校验的 p12；或 PEM 格式的单张客户端证书 + PEM 私钥。p12 或 cert/key 必须匹配并恰好包含一个客户端证书和一个私钥；CN、序列号、clients 目录、meta 或 CRL 冲突时拒绝，不覆盖、不 repair。密码文件与私钥文件必须是权限 0600 的普通文件（Windows 仅记录 ACL 限制）；加密私钥需要 --key-password-file。
 
 过期证书默认拒绝；使用 `--allow-expired` 并完成 Y/N 二次确认后，以 index 状态 E 导入，并提示随后执行 `neca cert reissue <CN>` 或 `neca cert revoke <CN>`。JSON 模式需要同时提供 `--allow-expired`（仅过期时）和 `--yes`。`--zip` 可在导入后生成下载包；`--platforms`/`--installers`/`--p12-profile` 与 issue 语义一致。
 

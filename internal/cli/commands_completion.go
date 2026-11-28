@@ -46,7 +46,7 @@ var completionFlags = map[string][]string{
 	"cert export":   {"--out"},
 	"cert platform": {"--platforms", "--installers", "--zip", "--no-reload"},
 	"cert package":  {"--platforms", "--installers", "--p12-profile", "--zip", "--no-reload"},
-	"cert import":   {"--p12", "--password-file", "--platforms", "--installers", "--p12-profile", "--allow-expired", "--zip"},
+	"cert import":   {"--p12", "--password-file", "--cert", "--key", "--key-password-file", "--platforms", "--installers", "--p12-profile", "--allow-expired", "--zip"},
 	"pki downloads": {"--expired", "--all"},
 	"trash purge":   {"--expired"},
 	"config init":   {"--force", "--from-env"},

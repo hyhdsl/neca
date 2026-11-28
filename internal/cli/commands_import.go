@@ -11,14 +11,14 @@ import (
 func newImportCommand() Command {
 	return Command{
 		Name:    "import",
-		Summary: "导入由当前 CA 签发的 p12 客户端证书",
+		Summary: "导入由当前 CA 签发的 p12 或 PEM 证书",
 		Run: func(env Env) int {
 			pos, values, bools, err := parseFlags(env.Args,
-				[]string{"p12", "password-file", "platforms", "installers", "p12-profile"},
+				[]string{"p12", "password-file", "cert", "key", "key-password-file", "platforms", "installers", "p12-profile"},
 				[]string{"allow-expired", "zip"})
 			if err != nil || len(pos) != 1 {
 				if err == nil {
-					err = fmt.Errorf("用法: import <CN> --p12 FILE --password-file FILE [--platforms ...] [--installers ...] [--p12-profile ...] [--allow-expired] [--zip]")
+					err = fmt.Errorf("用法: import <CN> --p12 FILE --password-file FILE | --cert FILE --key FILE [--key-password-file FILE] [--platforms ...] [--installers ...] [--p12-profile ...] [--allow-expired] [--zip]")
 				}
 				return usageFail(env, "%v", err)
 			}
@@ -28,6 +28,11 @@ func newImportCommand() Command {
 			deps, err := newCoreDeps()
 			if err != nil {
 				return fail(env, err)
+			}
+			if !env.DryRun {
+				if err := core.RecoverImportTransactions(context.Background(), deps.cfg, deps.store); err != nil {
+					return fail(env, err)
+				}
 			}
 			platforms := buildPlatforms(values["platforms"])
 			installers, err := buildInstallerSet(deps.cfg, values["installers"])
@@ -39,9 +44,13 @@ func newImportCommand() Command {
 				return usageFail(env, "%v", err)
 			}
 			req := core.ImportRequest{
-				CN: pos[0], Source: core.ImportSourceP12,
-				P12Path: values["p12"], PasswordFile: values["password-file"],
-				Platforms: platforms, Installers: installers, P12Profile: profile,
+				CN:              pos[0],
+				P12Path:         values["p12"],
+				PasswordFile:    values["password-file"],
+				CertPath:        values["cert"],
+				KeyPath:         values["key"],
+				KeyPasswordFile: values["key-password-file"],
+				Platforms:       platforms, Installers: installers, P12Profile: profile,
 				AllowExpired: bools["allow-expired"], DryRun: env.DryRun,
 			}
 			validation, err := core.ValidateImport(context.Background(), deps.cfg, deps.store, deps.oss, req)
@@ -93,7 +102,7 @@ func newImportCommand() Command {
 				return emitJSON(env, "cert import", result.CN, result.Warnings, data)
 			}
 			renderWarnings(env, result.Warnings)
-			fmt.Fprintf(env.Stdout, "[OK]   已导入 %s（序列 %s，来源 p12，入库 %s）\n", result.CN, result.Serial, result.Created)
+			fmt.Fprintf(env.Stdout, "[OK]   已导入 %s（序列 %s，来源 %s，入库 %s）\n", result.CN, result.Serial, result.Source, result.Created)
 			renderImportNextActions(env, result.NextActions)
 			if bools["zip"] {
 				if err := createZip(env, deps.cfg, result.CN, result.Platforms); err != nil {
